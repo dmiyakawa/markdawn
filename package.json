@@ -1,0 +1,51 @@
+{
+  "name": "markdown-editor",
+  "version": "1.0.0",
+  "description": "Web-based Markdown editor with preview and WYSIWYG capabilities",
+  "main": "src/main.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "format": "prettier --write src/"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "vue",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.7.0",
+    "autoprefixer": "^10.4.21",
+    "marked": "^16.1.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "vue": "^3.5.18",
+    "vue-tsc": "^3.0.5"
+  },
+  "devDependencies": {
+    "@types/marked": "^5.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/test-utils": "^2.4.6",
+    "eslint": "^9.33.0",
+    "eslint-plugin-vue": "^10.4.0",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.6.2",
+    "vitest": "^3.2.4"
+  }
+}
