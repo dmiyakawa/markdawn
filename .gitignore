@@ -13,6 +13,12 @@ build/
 coverage/
 *.lcov
 
+# Test results and reports
+test-results/
+playwright-report/
+test-results.json
+test-failures.json
+
 # Environment variables
 .env
 .env.local
@@ -41,3 +47,46 @@ Thumbs.db
 
 # Vite
 .vite/
+
+# Playwright and browser testing
+downloads/
+test-artifacts/
+*.trace.zip
+*.har
+
+# Visual regression test artifacts (keep baseline snapshots in git)
+*.actual.png
+*.expected.png  
+*.diff.png
+
+# Development and debugging
+.eslintcache
+.stylelintcache
+*.log.*
+
+# Editor temporary files
+*.code-workspace
+*.sublime-*
+*.vim
+
+# Local development
+.local/
+local/
+
+# Auto-generated files
+auto-imports.d.ts
+components.d.ts
+
+# Package manager lock files (keep package-lock.json but ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Runtime data
+*.pid
+*.pid.lock
+.DS_Store?

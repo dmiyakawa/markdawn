@@ -2,28 +2,29 @@
 
 ## High Priority - Next Session
 
-### File Operations Implementation
-- File upload/import functionality for .md files
-- Export to markdown file with download capability
-- Save/load functionality using browser localStorage
-- Clear/new document functionality with confirmation
-- Auto-save feature to prevent data loss
+### Advanced Editor Features
+- ✅ **COMPLETED**: Add syntax highlighting to markdown editor (CodeMirror 6 implemented)
+- ✅ **COMPLETED**: Search and replace functionality within editor (FindReplace component with regex support)
+- ✅ **COMPLETED**: Keyboard shortcuts for common operations (Emacs-style navigation implemented)
+- **Implement live scroll synchronization between editor and preview**
+- **Connect Find/Replace functionality to CodeMirror search system** 
+- **Add unit tests for CodeMirrorEditor and FindReplace components**
+- Undo/redo functionality with command history (basic CodeMirror history enabled)
 
-### User Interface Enhancements  
-- Add syntax highlighting to markdown editor (CodeMirror or Monaco)
-- Implement live scroll synchronization between editor and preview
-- Add status bar with word/character/line count
-- Responsive design improvements for mobile devices
-- Dark mode toggle functionality
+### Additional Testing Expansion  
+- **Fix E2E test issues with Playwright test runner** (current high priority)
+- **Update E2E tests to work with CodeMirror editor selectors**
+- Enhanced performance testing scenarios
+- Accessibility testing and ARIA compliance improvements
+- Advanced E2E test scenarios (file upload, drag-and-drop simulation)
 
 ## Medium Priority
 
-### Advanced Editor Features
-- Search and replace functionality within editor
-- Keyboard shortcuts for common formatting operations
-- Undo/redo functionality with command history
-- Full-screen editing mode
-- Split pane resizing for custom layout
+### Image Management Features
+- Create image management interface (view, delete stored images)
+- Add image gallery browser for stored images
+- Implement batch image operations (delete multiple, export)
+- Test image upload and resize functionality across browsers
 
 ### Performance and Polish
 - Syntax highlighting optimization for large documents  
@@ -31,13 +32,11 @@
 - Performance monitoring and optimization
 - Loading states and progress indicators
 
-### Testing Expansion
-- End-to-end testing with Playwright or Cypress
-- Visual regression testing
-- Performance testing
-- Accessibility testing
-
 ## Low Priority - Future Considerations
+
+### Image Enhancement Features
+- Add support for common image formats (JPEG, PNG, WebP, GIF)
+- Implement image optimization (compression quality settings)
 
 ### Advanced Features
 - Plugin system for custom markdown extensions
@@ -56,25 +55,24 @@
 - PWA capabilities (offline support)
 - Docker configuration for containerized deployment
 
-## Completed Since Last Update ✅
-- **Markdown Processing**: Implemented marked.js v16.1.2 with comprehensive feature support
-- **WYSIWYG Enhancement**: Added proper HTML-to-markdown conversion
-- **Testing Coverage**: Added 16 comprehensive markdown tests, achieving 87.41% coverage
-- **Feature Support**: Code blocks, links, lists, task lists, blockquotes all working
+## Completed Tasks
+
+See [ai/completed_tasks.md](./completed_tasks.md) for detailed record of all completed features and implementations.
 
 ## Unresolved Concerns
 
 ### Technical Decisions Needed  
-- Editor library selection for syntax highlighting (CodeMirror vs Monaco)
+- ✅ **RESOLVED**: Editor library selection for syntax highlighting (CodeMirror 6 selected and implemented)
+- **Find/Replace search algorithm implementation** (decide on search strategy with CodeMirror)
 - State management approach as complexity grows (consider Pinia)
-- File storage strategy (localStorage vs IndexedDB for larger documents)
 - PWA capabilities and offline support strategy
+- Performance optimization for large image collections
+- Advanced markdown extensions (tables, math, diagrams)
 
 ### Testing Strategy
-- End-to-end testing framework selection and setup
-- File upload/download testing approach
-- Performance testing for large documents
-- Accessibility testing implementation
+- File upload simulation in E2E tests (actual file drop testing)
+- Advanced image processing testing scenarios
+- Cross-browser visual regression testing maintenance
 
 ### Browser Compatibility
 - Target browser versions to support

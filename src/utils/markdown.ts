@@ -1,4 +1,5 @@
 import { marked } from 'marked'
+import { getStoredImage } from './imageOperations'
 
 /**
  * Configure marked with safe defaults and syntax highlighting support
@@ -8,6 +9,24 @@ function configureMarked() {
     breaks: true, // Support line breaks
     gfm: true, // GitHub Flavored Markdown
   })
+}
+
+/**
+ * Process stored image references in markdown
+ * Converts stored:image-id references to data URLs
+ */
+function processStoredImages(markdown: string): string {
+  return markdown.replace(
+    /!\[(.*?)\]\(stored:([^)]+)\)/g,
+    (match, altText, imageId) => {
+      const storedImage = getStoredImage(imageId)
+      if (storedImage) {
+        return `![${altText}](${storedImage.data})`
+      }
+      // Return original markdown if image not found
+      return `![${altText}](image-not-found:${imageId})`
+    }
+  )
 }
 
 /**
@@ -23,7 +42,9 @@ export function convertMarkdownToHtml(markdown: string): string {
   configureMarked()
 
   try {
-    return marked.parse(markdown) as string
+    // Process stored image references first
+    const processedMarkdown = processStoredImages(markdown)
+    return marked.parse(processedMarkdown) as string
   } catch (error) {
     console.error('Markdown parsing error:', error)
     // Fallback to original text if parsing fails

@@ -7,10 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a Markdown editor web application project that runs in browsers without depending on a backend server. The editor provides both HTML preview and WYSIWYG editing capabilities that can be toggled as needed.
 
 Key characteristics:
-- Web-based Markdown editor with preview functionality
-- WYSIWYG editor mode available
+- Web-based Markdown editor with side-by-side layout (editor left, preview right)
+- Professional UI with proper frames and responsive design
+- WYSIWYG editor mode available with bidirectional conversion
 - All data stored in browser (no backend dependency)
-- Supports file uploads and downloads
+- Comprehensive file operations (import, export, save, load, auto-save)
+- Real-time statistics and status feedback
 - Can be deployed to local, IaaS, or PaaS environments
 
 ## Technology Stack
