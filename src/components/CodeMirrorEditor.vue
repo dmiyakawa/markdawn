@@ -15,6 +15,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorState } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import { searchKeymap, highlightSelectionMatches, SearchQuery, findNext, findPrevious, replaceNext, replaceAll } from '@codemirror/search'
 
 // Props and emits
 interface Props {
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'toggle-find-replace': []
+  'scroll': [scrollInfo: { scrollTop: number; scrollHeight: number; clientHeight: number }]
 }>()
 
 // Template refs
@@ -162,7 +164,7 @@ const moveToPreviousLine = (view: EditorView) => {
 const initializeEditor = async () => {
   if (!editorContainer.value) return
 
-  // DOM event handler to prevent browser defaults
+  // DOM event handler to prevent browser defaults and handle scroll
   const domEventHandlers = EditorView.domEventHandlers({
     keydown(event, view) {
       // Intercept emacs shortcuts before they reach the browser
@@ -208,6 +210,15 @@ const initializeEditor = async () => {
       }
       return false
     },
+    scroll(event, view) {
+      const scrollElement = view.scrollDOM
+      emit('scroll', {
+        scrollTop: scrollElement.scrollTop,
+        scrollHeight: scrollElement.scrollHeight,
+        clientHeight: scrollElement.clientHeight,
+      })
+      return false // Don't prevent default
+    },
   })
 
   // Create editor state with extensions
@@ -215,6 +226,7 @@ const initializeEditor = async () => {
     basicSetup,
     markdown(),
     EditorView.lineWrapping,
+    highlightSelectionMatches(), // Highlight matching selections
     domEventHandlers,
     Prec.highest(
       keymap.of([
@@ -266,7 +278,7 @@ const initializeEditor = async () => {
         },
       ])
     ),
-    keymap.of([...defaultKeymap, ...historyKeymap]),
+    keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
     history(),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
@@ -490,11 +502,121 @@ const replaceSelection = (text: string) => {
   })
 }
 
+// Search functionality
+interface SearchOptions {
+  caseSensitive?: boolean
+  useRegex?: boolean
+}
+
+const performSearch = (query: string, options: SearchOptions = {}) => {
+  if (!editorView || !query) return null
+
+  const searchQuery = new SearchQuery({
+    search: query,
+    caseSensitive: options.caseSensitive || false,
+    regexp: options.useRegex || false,
+    replace: '',
+  })
+
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: SearchQuery.set(searchQuery),
+  })
+
+  return searchQuery
+}
+
+const searchNext = (query: string, options: SearchOptions = {}) => {
+  if (!editorView) return false
+
+  const searchQuery = performSearch(query, options)
+  if (!searchQuery) return false
+
+  return findNext(editorView)
+}
+
+const searchPrevious = (query: string, options: SearchOptions = {}) => {
+  if (!editorView) return false
+
+  const searchQuery = performSearch(query, options)
+  if (!searchQuery) return false
+
+  return findPrevious(editorView)
+}
+
+const performReplace = (findText: string, replaceText: string, options: SearchOptions = {}) => {
+  if (!editorView || !findText) return false
+
+  const searchQuery = new SearchQuery({
+    search: findText,
+    caseSensitive: options.caseSensitive || false,
+    regexp: options.useRegex || false,
+    replace: replaceText,
+  })
+
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: SearchQuery.set(searchQuery),
+  })
+
+  return replaceNext(editorView)
+}
+
+const performReplaceAll = (findText: string, replaceText: string, options: SearchOptions = {}) => {
+  if (!editorView || !findText) return false
+
+  const searchQuery = new SearchQuery({
+    search: findText,
+    caseSensitive: options.caseSensitive || false,
+    regexp: options.useRegex || false,
+    replace: replaceText,
+  })
+
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: SearchQuery.set(searchQuery),
+  })
+
+  return replaceAll(editorView)
+}
+
+const clearSearch = () => {
+  if (!editorView) return
+
+  editorView.dispatch({
+    effects: SearchQuery.set(new SearchQuery({ search: '', replace: '' })),
+  })
+}
+
+const scrollToPosition = (scrollTop: number) => {
+  if (!editorView) return
+
+  editorView.scrollDOM.scrollTop = scrollTop
+}
+
+const getScrollInfo = () => {
+  if (!editorView) return null
+
+  const scrollElement = editorView.scrollDOM
+  return {
+    scrollTop: scrollElement.scrollTop,
+    scrollHeight: scrollElement.scrollHeight,
+    clientHeight: scrollElement.clientHeight,
+  }
+}
+
 defineExpose({
   focus,
   getSelection,
   insertText,
   replaceSelection,
+  searchNext,
+  searchPrevious,
+  performReplace,
+  performReplaceAll,
+  clearSearch,
+  scrollToPosition,
+  getScrollInfo,
 })
 </script>
 

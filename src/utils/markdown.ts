@@ -1,5 +1,5 @@
 import { marked } from 'marked'
-import { getStoredImage } from './imageOperations'
+import { getStoredImage, getStoredImages } from './imageOperations'
 
 /**
  * Configure marked with safe defaults and syntax highlighting support
@@ -65,6 +65,20 @@ export function convertMarkdownToHtml(markdown: string): string {
 }
 
 /**
+ * Find stored image ID by data URL
+ * Searches through all stored images to find a match
+ */
+function findStoredImageByDataUrl(dataUrl: string): string | null {
+  const storedImages = getStoredImages()
+  for (const image of storedImages) {
+    if (image.data === dataUrl) {
+      return image.id
+    }
+  }
+  return null
+}
+
+/**
  * Basic HTML to markdown conversion (for WYSIWYG mode)
  * This is a simplified implementation - consider using a proper library like turndown for production
  * @param html - The HTML to convert
@@ -74,6 +88,8 @@ export function convertHtmlToMarkdown(html: string): string {
   if (!html.trim()) {
     return ''
   }
+
+  console.log('Converting HTML to Markdown:', html.substring(0, 200) + '...')
 
   return (
     html
@@ -89,29 +105,50 @@ export function convertHtmlToMarkdown(html: string): string {
       .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
       .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
       .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
-      // Handle stored images using multiple approaches
-      .replace(
-        /<img[^>]*class="[^"]*stored-image[^"]*"[^>]*data-stored-id="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
-        '![$2](stored:$1)'
-      )
+      // Handle stored images with data-stored-id attribute (from our conversion)
       .replace(
         /<img[^>]*data-stored-id="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
-        '![$2](stored:$1)'
+        (match, storedId, alt) => {
+          console.log(`Found img with data-stored-id: ${storedId}, alt: ${alt}`)
+          return `![${alt}](stored:${storedId})`
+        }
       )
+      // Handle stored images with class attribute (backup approach)
       .replace(
-        /<img[^>]*src="(data:image\/[^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
+        /<img[^>]*class="[^"]*stored-image[^"]*"[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
         (match, src, alt) => {
-          // Check if this data URL corresponds to a stored image
-          const storedId = imageDataToIdMap.get(src)
-          console.log(
-            `Converting image: alt="${alt}", src="${src.substring(0, 50)}...", storedId="${storedId}"`
-          )
+          console.log(`Found stored-image class: alt="${alt}", src="${src.substring(0, 50)}..."`)
+          // Try to find by data URL in imageDataToIdMap first
+          let storedId = imageDataToIdMap.get(src)
+          if (!storedId) {
+            // Fallback: search through all stored images
+            storedId = findStoredImageByDataUrl(src)
+          }
           if (storedId) {
             console.log(`Found stored ID: ${storedId}`)
             return `![${alt}](stored:${storedId})`
           }
-          // Regular image
-          console.log(`No stored ID found, using data URL`)
+          console.log(`No stored ID found for stored-image class`)
+          return `![${alt}](${src})`
+        }
+      )
+      // Handle any data URL images (try to match with stored images)
+      .replace(
+        /<img[^>]*src="(data:image\/[^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
+        (match, src, alt) => {
+          console.log(`Processing data URL image: alt="${alt}", src="${src.substring(0, 50)}..."`)
+          // Try imageDataToIdMap first (from current session)
+          let storedId = imageDataToIdMap.get(src)
+          if (!storedId) {
+            // Fallback: search through all stored images
+            storedId = findStoredImageByDataUrl(src)
+          }
+          if (storedId) {
+            console.log(`Found stored ID: ${storedId}`)
+            return `![${alt}](stored:${storedId})`
+          }
+          // Regular data URL image (not stored)
+          console.log(`No stored ID found, keeping data URL`)
           return `![${alt}](${src})`
         }
       )

@@ -153,14 +153,14 @@
     <main class="w-full px-4 sm:px-6 lg:px-8 py-4">
       <div
         ref="containerRef"
-        class="flex flex-row gap-3 w-full h-auto md:h-[calc(100vh-180px)] min-h-[400px] md:min-h-[500px]"
+        class="flex flex-row gap-3 w-full h-[calc(100vh-200px)] min-h-[400px] max-h-[calc(100vh-150px)]"
       >
         <!-- Editor Panel (Left Side) -->
         <div
           ref="editorContainer"
           data-testid="editor-panel"
           :class="[
-            'bg-white flex flex-col rounded-lg shadow border border-gray-200 min-h-[250px] md:min-h-[300px]',
+            'bg-white flex flex-col rounded-lg shadow border border-gray-200 h-full',
             { 'border-blue-400 bg-blue-50': isDragging },
           ]"
           :style="{ width: showPreview ? `${leftPaneWidth}%` : '100%' }"
@@ -181,6 +181,7 @@
               placeholder="Start typing your markdown here..."
               class="w-full h-full"
               @toggle-find-replace="toggleFindReplace"
+              @scroll="handleEditorScroll"
             />
           </div>
         </div>
@@ -207,7 +208,7 @@
           v-show="showPreview"
           data-testid="preview-panel"
           :class="[
-            'bg-white rounded-lg shadow border border-gray-200 flex flex-col min-h-[250px] md:min-h-[300px]',
+            'bg-white rounded-lg shadow border border-gray-200 flex flex-col h-full',
           ]"
           :style="{ width: `${100 - leftPaneWidth}%` }"
         >
@@ -220,7 +221,7 @@
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
-            <div class="h-full overflow-auto" style="padding: 0 16px;">
+            <div ref="wysiwygScrollContainer" class="h-full overflow-auto" style="padding: 0 16px;" @scroll="handleWysiwygScroll">
               <div
                 ref="wysiwygEditor"
                 contenteditable="true"
@@ -290,6 +291,7 @@ const showFindReplace = ref(false)
 const editorContainer = ref<HTMLElement | null>(null)
 const findReplaceRef = ref<InstanceType<typeof FindReplace> | null>(null)
 const wysiwygEditor = ref<HTMLElement | null>(null)
+const wysiwygScrollContainer = ref<HTMLElement | null>(null)
 const codeMirrorEditor = ref<InstanceType<typeof CodeMirrorEditor> | null>(null)
 
 // File operations
@@ -317,11 +319,17 @@ const togglePreview = () => {
 
 const toggleFindReplace = () => {
   showFindReplace.value = !showFindReplace.value
+  
+  // Clear search when closing Find/Replace panel
+  if (!showFindReplace.value && codeMirrorEditor.value) {
+    codeMirrorEditor.value.clearSearch()
+  }
 }
 
 // Remove renderedHtml since we no longer use it in template (WYSIWYG is now separate)
 
 let isUpdatingWysiwyg = false
+let isSyncingScroll = false // Prevent scroll sync loops
 
 const handleWysiwygInput = (event: Event) => {
   if (isUpdatingWysiwyg) return
@@ -622,13 +630,35 @@ interface SearchOptions {
 }
 
 const handleFindNext = (text: string, options: SearchOptions) => {
-  // TODO: Implement find functionality with CodeMirror
-  console.log('Find next:', text, options)
+  if (!codeMirrorEditor.value) return
+  
+  const result = codeMirrorEditor.value.searchNext(text, {
+    caseSensitive: options.caseSensitive,
+    useRegex: options.useRegex,
+  })
+  
+  if (!result) {
+    saveStatus.value = 'No matches found'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 2000)
+  }
 }
 
 const handleFindPrevious = (text: string, options: SearchOptions) => {
-  // TODO: Implement find previous functionality with CodeMirror
-  console.log('Find previous:', text, options)
+  if (!codeMirrorEditor.value) return
+  
+  const result = codeMirrorEditor.value.searchPrevious(text, {
+    caseSensitive: options.caseSensitive,
+    useRegex: options.useRegex,
+  })
+  
+  if (!result) {
+    saveStatus.value = 'No matches found'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 2000)
+  }
 }
 
 const handleReplaceNext = (
@@ -636,8 +666,24 @@ const handleReplaceNext = (
   replaceText: string,
   options: SearchOptions
 ) => {
-  // TODO: Implement replace functionality with CodeMirror
-  console.log('Replace next:', findText, 'with', replaceText, options)
+  if (!codeMirrorEditor.value) return
+  
+  const result = codeMirrorEditor.value.performReplace(findText, replaceText, {
+    caseSensitive: options.caseSensitive,
+    useRegex: options.useRegex,
+  })
+  
+  if (result) {
+    saveStatus.value = 'Text replaced'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 2000)
+  } else {
+    saveStatus.value = 'No matches found to replace'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 2000)
+  }
 }
 
 const handleReplaceAll = (
@@ -645,8 +691,88 @@ const handleReplaceAll = (
   replaceText: string,
   options: SearchOptions
 ) => {
-  // TODO: Implement replace all functionality with CodeMirror
-  console.log('Replace all:', findText, 'with', replaceText, options)
+  if (!codeMirrorEditor.value) return
+  
+  const result = codeMirrorEditor.value.performReplaceAll(findText, replaceText, {
+    caseSensitive: options.caseSensitive,
+    useRegex: options.useRegex,
+  })
+  
+  if (result) {
+    saveStatus.value = 'All matches replaced'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 2000)
+  } else {
+    saveStatus.value = 'No matches found to replace'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 2000)
+  }
+}
+
+// Scroll synchronization
+interface ScrollInfo {
+  scrollTop: number
+  scrollHeight: number
+  clientHeight: number
+}
+
+const handleEditorScroll = (scrollInfo: ScrollInfo) => {
+  if (isSyncingScroll || !wysiwygScrollContainer.value) return
+
+  isSyncingScroll = true
+  
+  // Calculate scroll percentage
+  const scrollPercentage = scrollInfo.scrollHeight > scrollInfo.clientHeight
+    ? scrollInfo.scrollTop / (scrollInfo.scrollHeight - scrollInfo.clientHeight)
+    : 0
+
+  // Apply to WYSIWYG container
+  const wysiwygElement = wysiwygScrollContainer.value
+  const wysiwygMaxScroll = wysiwygElement.scrollHeight - wysiwygElement.clientHeight
+  
+  if (wysiwygMaxScroll > 0) {
+    wysiwygElement.scrollTop = scrollPercentage * wysiwygMaxScroll
+  }
+
+  // Reset flag after a brief delay
+  setTimeout(() => {
+    isSyncingScroll = false
+  }, 50)
+}
+
+const handleWysiwygScroll = (event: Event) => {
+  if (isSyncingScroll || !codeMirrorEditor.value) return
+
+  const target = event.target as HTMLElement
+  const scrollInfo = {
+    scrollTop: target.scrollTop,
+    scrollHeight: target.scrollHeight,
+    clientHeight: target.clientHeight,
+  }
+
+  isSyncingScroll = true
+
+  // Calculate scroll percentage
+  const scrollPercentage = scrollInfo.scrollHeight > scrollInfo.clientHeight
+    ? scrollInfo.scrollTop / (scrollInfo.scrollHeight - scrollInfo.clientHeight)
+    : 0
+
+  // Get CodeMirror scroll info and apply percentage
+  const editorScrollInfo = codeMirrorEditor.value.getScrollInfo()
+  if (editorScrollInfo) {
+    const editorMaxScroll = editorScrollInfo.scrollHeight - editorScrollInfo.clientHeight
+    if (editorMaxScroll > 0) {
+      const newScrollTop = scrollPercentage * editorMaxScroll
+      codeMirrorEditor.value.scrollToPosition(newScrollTop)
+    }
+  }
+
+  // Reset flag after a brief delay
+  setTimeout(() => {
+    isSyncingScroll = false
+  }, 50)
 }
 
 // Initialize on mount
