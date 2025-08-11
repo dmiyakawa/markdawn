@@ -1,9 +1,6 @@
 <template>
-  <div
-    class="min-h-screen bg-gray-100"
-    :class="{ 'overflow-hidden': fullScreenMode }"
-  >
-    <header v-show="!fullScreenMode" class="bg-white shadow-sm border-b">
+  <div class="min-h-screen bg-gray-100">
+    <header class="bg-white shadow-sm border-b">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex items-center py-2">
           <!-- Menu Bar Controls -->
@@ -103,17 +100,34 @@
                 🔍
               </button>
               <button
-                @click="toggleFullScreen"
+                @click="togglePreview"
                 :class="[
                   'px-2 py-1 text-xs rounded',
-                  fullScreenMode
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                  showPreview
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-blue-500 text-white',
                 ]"
-                title="Toggle full-screen editing"
+                title="Toggle preview pane"
               >
-                {{ fullScreenMode ? '⤾' : '⤢' }}
+                {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
               </button>
+            </div>
+          </div>
+
+          <!-- Information Pane -->
+          <div class="ml-auto flex items-center text-xs text-gray-600">
+            <div class="flex items-center" style="margin-right: 16px">
+              <span style="margin-right: 8px">Words: {{ stats.words }}</span>
+              <span style="margin-right: 8px">Chars: {{ stats.characters.withSpaces }}</span>
+              <span>Lines: {{ stats.lines }}</span>
+            </div>
+            <div class="flex items-center">
+              <span v-if="lastSaved" class="text-green-600" style="margin-right: 6px">
+                Saved: {{ formatTimestamp(lastSaved) }}
+              </span>
+              <span v-if="saveStatus" :class="saveStatusClass">
+                {{ saveStatus }}
+              </span>
             </div>
           </div>
         </div>
@@ -130,95 +144,46 @@
       ref="findReplaceRef"
     />
 
-    <main
-      :class="['w-full', fullScreenMode ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-4']"
-    >
+    <main class="w-full px-4 sm:px-6 lg:px-8 py-4">
       <div
         ref="containerRef"
-        :class="[
-          'flex flex-row gap-3 w-full',
-          fullScreenMode
-            ? 'h-screen min-h-screen'
-            : 'h-auto md:h-[calc(100vh-180px)] min-h-[400px] md:min-h-[500px]',
-        ]"
+        class="flex flex-row gap-3 w-full h-auto md:h-[calc(100vh-180px)] min-h-[400px] md:min-h-[500px]"
       >
         <!-- Editor Panel (Left Side) -->
         <div
           ref="editorContainer"
           data-testid="editor-panel"
           :class="[
-            'bg-white flex flex-col',
-            fullScreenMode
-              ? 'flex-1 min-h-screen border-0 shadow-none rounded-none'
-              : 'rounded-lg shadow border border-gray-200 min-h-[250px] md:min-h-[300px]',
-            { 'border-blue-400 bg-blue-50': isDragging && !fullScreenMode },
+            'bg-white flex flex-col rounded-lg shadow border border-gray-200 min-h-[250px] md:min-h-[300px]',
+            { 'border-blue-400 bg-blue-50': isDragging },
           ]"
-          :style="!fullScreenMode ? { width: `${leftPaneWidth}%` } : {}"
+          :style="{ width: showPreview ? `${leftPaneWidth}%` : '100%' }"
         >
           <div
             class="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between"
           >
-            <h3 class="text-sm font-medium text-gray-700 flex items-center">
-              <svg
-                class="w-4 h-4 mr-1.5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              {{ wysiwygMode ? 'WYSIWYG Editor' : 'Markdown Editor' }}
+            <h3 class="text-sm font-medium text-gray-700">
+              Markdown Editor
             </h3>
             <div class="flex items-center space-x-2">
-              <button
-                v-if="fullScreenMode"
-                @click="toggleFullScreen"
-                class="px-2 py-1 text-xs rounded bg-red-500 text-white hover:bg-red-600"
-                title="Exit full-screen mode"
-              >
-                ⤾ Exit
-              </button>
-              <button
-                @click="toggleWysiwyg"
-                :class="[
-                  'px-2 py-1 text-xs rounded',
-                  wysiwygMode
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300',
-                ]"
-                title="Toggle WYSIWYG mode"
-              >
-                {{ wysiwygMode ? 'MD' : 'WYSIWYG' }}
-              </button>
+              <!-- Editor controls can be added here if needed -->
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
             <CodeMirrorEditor
-              v-if="!wysiwygMode"
+              ref="codeMirrorEditor"
               v-model="markdownContent"
               :dark-mode="false"
               placeholder="Start typing your markdown here..."
               class="w-full h-full"
               @toggle-find-replace="toggleFindReplace"
             />
-            <div
-              v-else
-              contenteditable="true"
-              class="w-full h-full focus:outline-none prose prose-sm max-w-none overflow-auto p-3"
-              @input="handleWysiwygInput"
-              v-html="renderedHtml"
-            />
           </div>
         </div>
 
         <!-- Resize Handle -->
         <div
-          v-show="!fullScreenMode"
+          v-show="showPreview"
           ref="resizeHandleRef"
           data-testid="resize-handle"
           @mousedown="startResize"
@@ -235,7 +200,7 @@
 
         <!-- Preview Panel (Right Side) -->
         <div
-          v-show="!fullScreenMode"
+          v-show="showPreview"
           data-testid="preview-panel"
           :class="[
             'bg-white rounded-lg shadow border border-gray-200 flex flex-col min-h-[250px] md:min-h-[300px]',
@@ -245,109 +210,31 @@
           <div
             class="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between"
           >
-            <h3 class="text-sm font-medium text-gray-700 flex items-center">
-              <svg
-                class="w-4 h-4 mr-1.5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
-              Preview
-              <span v-if="!showPreview" class="ml-1 text-xs text-gray-500"
-                >(Hidden)</span
-              >
+            <h3 class="text-sm font-medium text-gray-700">
+              WYSIWYG Editor
             </h3>
             <div class="flex items-center space-x-2">
-              <button
-                @click="togglePreview"
-                :class="[
-                  'px-2 py-1 text-xs rounded',
-                  showPreview
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300',
-                ]"
-                title="Toggle preview"
-              >
-                {{ showPreview ? 'Hide' : 'Show' }}
-              </button>
+              <!-- Preview controls can be added here if needed -->
             </div>
           </div>
-          <div
-            class="flex-1 p-3 overflow-auto"
-            :class="{ 'opacity-50': !showPreview }"
-          >
+          <div class="flex-1 overflow-hidden">
             <div
-              v-if="showPreview"
-              class="prose prose-sm max-w-none"
-              v-html="renderedHtml"
+              ref="wysiwygEditor"
+              contenteditable="true"
+              class="w-full h-full focus:outline-none prose prose-sm max-w-none overflow-auto p-4"
+              @input="handleWysiwygInput"
+              @blur="syncWysiwygContent"
             />
-            <div
-              v-else
-              class="flex items-center justify-center h-full text-gray-500"
-            >
-              <div class="text-center">
-                <svg
-                  class="w-12 h-12 mx-auto mb-4 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L9.878 9.878m4.242 4.242L9.878 9.878M4.929 19.071L19.071 4.93"
-                  />
-                </svg>
-                <p class="text-lg font-medium">Preview Hidden</p>
-                <p class="text-sm">
-                  Click the Preview button to show the rendered markdown
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Status Bar -->
-    <footer v-show="!fullScreenMode" class="bg-white border-t px-4 py-2">
-      <div
-        class="max-w-7xl mx-auto flex justify-between items-center text-sm text-gray-600"
-      >
-        <div class="flex space-x-4">
-          <span>Words: {{ stats.words }}</span>
-          <span>Characters: {{ stats.characters.withSpaces }}</span>
-          <span>Lines: {{ stats.lines }}</span>
-        </div>
-        <div class="flex space-x-4">
-          <span v-if="lastSaved" class="text-green-600">
-            Last saved: {{ formatTimestamp(lastSaved) }}
-          </span>
-          <span v-if="saveStatus" :class="saveStatusClass">
-            {{ saveStatus }}
-          </span>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { convertMarkdownToHtml, convertHtmlToMarkdown } from './utils/markdown'
 import ImageUploader from './components/ImageUploader.vue'
 import CodeMirrorEditor from './components/CodeMirrorEditor.vue'
@@ -394,13 +281,13 @@ function hello() {
 > **Tip**: Toggle between edit and preview modes using the buttons above!`
 )
 const showPreview = ref(true)
-const wysiwygMode = ref(false)
-const fullScreenMode = ref(false)
 const showFindReplace = ref(false)
 
 // Template refs for drag-and-drop
 const editorContainer = ref<HTMLElement | null>(null)
 const findReplaceRef = ref<InstanceType<typeof FindReplace> | null>(null)
+const wysiwygEditor = ref<HTMLElement | null>(null)
+const codeMirrorEditor = ref<InstanceType<typeof CodeMirrorEditor> | null>(null)
 
 // File operations
 const fileInput = ref<HTMLInputElement>()
@@ -425,13 +312,6 @@ const togglePreview = () => {
   showPreview.value = !showPreview.value
 }
 
-const toggleWysiwyg = () => {
-  wysiwygMode.value = !wysiwygMode.value
-}
-
-const toggleFullScreen = () => {
-  fullScreenMode.value = !fullScreenMode.value
-}
 
 const toggleFindReplace = () => {
   showFindReplace.value = !showFindReplace.value
@@ -441,14 +321,52 @@ const renderedHtml = computed(() => {
   return convertMarkdownToHtml(markdownContent.value)
 })
 
+let isUpdatingWysiwyg = false
+
 const handleWysiwygInput = (event: Event) => {
+  if (isUpdatingWysiwyg) return
+  
   const target = event.target as HTMLElement
-  // Convert HTML content back to markdown
+  // Convert HTML content back to markdown without triggering re-render
   if (target.innerHTML) {
-    markdownContent.value = convertHtmlToMarkdown(target.innerHTML)
+    const newMarkdown = convertHtmlToMarkdown(target.innerHTML)
+    // Only update if content actually changed to avoid cursor issues
+    if (newMarkdown !== markdownContent.value) {
+      markdownContent.value = newMarkdown
+    }
   } else {
-    markdownContent.value = target.innerText || ''
+    const newMarkdown = target.innerText || ''
+    if (newMarkdown !== markdownContent.value) {
+      markdownContent.value = newMarkdown
+    }
   }
+}
+
+const syncWysiwygContent = () => {
+  // Sync content when focus is lost
+  if (wysiwygEditor.value) {
+    const target = wysiwygEditor.value
+    if (target.innerHTML) {
+      const newMarkdown = convertHtmlToMarkdown(target.innerHTML)
+      if (newMarkdown !== markdownContent.value) {
+        markdownContent.value = newMarkdown
+      }
+    }
+  }
+}
+
+const updateWysiwygContent = () => {
+  if (!wysiwygEditor.value) return
+  
+  isUpdatingWysiwyg = true
+  const currentHtml = wysiwygEditor.value.innerHTML
+  const newHtml = convertMarkdownToHtml(markdownContent.value)
+  
+  // Only update if HTML content is different and WYSIWYG editor is not focused
+  if (currentHtml !== newHtml && document.activeElement !== wysiwygEditor.value) {
+    wysiwygEditor.value.innerHTML = newHtml
+  }
+  isUpdatingWysiwyg = false
 }
 
 // File Operations
@@ -619,37 +537,35 @@ const enableAutoSave = () => {
 
 // Image insertion method
 const insertImageIntoEditor = (markdown: string) => {
-  const textarea = document.querySelector('textarea') as HTMLTextAreaElement
-  if (textarea && !wysiwygMode.value) {
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
+  if (!codeMirrorEditor.value) {
+    // Fallback: append to end of content
     const currentContent = markdownContent.value
-
-    // Insert markdown at cursor position or append to end
-    const insertAt = start !== undefined ? start : currentContent.length
-    const beforeCursor = currentContent.substring(0, insertAt)
-    const afterCursor = currentContent.substring(end || insertAt)
-
-    // Add newlines around image if needed
-    const needsNewlineBefore =
-      beforeCursor.length > 0 && !beforeCursor.endsWith('\n')
-    const needsNewlineAfter =
-      afterCursor.length > 0 && !afterCursor.startsWith('\n')
+    const needsNewlineBefore = currentContent.length > 0 && !currentContent.endsWith('\n')
+    const needsNewlineAfter = true // Always add newline after image
 
     const imageMarkdown = `${needsNewlineBefore ? '\n' : ''}${markdown}${needsNewlineAfter ? '\n' : ''}`
-
-    markdownContent.value = beforeCursor + imageMarkdown + afterCursor
-
-    // Set cursor position after inserted image
-    setTimeout(() => {
-      const newPosition = insertAt + imageMarkdown.length
-      textarea.setSelectionRange(newPosition, newPosition)
-      textarea.focus()
-    }, 0)
-  } else {
-    // Fallback: append to end of content
-    markdownContent.value += `\n${markdown}\n`
+    markdownContent.value = currentContent + imageMarkdown
+    return
   }
+
+  // Get current cursor position
+  const selection = codeMirrorEditor.value.getSelection()
+  const currentContent = markdownContent.value
+  
+  // Check if we need newlines around the image
+  const beforeCursor = currentContent.substring(0, selection.from)
+  const afterCursor = currentContent.substring(selection.to)
+  
+  const needsNewlineBefore = beforeCursor.length > 0 && !beforeCursor.endsWith('\n')
+  const needsNewlineAfter = afterCursor.length > 0 && !afterCursor.startsWith('\n')
+
+  const imageMarkdown = `${needsNewlineBefore ? '\n' : ''}${markdown}${needsNewlineAfter ? '\n' : ''}`
+
+  // Insert the image at cursor position
+  codeMirrorEditor.value.insertText(imageMarkdown)
+  
+  // Focus the editor after insertion
+  codeMirrorEditor.value.focus()
 }
 
 // Set up drag-and-drop
@@ -728,7 +644,7 @@ const handleReplaceAll = (
 }
 
 // Initialize on mount
-onMounted(() => {
+onMounted(async () => {
   // Load existing saved content if available, otherwise keep welcome content
   if (hasSavedContent()) {
     const savedContent = loadFromLocalStorage()
@@ -740,5 +656,18 @@ onMounted(() => {
 
   // Enable auto-save
   enableAutoSave()
+
+  // Initialize WYSIWYG content
+  await nextTick()
+  updateWysiwygContent()
+})
+
+// Watch for markdown content changes (but not when updating from WYSIWYG)
+watch(markdownContent, () => {
+  if (!isUpdatingWysiwyg) {
+    nextTick(() => {
+      updateWysiwygContent()
+    })
+  }
 })
 </script>

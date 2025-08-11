@@ -11,17 +11,27 @@ function configureMarked() {
   })
 }
 
+// Map to track image data URLs to their stored IDs
+const imageDataToIdMap = new Map<string, string>()
+
 /**
  * Process stored image references in markdown
- * Converts stored:image-id references to data URLs
+ * Converts stored:image-id references to data URLs and tracks the mapping
  */
 function processStoredImages(markdown: string): string {
+  // Clear the map for fresh tracking
+  imageDataToIdMap.clear()
+  
   return markdown.replace(
     /!\[(.*?)\]\(stored:([^)]+)\)/g,
     (match, altText, imageId) => {
       const storedImage = getStoredImage(imageId)
       if (storedImage) {
-        return `![${altText}](${storedImage.data})`
+        // Track the mapping from data URL to stored ID
+        imageDataToIdMap.set(storedImage.data, imageId)
+        console.log(`Tracking image: ${imageId} -> ${storedImage.data.substring(0, 50)}...`)
+        // Add both data-stored-id and a class for easier identification
+        return `<img src="${storedImage.data}" alt="${altText}" data-stored-id="${imageId}" class="stored-image" />`
       }
       // Return original markdown if image not found
       return `![${altText}](image-not-found:${imageId})`
@@ -76,6 +86,22 @@ export function convertHtmlToMarkdown(html: string): string {
     .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
     .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
     .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+    // Handle stored images using multiple approaches
+    .replace(/<img[^>]*class="[^"]*stored-image[^"]*"[^>]*data-stored-id="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2](stored:$1)')
+    .replace(/<img[^>]*data-stored-id="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2](stored:$1)')
+    .replace(/<img[^>]*src="(data:image\/[^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, (match, src, alt) => {
+      // Check if this data URL corresponds to a stored image
+      const storedId = imageDataToIdMap.get(src)
+      console.log(`Converting image: alt="${alt}", src="${src.substring(0, 50)}...", storedId="${storedId}"`)
+      if (storedId) {
+        console.log(`Found stored ID: ${storedId}`)
+        return `![${alt}](stored:${storedId})`
+      }
+      // Regular image
+      console.log(`No stored ID found, using data URL`)
+      return `![${alt}](${src})`
+    })
+    // Handle any remaining regular images
     .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')

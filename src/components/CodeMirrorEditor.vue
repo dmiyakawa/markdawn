@@ -40,6 +40,7 @@ const editorContainer = ref<HTMLDivElement>()
 
 // State
 let editorView: EditorView | null = null
+let keydownHandler: ((event: KeyboardEvent) => void) | null = null
 
 // Kill ring for emacs-like yank functionality
 let killRing = ''
@@ -161,10 +162,60 @@ const moveToPreviousLine = (view: EditorView) => {
 const initializeEditor = async () => {
   if (!editorContainer.value) return
 
+  // DOM event handler to prevent browser defaults
+  const domEventHandlers = EditorView.domEventHandlers({
+    keydown(event, view) {
+      // Intercept emacs shortcuts before they reach the browser
+      if (event.ctrlKey) {
+        switch (event.key) {
+          case 'n':
+            event.preventDefault()
+            moveToNextLine(view)
+            return true
+          case 'p':
+            event.preventDefault()
+            moveToPreviousLine(view)
+            return true
+          case 'a':
+            event.preventDefault()
+            moveToLineStart(view)
+            return true
+          case 'e':
+            event.preventDefault()
+            moveToLineEnd(view)
+            return true
+          case 'b':
+            event.preventDefault()
+            moveCharLeft(view)
+            return true
+          case 'f':
+            event.preventDefault()
+            moveCharRight(view)
+            return true
+          case 'k':
+            event.preventDefault()
+            killToLineEnd(view)
+            return true
+          case 'y':
+            event.preventDefault()
+            yankText(view)
+            return true
+          case 'h':
+            event.preventDefault()
+            toggleFindReplace(view)
+            return true
+        }
+      }
+      return false
+    },
+  })
+
   // Create editor state with extensions
   const extensions = [
     basicSetup,
     markdown(),
+    EditorView.lineWrapping,
+    domEventHandlers,
     Prec.highest(
       keymap.of([
         // Emacs-like keyboard shortcuts with highest precedence
@@ -267,6 +318,70 @@ const initializeEditor = async () => {
     state,
     parent: editorContainer.value,
   })
+
+  // Add direct event listener to override browser shortcuts
+  keydownHandler = (event: KeyboardEvent) => {
+    // Only handle if editor is focused
+    if (!editorView || !editorView.hasFocus) {
+      return
+    }
+
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case 'n':
+          event.preventDefault()
+          event.stopPropagation()
+          moveToNextLine(editorView)
+          break
+        case 'p':
+          event.preventDefault()
+          event.stopPropagation()
+          moveToPreviousLine(editorView)
+          break
+        case 'a':
+          event.preventDefault()
+          event.stopPropagation()
+          moveToLineStart(editorView)
+          break
+        case 'e':
+          event.preventDefault()
+          event.stopPropagation()
+          moveToLineEnd(editorView)
+          break
+        case 'b':
+          event.preventDefault()
+          event.stopPropagation()
+          moveCharLeft(editorView)
+          break
+        case 'f':
+          event.preventDefault()
+          event.stopPropagation()
+          moveCharRight(editorView)
+          break
+        case 'k':
+          event.preventDefault()
+          event.stopPropagation()
+          killToLineEnd(editorView)
+          break
+        case 'y':
+          event.preventDefault()
+          event.stopPropagation()
+          yankText(editorView)
+          break
+        case 'h':
+          event.preventDefault()
+          event.stopPropagation()
+          toggleFindReplace(editorView)
+          break
+      }
+    }
+  }
+
+  // Add event listener to document with capture = true for maximum override power
+  document.addEventListener('keydown', keydownHandler, true)
+
+  // Also add to container as fallback
+  editorContainer.value.addEventListener('keydown', keydownHandler, true)
 }
 
 // Update editor content when prop changes
@@ -317,6 +432,12 @@ import { onBeforeUnmount } from 'vue'
 onBeforeUnmount(() => {
   if (editorView) {
     editorView.destroy()
+  }
+  if (keydownHandler) {
+    document.removeEventListener('keydown', keydownHandler, true)
+    if (editorContainer.value) {
+      editorContainer.value.removeEventListener('keydown', keydownHandler, true)
+    }
   }
 })
 
