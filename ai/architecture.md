@@ -50,19 +50,18 @@ src/
 ## Application Architecture
 
 ### Core Features
-1. **Menu Bar Interface** - Professional controls organized in logical groups (File, Export, Insert, View)
-2. **Find/Replace System** - Advanced search functionality with regex, case-sensitive options, and keyboard shortcuts
-3. **CodeMirror Editor** - Professional code editor with syntax highlighting and emacs-style navigation
-4. **Side-by-Side Layout** - Editor on left, preview on right with resizable panes and responsive design
-5. **Full-Screen Mode** - Distraction-free writing with header/status bar hiding and editor focus
-6. **Resizable Panes** - Drag-to-resize functionality between editor and preview with 20%-80% constraints
-7. **Image Upload System** - Complete image management with drag-and-drop, resizing, and browser storage
-8. **Preview Mode** - Real-time HTML preview of markdown content with toggle visibility
-9. **WYSIWYG Mode** - Rich text editor with bidirectional HTML↔Markdown conversion
+1. **Menu Bar Interface** - Professional controls organized in logical groups (File, Export, Insert, View) with Information Pane
+2. **Information Pane** - Real-time statistics (Words, Characters, Lines) and save status in header
+3. **Find/Replace System** - Advanced search functionality with regex, case-sensitive options, and keyboard shortcuts
+4. **Dual Editor Layout** - Markdown editor (left) and WYSIWYG editor (right) with simultaneous editing
+5. **CodeMirror Editor** - Professional code editor with syntax highlighting and emacs-style navigation
+6. **WYSIWYG Editor** - Rich text editor with bidirectional HTML↔Markdown sync and real-time updates
+7. **Resizable Panes** - Drag-to-resize functionality between editors with 20%-80% constraints
+8. **Preview Toggle** - Hide/Show WYSIWYG pane to expand markdown editor to full width
+9. **Image Upload System** - Complete image management with cursor-based insertion, drag-and-drop, and storage
 10. **File Operations** - Import, export (MD/ZIP), save/load, and document management
-11. **Status Bar** - Real-time word/character/line count and save status
-12. **Auto-save & Persistence** - Background saving every 30 seconds + content preservation across reloads
-13. **Responsive Design** - Mobile/tablet optimization with adaptive menu wrapping
+11. **Auto-save & Persistence** - Background saving every 30 seconds + content preservation across reloads
+12. **Responsive Design** - Mobile/tablet optimization with adaptive menu wrapping
 
 ### CodeMirror Editor System
 - **Framework**: CodeMirror 6 with Vue.js integration
@@ -114,12 +113,16 @@ src/
 - **Validation**: File type and size validation with user feedback
 
 ### Data Flow
-- Reactive `markdownContent` ref stores the markdown source
-- Computed `renderedHtml` uses marked.js to convert markdown to HTML
-- Computed `stats` provides real-time content analysis (words/characters/lines)
-- WYSIWYG mode provides bidirectional HTML-to-markdown conversion
-- Toggle states control UI visibility and editing modes
-- File operations update content with status feedback
+- Reactive `markdownContent` ref stores the markdown source (single source of truth)
+- Dual editor synchronization:
+  - Markdown Editor: Updates `markdownContent` directly via CodeMirror
+  - WYSIWYG Editor: Converts HTML to markdown and updates `markdownContent`
+  - Bidirectional sync prevents circular updates with `isUpdatingWysiwyg` flag
+- Real-time HTML conversion: `convertMarkdownToHtml()` with stored image reference preservation
+- Computed `stats` provides real-time content analysis (words/characters/lines) in header Information Pane
+- Image insertion uses CodeMirror cursor position for precise placement
+- Toggle states control WYSIWYG pane visibility and editor width
+- File operations update content with status feedback in Information Pane
 
 ### Vue Composables Architecture
 - **useDragAndDrop**: Handles file drag-and-drop functionality with type validation
@@ -127,14 +130,16 @@ src/
 - **useDarkMode**: Theme management with persistent preferences and system detection (ready for future)
 
 ### User Interface Architecture
-- **Menu Bar**: Logical grouping of controls with responsive behavior
+- **Menu Bar**: Logical grouping of controls with responsive behavior and Information Pane
   - File Menu: New, Import, Save, Load operations
   - Export Menu: MD and ZIP export options
   - Insert Menu: Image upload functionality  
-  - View Menu: Find/Replace toggle, full-screen mode, and display options
+  - View Menu: Find/Replace toggle and WYSIWYG pane visibility toggle
+  - Information Pane: Real-time statistics and save status with compact spacing
+- **Dual Editor Layout**: Always-visible Markdown (left) and WYSIWYG (right) editors
 - **Responsive Design**: Mobile-first with `hidden sm:inline` labels and flexible menu wrapping
-- **Full-Screen Mode**: Complete UI hiding with editor focus and red exit button
-- **Visual Feedback**: Hover states, loading indicators, and status messaging
+- **No Full-Screen Mode**: Removed in favor of WYSIWYG pane toggle for better workflow
+- **Visual Feedback**: Hover states, loading indicators, and status messaging in Information Pane
 
 ### Storage Strategy
 - **In-Memory**: Reactive refs for current document state

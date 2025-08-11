@@ -126,12 +126,39 @@
 - **Results**: Complete E2E test coverage preventing regressions, visual consistency protection, performance monitoring
 - **Browser Support Decision**: Limited to Chromium and Firefox for practical testing efficiency (WebKit/Safari not required)
 
-### UI Architecture: Menu Bar + Composables Pattern (Selected)
-- **Decision**: Organized controls into menu bar with logical grouping and Vue composables
+### UI Architecture: Menu Bar + Information Pane + Dual Editors (Selected)
+- **Decision**: Organized controls into menu bar with logical grouping, Information Pane, and always-visible dual editors
 - **Menu Structure**: File, Export, Insert, View groups for intuitive navigation
-- **Composables**: useResizablePanes, useDragAndDrop, useDarkMode for reusable logic
+- **Information Pane**: Real-time statistics (Words, Characters, Lines) and save status in header with compact spacing
+- **Dual Editor Layout**: Always-visible Markdown (left) and WYSIWYG (right) editors with bidirectional sync
+- **Composables**: useResizablePanes, useDragAndDrop for reusable logic
 - **Responsive Strategy**: Mobile-first with `hidden sm:inline` labels and flexible wrapping
-- **Full-Screen Implementation**: Complete UI hiding with editor focus and contextual exit
+- **Full-Screen Mode Removed**: Replaced with WYSIWYG pane toggle for better user workflow
+
+### WYSIWYG Integration: Dual Editor Architecture (Selected)
+- **Decision**: Merge WYSIWYG capability with preview pane for simultaneous editing
+- **Rationale**: User requested dual editors with bidirectional synchronization
+- **Implementation**: 
+  - Left pane: Always-visible CodeMirror markdown editor
+  - Right pane: Always-visible WYSIWYG contenteditable with prose styling
+  - Single source of truth: `markdownContent` ref with bidirectional sync
+  - Sync protection: `isUpdatingWysiwyg` flag prevents circular updates
+  - Focus-aware updates: WYSIWYG only updates when not actively being edited
+- **Image Reference Preservation**: Enhanced HTML/Markdown conversion with stored image tracking
+- **Benefits**: Real-time dual editing, better workflow than toggle-based WYSIWYG
+
+### Information Pane: Header Integration (Selected)
+- **Decision**: Move statistics and save status from footer to header Information Pane
+- **Rationale**: Better space utilization, consistent with modern UI patterns
+- **Implementation**: Right-aligned in menu bar with compact spacing (8px/16px/6px)
+- **Content**: Words, Characters, Lines, Last Saved timestamp, Save status
+- **Status Bar Removed**: Footer eliminated in favor of header integration
+
+### Image Insertion: Cursor-Based Placement (Selected)
+- **Decision**: Insert images at cursor position instead of appending to end
+- **Implementation**: Use CodeMirror's `getSelection()` and `insertText()` methods
+- **Benefits**: More intuitive editing experience, precise image placement
+- **Fallback**: Append to end if CodeMirror ref unavailable
 
 ### Development Workflow
 - **Scripts**: Comprehensive npm scripts for all operations

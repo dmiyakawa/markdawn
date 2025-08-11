@@ -8,56 +8,48 @@ describe('App.vue', () => {
     expect(wrapper.text()).toContain('Markdown Editor')
   })
 
-  it('has preview and wysiwyg toggle buttons', () => {
+  it('has preview toggle button', () => {
     const wrapper = mount(App)
     const buttons = wrapper.findAll('button')
-    expect(buttons.some((button) => button.text() === 'Hide')).toBe(true) // Preview toggle button
-    expect(buttons.some((button) => button.text() === 'WYSIWYG')).toBe(true) // WYSIWYG toggle button (inactive state)
+    expect(buttons.some((button) => button.text() === 'Hide Preview')).toBe(true) // Preview toggle button
   })
 
   it('toggles preview visibility', async () => {
     const wrapper = mount(App)
     const previewButton = wrapper
       .findAll('button')
-      .find((button) => button.text() === 'Hide')
+      .find((button) => button.text() === 'Hide Preview')
 
-    expect(wrapper.text()).toContain('Preview')
+    expect(wrapper.text()).toContain('WYSIWYG Editor')
 
     await previewButton?.trigger('click')
-    // After toggle, preview panel should still be accessible but button state changes
-    expect(previewButton?.classes()).toContain('bg-gray-200')
-    expect(previewButton?.text()).toBe('Show') // Button text should change to "Show"
+    // After toggle, button text should change to "Show Preview"
+    expect(previewButton?.text()).toBe('Show Preview')
   })
 
-  it('toggles wysiwyg mode', async () => {
+  it('has dual editor layout', () => {
     const wrapper = mount(App)
-    const wysiwygButton = wrapper
-      .findAll('button')
-      .find((button) => button.text() === 'WYSIWYG')
-
-    await wysiwygButton?.trigger('click')
-    expect(wysiwygButton?.classes()).toContain('bg-blue-500')
-    expect(wysiwygButton?.text()).toBe('MD') // Button text should change to "MD" when active
+    // Check that both editor panes exist
+    expect(wrapper.text()).toContain('Markdown Editor')
+    expect(wrapper.text()).toContain('WYSIWYG Editor')
+    // WYSIWYG is always visible now, no toggle button
+    expect(wrapper.findAll('button').some((button) => button.text() === 'WYSIWYG')).toBe(false)
   })
 
   it('has default markdown content', () => {
     const wrapper = mount(App)
-    expect(wrapper.text()).toContain('Welcome to Markdown Editor')
+    // Access the component's markdown content directly
+    const vm = wrapper.vm as unknown as { markdownContent: string }
+    expect(vm.markdownContent).toContain('# Welcome to Markdown Editor')
   })
 
   it('handles wysiwyg input events', async () => {
     const wrapper = mount(App)
 
-    // Simulate WYSIWYG mode first
-    const wysiwygButton = wrapper
-      .findAll('button')
-      .find((button) => button.text() === 'WYSIWYG')
-    await wysiwygButton?.trigger('click')
-
     // Test the handleWysiwygInput function by creating a mock event
     const mockEvent = {
       target: {
-        innerText: 'Test content',
+        innerHTML: '<p>Test content</p>',
       },
     }
 
@@ -68,7 +60,7 @@ describe('App.vue', () => {
     }
     vm.handleWysiwygInput(mockEvent as unknown as Event)
 
-    expect(vm.markdownContent).toBe('Test content')
+    expect(vm.markdownContent).toContain('Test content')
   })
 
   it('displays file operation buttons', () => {
@@ -85,14 +77,16 @@ describe('App.vue', () => {
     expect(buttonTexts).toContain('New')
   })
 
-  it('displays status bar with statistics', () => {
+  it('displays statistics in header information pane', () => {
     const wrapper = mount(App)
 
+    // Statistics are now in the header information pane, not footer
+    expect(wrapper.text()).toContain('Words:')
+    expect(wrapper.text()).toContain('Chars:')
+    expect(wrapper.text()).toContain('Lines:')
+    // Footer should not exist anymore
     const footer = wrapper.find('footer')
-    expect(footer.exists()).toBe(true)
-    expect(footer.text()).toContain('Words:')
-    expect(footer.text()).toContain('Characters:')
-    expect(footer.text()).toContain('Lines:')
+    expect(footer.exists()).toBe(false)
   })
 
   it('triggers file input when import button clicked', async () => {

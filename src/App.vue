@@ -118,11 +118,17 @@
           <div class="ml-auto flex items-center text-xs text-gray-600">
             <div class="flex items-center" style="margin-right: 16px">
               <span style="margin-right: 8px">Words: {{ stats.words }}</span>
-              <span style="margin-right: 8px">Chars: {{ stats.characters.withSpaces }}</span>
+              <span style="margin-right: 8px"
+                >Chars: {{ stats.characters.withSpaces }}</span
+              >
               <span>Lines: {{ stats.lines }}</span>
             </div>
             <div class="flex items-center">
-              <span v-if="lastSaved" class="text-green-600" style="margin-right: 6px">
+              <span
+                v-if="lastSaved"
+                class="text-green-600"
+                style="margin-right: 6px"
+              >
                 Saved: {{ formatTimestamp(lastSaved) }}
               </span>
               <span v-if="saveStatus" :class="saveStatusClass">
@@ -162,9 +168,7 @@
           <div
             class="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between"
           >
-            <h3 class="text-sm font-medium text-gray-700">
-              Markdown Editor
-            </h3>
+            <h3 class="text-sm font-medium text-gray-700">Markdown Editor</h3>
             <div class="flex items-center space-x-2">
               <!-- Editor controls can be added here if needed -->
             </div>
@@ -210,26 +214,25 @@
           <div
             class="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between"
           >
-            <h3 class="text-sm font-medium text-gray-700">
-              WYSIWYG Editor
-            </h3>
+            <h3 class="text-sm font-medium text-gray-700">WYSIWYG Editor</h3>
             <div class="flex items-center space-x-2">
               <!-- Preview controls can be added here if needed -->
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
-            <div
-              ref="wysiwygEditor"
-              contenteditable="true"
-              class="w-full h-full focus:outline-none prose prose-sm max-w-none overflow-auto p-4"
-              @input="handleWysiwygInput"
-              @blur="syncWysiwygContent"
-            />
+            <div class="h-full overflow-auto" style="padding: 0 16px;">
+              <div
+                ref="wysiwygEditor"
+                contenteditable="true"
+                class="w-full h-full focus:outline-none prose prose-sm max-w-none"
+                @input="handleWysiwygInput"
+                @blur="syncWysiwygContent"
+              />
+            </div>
           </div>
         </div>
       </div>
     </main>
-
   </div>
 </template>
 
@@ -312,20 +315,17 @@ const togglePreview = () => {
   showPreview.value = !showPreview.value
 }
 
-
 const toggleFindReplace = () => {
   showFindReplace.value = !showFindReplace.value
 }
 
-const renderedHtml = computed(() => {
-  return convertMarkdownToHtml(markdownContent.value)
-})
+// Remove renderedHtml since we no longer use it in template (WYSIWYG is now separate)
 
 let isUpdatingWysiwyg = false
 
 const handleWysiwygInput = (event: Event) => {
   if (isUpdatingWysiwyg) return
-  
+
   const target = event.target as HTMLElement
   // Convert HTML content back to markdown without triggering re-render
   if (target.innerHTML) {
@@ -357,13 +357,16 @@ const syncWysiwygContent = () => {
 
 const updateWysiwygContent = () => {
   if (!wysiwygEditor.value) return
-  
+
   isUpdatingWysiwyg = true
   const currentHtml = wysiwygEditor.value.innerHTML
   const newHtml = convertMarkdownToHtml(markdownContent.value)
-  
+
   // Only update if HTML content is different and WYSIWYG editor is not focused
-  if (currentHtml !== newHtml && document.activeElement !== wysiwygEditor.value) {
+  if (
+    currentHtml !== newHtml &&
+    document.activeElement !== wysiwygEditor.value
+  ) {
     wysiwygEditor.value.innerHTML = newHtml
   }
   isUpdatingWysiwyg = false
@@ -540,7 +543,8 @@ const insertImageIntoEditor = (markdown: string) => {
   if (!codeMirrorEditor.value) {
     // Fallback: append to end of content
     const currentContent = markdownContent.value
-    const needsNewlineBefore = currentContent.length > 0 && !currentContent.endsWith('\n')
+    const needsNewlineBefore =
+      currentContent.length > 0 && !currentContent.endsWith('\n')
     const needsNewlineAfter = true // Always add newline after image
 
     const imageMarkdown = `${needsNewlineBefore ? '\n' : ''}${markdown}${needsNewlineAfter ? '\n' : ''}`
@@ -551,19 +555,21 @@ const insertImageIntoEditor = (markdown: string) => {
   // Get current cursor position
   const selection = codeMirrorEditor.value.getSelection()
   const currentContent = markdownContent.value
-  
+
   // Check if we need newlines around the image
   const beforeCursor = currentContent.substring(0, selection.from)
   const afterCursor = currentContent.substring(selection.to)
-  
-  const needsNewlineBefore = beforeCursor.length > 0 && !beforeCursor.endsWith('\n')
-  const needsNewlineAfter = afterCursor.length > 0 && !afterCursor.startsWith('\n')
+
+  const needsNewlineBefore =
+    beforeCursor.length > 0 && !beforeCursor.endsWith('\n')
+  const needsNewlineAfter =
+    afterCursor.length > 0 && !afterCursor.startsWith('\n')
 
   const imageMarkdown = `${needsNewlineBefore ? '\n' : ''}${markdown}${needsNewlineAfter ? '\n' : ''}`
 
   // Insert the image at cursor position
   codeMirrorEditor.value.insertText(imageMarkdown)
-  
+
   // Focus the editor after insertion
   codeMirrorEditor.value.focus()
 }
