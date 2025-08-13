@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { convertMarkdownToHtml, convertHtmlToMarkdown } from '../src/utils/markdown'
-import { saveImageToStorage, clearImageStorage, type StoredImage } from '../src/utils/imageOperations'
+import {
+  convertMarkdownToHtml,
+  convertHtmlToMarkdown,
+} from '../src/utils/markdown'
+import {
+  saveImageToStorage,
+  type StoredImage,
+} from '../src/utils/imageOperations'
 
 describe('Image Reference Preservation', () => {
   // Mock localStorage for tests
@@ -22,7 +28,7 @@ describe('Image Reference Preservation', () => {
     // Clear localStorage mock
     mockLocalStorage.clear()
     vi.clearAllMocks()
-    
+
     // Mock global localStorage
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
@@ -128,7 +134,11 @@ Data URL: ![Data](data:image/png;base64,test123)`
     const convertedMarkdown = convertHtmlToMarkdown(html)
 
     // Regular images should remain as-is
-    expect(convertedMarkdown).toContain('![External](https://example.com/image.jpg)')
-    expect(convertedMarkdown).toContain('![Data](data:image/png;base64,test123)')
+    expect(convertedMarkdown).toContain(
+      '![External](https://example.com/image.jpg)'
+    )
+    expect(convertedMarkdown).toContain(
+      '![Data](data:image/png;base64,test123)'
+    )
   })
 })

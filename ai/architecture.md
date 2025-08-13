@@ -62,6 +62,8 @@ src/
 10. **File Operations** - Import, export (MD/ZIP), save/load, and document management
 11. **Auto-save & Persistence** - Background saving every 30 seconds + content preservation across reloads
 12. **Responsive Design** - Mobile/tablet optimization with adaptive menu wrapping
+13. **Scroll Synchronization** - Bidirectional scroll sync between editors with percentage-based positioning
+14. **Viewport Height Management** - Editors constrained to viewport bounds preventing infinite vertical expansion
 
 ### CodeMirror Editor System
 - **Framework**: CodeMirror 6 with Vue.js integration
@@ -94,15 +96,18 @@ src/
 ### Markdown Processing
 - **Library**: marked.js v16.1.2 for robust markdown parsing
 - **Features**: GitHub Flavored Markdown with comprehensive feature support
-- **Bidirectional**: HTML ↔ Markdown conversion for WYSIWYG mode
+- **Bidirectional**: HTML ↔ Markdown conversion for WYSIWYG mode with enhanced list support
+- **List Conversion**: Recursive list processing supporting nested ul/ol with proper indentation and markers
 - **Error Handling**: Graceful fallbacks for parsing errors
 
 ### Layout Architecture
 - **Flexbox System**: Flexbox layout with `flex-row` for reliable side-by-side positioning
 - **Panel Design**: Editor and preview panels with proper frames, borders, and shadows using `flex-1` for equal width
 - **Headers**: Each panel has a titled header with appropriately sized SVG icons (w-4 h-4)
-- **Responsive**: Flexible layout that adapts to container width with proper gap spacing
+- **Viewport Constraints**: Container height limited to `calc(100vh-200px)` with `min-h-[400px]` and `max-h-[calc(100vh-150px)]`
+- **Responsive**: Flexible layout that adapts to container width with proper gap spacing and viewport height management
 - **Visual Feedback**: Preview panel shows "hidden" state when toggled off with subtle gray styling
+- **Scroll Management**: Both editors constrained to viewport bounds with internal scrolling for long documents
 
 ### File Operations System
 - **Import**: Browser FileReader API for .md/.markdown files (10MB limit)
@@ -119,6 +124,11 @@ src/
   - WYSIWYG Editor: Converts HTML to markdown and updates `markdownContent`
   - Bidirectional sync prevents circular updates with `isUpdatingWysiwyg` flag
 - Real-time HTML conversion: `convertMarkdownToHtml()` with stored image reference preservation
+- Enhanced HTML to Markdown conversion: `convertListContent()` function provides recursive list processing
+  - Supports nested unordered lists (ul) and ordered lists (ol)
+  - Maintains proper indentation (2 spaces per level)
+  - Preserves list markers (-, numbers) based on nesting context
+  - Handles mixed nested lists with correct markdown syntax
 - Computed `stats` provides real-time content analysis (words/characters/lines) in header Information Pane
 - Image insertion uses CodeMirror cursor position for precise placement
 - Toggle states control WYSIWYG pane visibility and editor width

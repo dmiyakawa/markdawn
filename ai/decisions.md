@@ -160,6 +160,38 @@
 - **Benefits**: More intuitive editing experience, precise image placement
 - **Fallback**: Append to end if CodeMirror ref unavailable
 
+### HTML to Markdown List Conversion: Recursive Processing (Selected)
+- **Decision**: Implement custom recursive list conversion function for enhanced bidirectional WYSIWYG sync
+- **Problem**: User reported that editing list items in WYSIWYG mode caused markdown to lose list notation ("-")
+- **Root Cause**: Simple regex replacement in `convertHtmlToMarkdown()` couldn't handle nested lists properly
+- **Solution**: Created `convertListContent()` helper function with recursive processing
+- **Implementation**:
+  - Processes `<ul>` and `<ol>` elements with nested content support
+  - Maintains proper indentation (2 spaces per nesting level)
+  - Preserves different list markers: `-` for unordered, numbered for ordered
+  - Handles mixed nested lists with correct markdown syntax
+  - Processes `<li>` elements recursively to handle nested structures
+- **Benefits**: 
+  - Preserves list structure during WYSIWYG editing
+  - Supports complex nested list scenarios
+  - Maintains markdown list notation integrity
+  - Provides consistent indentation formatting
+- **Alternative Considered**: Using turndown.js library - rejected to minimize dependencies and maintain control over conversion logic
+
+### Viewport Height Management: Constrained Layout (Selected)
+- **Decision**: Limit editor panes to viewport height to prevent infinite vertical expansion
+- **Implementation**: 
+  - Container: `h-[calc(100vh-200px)]` with `min-h-[400px]` and `max-h-[calc(100vh-150px)]`
+  - Panes: `h-full` within constrained container instead of unlimited expansion
+- **Benefits**: Prevents UI overflow, maintains professional layout for long documents
+- **User Experience**: Content scrolls within panes rather than expanding entire interface
+
+### Scroll Synchronization: Percentage-Based (Selected)  
+- **Decision**: Implement bidirectional scroll synchronization between dual editors
+- **Algorithm**: Calculate scroll percentage and apply proportionally to other editor
+- **Loop Prevention**: `isSyncingScroll` flag with 50ms timeout to prevent circular updates
+- **Benefits**: Maintains visual correspondence between markdown and WYSIWYG content
+
 ### Development Workflow
 - **Scripts**: Comprehensive npm scripts for all operations
 - **Hot reload**: Vite dev server for fast development

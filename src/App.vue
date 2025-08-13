@@ -150,6 +150,9 @@
       ref="findReplaceRef"
     />
 
+    <!-- Tab Bar -->
+    <TabBar />
+
     <main class="w-full px-4 sm:px-6 lg:px-8 py-4">
       <div
         ref="containerRef"
@@ -166,7 +169,7 @@
           :style="{ width: showPreview ? `${leftPaneWidth}%` : '100%' }"
         >
           <div
-            class="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between"
+            class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between min-h-8"
           >
             <h3 class="text-sm font-medium text-gray-700">Markdown Editor</h3>
             <div class="flex items-center space-x-2">
@@ -213,21 +216,48 @@
           :style="{ width: `${100 - leftPaneWidth}%` }"
         >
           <div
-            class="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between"
+            class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between min-h-8"
           >
-            <h3 class="text-sm font-medium text-gray-700">WYSIWYG Editor</h3>
+            <h3 class="text-sm font-medium text-gray-700">
+              {{ isWysiwygMode ? 'WYSIWYG Editor' : 'Preview' }}
+            </h3>
             <div class="flex items-center space-x-2">
-              <!-- Preview controls can be added here if needed -->
+              <button
+                @click="toggleWysiwygMode"
+                :class="[
+                  'px-2 py-1 text-xs rounded transition-colors duration-200',
+                  isWysiwygMode
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                ]"
+                :title="
+                  isWysiwygMode
+                    ? 'Switch to Preview mode'
+                    : 'Switch to WYSIWYG editing mode'
+                "
+              >
+                {{ isWysiwygMode ? 'Preview' : 'Edit' }}
+              </button>
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
-            <div ref="wysiwygScrollContainer" class="h-full overflow-auto" style="padding: 0 16px;" @scroll="handleWysiwygScroll">
+            <div
+              ref="wysiwygScrollContainer"
+              class="h-full overflow-auto"
+              style="padding: 0 16px"
+              @scroll="handleWysiwygScroll"
+            >
               <div
                 ref="wysiwygEditor"
-                contenteditable="true"
-                class="w-full h-full focus:outline-none prose prose-sm max-w-none"
+                :contenteditable="isWysiwygMode"
+                :class="[
+                  'w-full h-full prose prose-sm max-w-none wysiwyg-editor',
+                  isWysiwygMode ? 'focus:outline-none' : 'cursor-default',
+                  !isWysiwygMode ? 'bg-gray-50' : '',
+                ]"
                 @input="handleWysiwygInput"
                 @blur="syncWysiwygContent"
+                @paste="handleWysiwygPaste"
               />
             </div>
           </div>
@@ -238,13 +268,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { convertMarkdownToHtml, convertHtmlToMarkdown } from './utils/markdown'
 import ImageUploader from './components/ImageUploader.vue'
 import CodeMirrorEditor from './components/CodeMirrorEditor.vue'
 import FindReplace from './components/FindReplace.vue'
+import TabBar from './components/TabBar.vue'
 import { useDragAndDrop } from './composables/useDragAndDrop'
 import { useResizablePanes } from './composables/useResizablePanes'
+import { useDocuments } from './composables/useDocuments'
 import {
   importMarkdownFile,
   exportMarkdownFile,
@@ -259,33 +291,28 @@ import {
   getExportStats,
 } from './utils/fileOperations'
 
-const markdownContent = ref(
-  `# Welcome to Markdown Editor
+// Document management
+const {
+  activeDocument,
+  activeDocumentId,
+  updateDocumentContent,
+  markDocumentAsSaved,
+  initializeDocuments,
+  getAllDocuments,
+} = useDocuments()
 
-Start editing your **markdown** content here! This editor supports:
-
-## Features
-- **Bold text** and *italic text*
-- [Links](https://example.com)
-- \`inline code\`
-- Lists and more!
-
-### Code Example
-\`\`\`javascript
-function hello() {
-  console.log("Hello, world!");
-}
-\`\`\`
-
-### Task List
-- [x] Set up markdown editor
-- [ ] Add more features
-- [ ] Deploy the app
-
-> **Tip**: Toggle between edit and preview modes using the buttons above!`
-)
+// Computed markdown content from active document
+const markdownContent = computed({
+  get: () => activeDocument.value?.content || '',
+  set: (value: string) => {
+    if (activeDocumentId.value) {
+      updateDocumentContent(activeDocumentId.value, value)
+    }
+  },
+})
 const showPreview = ref(true)
 const showFindReplace = ref(false)
+const isWysiwygMode = ref(false) // false = Preview mode, true = WYSIWYG mode
 
 // Template refs for drag-and-drop
 const editorContainer = ref<HTMLElement | null>(null)
@@ -299,6 +326,9 @@ const fileInput = ref<HTMLInputElement>()
 const lastSaved = ref<string | null>(null)
 const saveStatus = ref<string>('')
 const exportingZip = ref(false)
+
+// Global keyboard handler
+let globalKeydownHandler: ((event: KeyboardEvent) => void) | null = null
 
 // Statistics
 const stats = computed(() => ({
@@ -319,10 +349,21 @@ const togglePreview = () => {
 
 const toggleFindReplace = () => {
   showFindReplace.value = !showFindReplace.value
-  
+
   // Clear search when closing Find/Replace panel
   if (!showFindReplace.value && codeMirrorEditor.value) {
     codeMirrorEditor.value.clearSearch()
+  }
+}
+
+const toggleWysiwygMode = () => {
+  isWysiwygMode.value = !isWysiwygMode.value
+
+  // When switching to WYSIWYG mode, update content
+  if (isWysiwygMode.value) {
+    nextTick(() => {
+      updateWysiwygContent()
+    })
   }
 }
 
@@ -332,7 +373,8 @@ let isUpdatingWysiwyg = false
 let isSyncingScroll = false // Prevent scroll sync loops
 
 const handleWysiwygInput = (event: Event) => {
-  if (isUpdatingWysiwyg) return
+  // Only handle input in WYSIWYG mode
+  if (!isWysiwygMode.value || isUpdatingWysiwyg) return
 
   const target = event.target as HTMLElement
   // Convert HTML content back to markdown without triggering re-render
@@ -351,14 +393,63 @@ const handleWysiwygInput = (event: Event) => {
 }
 
 const syncWysiwygContent = () => {
-  // Sync content when focus is lost
-  if (wysiwygEditor.value) {
-    const target = wysiwygEditor.value
-    if (target.innerHTML) {
-      const newMarkdown = convertHtmlToMarkdown(target.innerHTML)
-      if (newMarkdown !== markdownContent.value) {
-        markdownContent.value = newMarkdown
+  // Only sync in WYSIWYG mode
+  if (!isWysiwygMode.value || !wysiwygEditor.value) return
+
+  const target = wysiwygEditor.value
+  if (target.innerHTML) {
+    const newMarkdown = convertHtmlToMarkdown(target.innerHTML)
+    if (newMarkdown !== markdownContent.value) {
+      markdownContent.value = newMarkdown
+    }
+  }
+}
+
+const handleWysiwygPaste = async (event: ClipboardEvent) => {
+  // Only handle paste in WYSIWYG mode
+  if (!isWysiwygMode.value || !event.clipboardData) return
+
+  const items = Array.from(event.clipboardData.items)
+  const imageItem = items.find((item) => item.type.startsWith('image/'))
+
+  if (imageItem) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    try {
+      const file = imageItem.getAsFile()
+      if (!file) return
+
+      // Import image processing utilities
+      const {
+        processImageForStorage,
+        saveImageToStorage,
+        generateImageMarkdown,
+      } = await import('./utils/imageOperations')
+
+      // Process and save the image
+      const processedImage = await processImageForStorage(file)
+      const saved = saveImageToStorage(processedImage)
+
+      if (saved) {
+        // Generate markdown for the image
+        const imageMarkdown = generateImageMarkdown(processedImage)
+
+        // Insert into the current markdown content at cursor/selection
+        const selection = window.getSelection()
+        if (selection && wysiwygEditor.value?.contains(selection.focusNode)) {
+          // Convert to markdown and insert
+          const currentMarkdown = markdownContent.value
+          const needsNewlines = !currentMarkdown.endsWith('\n\n')
+          markdownContent.value =
+            currentMarkdown +
+            (needsNewlines ? '\n\n' : '') +
+            imageMarkdown +
+            '\n\n'
+        }
       }
+    } catch (error) {
+      console.error('Failed to process pasted image in WYSIWYG:', error)
     }
   }
 }
@@ -429,21 +520,25 @@ const exportAllFilesWithImages = async () => {
   exportingZip.value = true
 
   try {
-    const stats = getExportStats(markdownContent.value)
+    const allDocs = getAllDocuments()
+    const totalImages = allDocs.reduce((count, doc) => {
+      return count + getExportStats(doc.content).imageCount
+    }, 0)
 
     // Show export info
-    if (stats.imageCount > 0) {
-      saveStatus.value = `Creating ZIP with ${stats.imageCount} image(s)...`
+    if (totalImages > 0) {
+      saveStatus.value = `Creating ZIP with ${allDocs.length} document(s) and ${totalImages} image(s)...`
     } else {
-      saveStatus.value = 'Creating ZIP file...'
+      saveStatus.value = `Creating ZIP with ${allDocs.length} document(s)...`
     }
 
+    // Export all documents - use active document for main file
     await exportAllFiles(markdownContent.value)
 
     saveStatus.value =
-      stats.imageCount > 0
-        ? `ZIP exported successfully with ${stats.imageCount} image(s)`
-        : 'ZIP exported successfully'
+      totalImages > 0
+        ? `ZIP exported successfully with ${allDocs.length} document(s) and ${totalImages} image(s)`
+        : `ZIP exported successfully with ${allDocs.length} document(s)`
 
     setTimeout(() => {
       saveStatus.value = ''
@@ -460,19 +555,59 @@ const exportAllFilesWithImages = async () => {
 
 const saveDocument = () => {
   try {
-    const success = saveToLocalStorage(markdownContent.value)
-    if (success) {
+    if (activeDocumentId.value) {
+      markDocumentAsSaved(activeDocumentId.value)
       lastSaved.value = new Date().toISOString()
       saveStatus.value = 'Document saved'
       setTimeout(() => {
         saveStatus.value = ''
       }, 3000)
     } else {
-      saveStatus.value = 'Save error: Storage failed'
+      saveStatus.value = 'No active document to save'
       setTimeout(() => {
         saveStatus.value = ''
-      }, 5000)
+      }, 3000)
     }
+  } catch (error) {
+    saveStatus.value = `Save error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 5000)
+  }
+}
+
+const saveAllDocuments = () => {
+  try {
+    const allDocs = getAllDocuments()
+    if (allDocs.length === 0) {
+      saveStatus.value = 'No documents to save'
+      setTimeout(() => {
+        saveStatus.value = ''
+      }, 3000)
+      return
+    }
+
+    let savedCount = 0
+    allDocs.forEach(doc => {
+      if (doc.isUnsaved) {
+        markDocumentAsSaved(doc.id)
+        savedCount++
+      }
+    })
+
+    lastSaved.value = new Date().toISOString()
+    
+    if (savedCount > 0) {
+      saveStatus.value = savedCount === 1 
+        ? '1 document saved' 
+        : `${savedCount} documents saved`
+    } else {
+      saveStatus.value = 'All documents already saved'
+    }
+    
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 3000)
   } catch (error) {
     saveStatus.value = `Save error: ${error instanceof Error ? error.message : 'Unknown error'}`
     setTimeout(() => {
@@ -483,16 +618,26 @@ const saveDocument = () => {
 
 const loadDocument = () => {
   try {
+    // For legacy compatibility - import old single document if exists
     const content = loadFromLocalStorage()
-    if (content) {
-      markdownContent.value = content
-      lastSaved.value = getSaveTimestamp()
-      saveStatus.value = 'Document loaded'
+    if (content && !activeDocument.value) {
+      // Create new document from legacy content
+      const { createNewDocument } = useDocuments()
+      const newDoc = createNewDocument('Imported Document')
+      updateDocumentContent(newDoc.id, content)
+      markDocumentAsSaved(newDoc.id)
+
+      saveStatus.value = 'Legacy document imported'
       setTimeout(() => {
         saveStatus.value = ''
       }, 3000)
+    } else if (activeDocument.value) {
+      saveStatus.value = 'Documents are automatically loaded'
+      setTimeout(() => {
+        saveStatus.value = ''
+      }, 2000)
     } else {
-      saveStatus.value = 'No saved document found'
+      saveStatus.value = 'No documents to load'
       setTimeout(() => {
         saveStatus.value = ''
       }, 3000)
@@ -506,20 +651,10 @@ const loadDocument = () => {
 }
 
 const newDocument = () => {
-  if (
-    markdownContent.value.trim() &&
-    !confirm(
-      'Are you sure you want to create a new document? Unsaved changes will be lost.'
-    )
-  ) {
-    return
-  }
+  const { createNewDocument } = useDocuments()
+  const newDoc = createNewDocument()
 
-  markdownContent.value = `# New Document
-
-Start writing your markdown here...`
-  lastSaved.value = null
-  saveStatus.value = 'New document created'
+  saveStatus.value = `New document "${newDoc.title}" created`
   setTimeout(() => {
     saveStatus.value = ''
   }, 3000)
@@ -631,12 +766,12 @@ interface SearchOptions {
 
 const handleFindNext = (text: string, options: SearchOptions) => {
   if (!codeMirrorEditor.value) return
-  
+
   const result = codeMirrorEditor.value.searchNext(text, {
     caseSensitive: options.caseSensitive,
     useRegex: options.useRegex,
   })
-  
+
   if (!result) {
     saveStatus.value = 'No matches found'
     setTimeout(() => {
@@ -647,12 +782,12 @@ const handleFindNext = (text: string, options: SearchOptions) => {
 
 const handleFindPrevious = (text: string, options: SearchOptions) => {
   if (!codeMirrorEditor.value) return
-  
+
   const result = codeMirrorEditor.value.searchPrevious(text, {
     caseSensitive: options.caseSensitive,
     useRegex: options.useRegex,
   })
-  
+
   if (!result) {
     saveStatus.value = 'No matches found'
     setTimeout(() => {
@@ -667,12 +802,12 @@ const handleReplaceNext = (
   options: SearchOptions
 ) => {
   if (!codeMirrorEditor.value) return
-  
+
   const result = codeMirrorEditor.value.performReplace(findText, replaceText, {
     caseSensitive: options.caseSensitive,
     useRegex: options.useRegex,
   })
-  
+
   if (result) {
     saveStatus.value = 'Text replaced'
     setTimeout(() => {
@@ -692,12 +827,16 @@ const handleReplaceAll = (
   options: SearchOptions
 ) => {
   if (!codeMirrorEditor.value) return
-  
-  const result = codeMirrorEditor.value.performReplaceAll(findText, replaceText, {
-    caseSensitive: options.caseSensitive,
-    useRegex: options.useRegex,
-  })
-  
+
+  const result = codeMirrorEditor.value.performReplaceAll(
+    findText,
+    replaceText,
+    {
+      caseSensitive: options.caseSensitive,
+      useRegex: options.useRegex,
+    }
+  )
+
   if (result) {
     saveStatus.value = 'All matches replaced'
     setTimeout(() => {
@@ -722,16 +861,19 @@ const handleEditorScroll = (scrollInfo: ScrollInfo) => {
   if (isSyncingScroll || !wysiwygScrollContainer.value) return
 
   isSyncingScroll = true
-  
+
   // Calculate scroll percentage
-  const scrollPercentage = scrollInfo.scrollHeight > scrollInfo.clientHeight
-    ? scrollInfo.scrollTop / (scrollInfo.scrollHeight - scrollInfo.clientHeight)
-    : 0
+  const scrollPercentage =
+    scrollInfo.scrollHeight > scrollInfo.clientHeight
+      ? scrollInfo.scrollTop /
+        (scrollInfo.scrollHeight - scrollInfo.clientHeight)
+      : 0
 
   // Apply to WYSIWYG container
   const wysiwygElement = wysiwygScrollContainer.value
-  const wysiwygMaxScroll = wysiwygElement.scrollHeight - wysiwygElement.clientHeight
-  
+  const wysiwygMaxScroll =
+    wysiwygElement.scrollHeight - wysiwygElement.clientHeight
+
   if (wysiwygMaxScroll > 0) {
     wysiwygElement.scrollTop = scrollPercentage * wysiwygMaxScroll
   }
@@ -755,14 +897,17 @@ const handleWysiwygScroll = (event: Event) => {
   isSyncingScroll = true
 
   // Calculate scroll percentage
-  const scrollPercentage = scrollInfo.scrollHeight > scrollInfo.clientHeight
-    ? scrollInfo.scrollTop / (scrollInfo.scrollHeight - scrollInfo.clientHeight)
-    : 0
+  const scrollPercentage =
+    scrollInfo.scrollHeight > scrollInfo.clientHeight
+      ? scrollInfo.scrollTop /
+        (scrollInfo.scrollHeight - scrollInfo.clientHeight)
+      : 0
 
   // Get CodeMirror scroll info and apply percentage
   const editorScrollInfo = codeMirrorEditor.value.getScrollInfo()
   if (editorScrollInfo) {
-    const editorMaxScroll = editorScrollInfo.scrollHeight - editorScrollInfo.clientHeight
+    const editorMaxScroll =
+      editorScrollInfo.scrollHeight - editorScrollInfo.clientHeight
     if (editorMaxScroll > 0) {
       const newScrollTop = scrollPercentage * editorMaxScroll
       codeMirrorEditor.value.scrollToPosition(newScrollTop)
@@ -777,13 +922,20 @@ const handleWysiwygScroll = (event: Event) => {
 
 // Initialize on mount
 onMounted(async () => {
-  // Load existing saved content if available, otherwise keep welcome content
+  // Initialize document management system
+  initializeDocuments()
+
+  // Load existing saved content if available for backwards compatibility
   if (hasSavedContent()) {
     const savedContent = loadFromLocalStorage()
-    if (savedContent) {
-      markdownContent.value = savedContent
-      lastSaved.value = getSaveTimestamp()
+    if (savedContent && !activeDocument.value) {
+      // Import legacy content as a new document
+      const { createNewDocument } = useDocuments()
+      const legacyDoc = createNewDocument('Imported Document')
+      updateDocumentContent(legacyDoc.id, savedContent)
+      markDocumentAsSaved(legacyDoc.id)
     }
+    lastSaved.value = getSaveTimestamp()
   }
 
   // Enable auto-save
@@ -792,6 +944,24 @@ onMounted(async () => {
   // Initialize WYSIWYG content
   await nextTick()
   updateWysiwygContent()
+
+  // Add global keyboard shortcuts
+  globalKeydownHandler = (event: KeyboardEvent) => {
+    // Ctrl-S: Save all documents
+    if (event.ctrlKey && event.key === 's') {
+      event.preventDefault()
+      saveAllDocuments()
+    }
+  }
+  
+  document.addEventListener('keydown', globalKeydownHandler)
+})
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  if (globalKeydownHandler) {
+    document.removeEventListener('keydown', globalKeydownHandler)
+  }
 })
 
 // Watch for markdown content changes (but not when updating from WYSIWYG)
@@ -803,3 +973,5 @@ watch(markdownContent, () => {
   }
 })
 </script>
+
+<style scoped></style>

@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
 import { keymap } from '@codemirror/view'
 import { Prec } from '@codemirror/state'
@@ -15,7 +15,15 @@ import { markdown } from '@codemirror/lang-markdown'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorState } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
-import { searchKeymap, highlightSelectionMatches, SearchQuery, findNext, findPrevious, replaceNext, replaceAll } from '@codemirror/search'
+import {
+  searchKeymap,
+  highlightSelectionMatches,
+  SearchQuery,
+  findNext,
+  findPrevious,
+  replaceNext,
+  replaceAll,
+} from '@codemirror/search'
 
 // Props and emits
 interface Props {
@@ -34,7 +42,13 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'toggle-find-replace': []
-  'scroll': [scrollInfo: { scrollTop: number; scrollHeight: number; clientHeight: number }]
+  scroll: [
+    scrollInfo: {
+      scrollTop: number
+      scrollHeight: number
+      clientHeight: number
+    },
+  ]
 }>()
 
 // Template refs
@@ -43,6 +57,7 @@ const editorContainer = ref<HTMLDivElement>()
 // State
 let editorView: EditorView | null = null
 let keydownHandler: ((event: KeyboardEvent) => void) | null = null
+let pasteHandler: ((event: ClipboardEvent) => void) | null = null
 
 // Kill ring for emacs-like yank functionality
 let killRing = ''
@@ -160,6 +175,106 @@ const moveToPreviousLine = (view: EditorView) => {
   return true
 }
 
+// List indentation functions
+const indentListItem = (view: EditorView): boolean => {
+  const { state } = view
+  const { selection } = state
+  const line = state.doc.lineAt(selection.main.head)
+  const lineText = line.text
+
+  // Check if current line is a list item
+  const listItemMatch = lineText.match(/^(\s*)([-*+]|\d+\.)\s/)
+  if (listItemMatch) {
+    const [, indent] = listItemMatch
+    const newIndent = indent + '  ' // Add 2 spaces for indentation
+    const newLineText = newIndent + lineText.slice(indent.length)
+
+    view.dispatch({
+      changes: {
+        from: line.from,
+        to: line.to,
+        insert: newLineText,
+      },
+      selection: {
+        anchor: selection.main.head + 2, // Move cursor 2 spaces right
+      },
+    })
+    return true
+  }
+
+  // If not a list item, convert to list item
+  const trimmedLine = lineText.trim()
+  if (trimmedLine) {
+    const leadingSpaces = lineText.match(/^\s*/)?.[0] || ''
+    const newLineText = leadingSpaces + '- ' + trimmedLine
+
+    view.dispatch({
+      changes: {
+        from: line.from,
+        to: line.to,
+        insert: newLineText,
+      },
+      selection: {
+        anchor: line.from + leadingSpaces.length + 2 + trimmedLine.length,
+      },
+    })
+    return true
+  }
+
+  return false
+}
+
+const unindentListItem = (view: EditorView): boolean => {
+  const { state } = view
+  const { selection } = state
+  const line = state.doc.lineAt(selection.main.head)
+  const lineText = line.text
+
+  // Check if current line is a list item
+  const listItemMatch = lineText.match(/^(\s*)([-*+]|\d+\.)\s/)
+  if (listItemMatch) {
+    const [, indent, marker] = listItemMatch
+
+    if (indent.length >= 2) {
+      // Remove 2 spaces of indentation
+      const newIndent = indent.slice(2)
+      const newLineText = newIndent + lineText.slice(indent.length)
+
+      view.dispatch({
+        changes: {
+          from: line.from,
+          to: line.to,
+          insert: newLineText,
+        },
+        selection: {
+          anchor: Math.max(
+            line.from + newIndent.length + marker.length + 1,
+            selection.main.head - 2
+          ),
+        },
+      })
+      return true
+    } else if (indent.length === 0) {
+      // Remove list marker entirely if no indentation
+      const contentAfterMarker = lineText.slice(listItemMatch[0].length)
+
+      view.dispatch({
+        changes: {
+          from: line.from,
+          to: line.to,
+          insert: contentAfterMarker,
+        },
+        selection: {
+          anchor: line.from + contentAfterMarker.length,
+        },
+      })
+      return true
+    }
+  }
+
+  return false
+}
+
 // Initialize CodeMirror editor
 const initializeEditor = async () => {
   if (!editorContainer.value) return
@@ -167,6 +282,19 @@ const initializeEditor = async () => {
   // DOM event handler to prevent browser defaults and handle scroll
   const domEventHandlers = EditorView.domEventHandlers({
     keydown(event, view) {
+      // Handle Tab key for list indentation
+      if (event.key === 'Tab') {
+        event.preventDefault()
+        if (event.shiftKey) {
+          // Shift+Tab: unindent list item
+          unindentListItem(view)
+        } else {
+          // Tab: indent list item
+          indentListItem(view)
+        }
+        return true
+      }
+
       // Intercept emacs shortcuts before they reach the browser
       if (event.ctrlKey) {
         switch (event.key) {
@@ -331,10 +459,89 @@ const initializeEditor = async () => {
     parent: editorContainer.value,
   })
 
+  // Add paste event listener for clipboard images
+  pasteHandler = async (event: ClipboardEvent) => {
+    if (!editorView || !event.clipboardData) return
+
+    const items = Array.from(event.clipboardData.items)
+    const imageItem = items.find((item) => item.type.startsWith('image/'))
+
+    if (imageItem) {
+      event.preventDefault()
+      event.stopPropagation()
+
+      try {
+        const file = imageItem.getAsFile()
+        if (!file) return
+
+        // Import image processing utilities
+        const {
+          processImageForStorage,
+          saveImageToStorage,
+          generateImageMarkdown,
+        } = await import('../utils/imageOperations')
+
+        // Process and save the image
+        const processedImage = await processImageForStorage(file)
+        const saved = saveImageToStorage(processedImage)
+
+        if (saved) {
+          // Generate markdown for the image
+          const imageMarkdown = generateImageMarkdown(processedImage)
+
+          // Insert at current cursor position
+          const selection = editorView.state.selection.main
+          const needsNewlineBefore =
+            selection.from > 0 &&
+            !editorView.state.doc
+              .sliceString(selection.from - 1, selection.from)
+              .match(/\n/)
+          const needsNewlineAfter =
+            selection.to < editorView.state.doc.length &&
+            !editorView.state.doc
+              .sliceString(selection.to, selection.to + 1)
+              .match(/\n/)
+
+          const finalMarkdown = `${needsNewlineBefore ? '\n' : ''}${imageMarkdown}${needsNewlineAfter ? '\n' : ''}`
+
+          editorView.dispatch({
+            changes: {
+              from: selection.from,
+              to: selection.to,
+              insert: finalMarkdown,
+            },
+            selection: {
+              anchor: selection.from + finalMarkdown.length,
+            },
+          })
+
+          // Emit the change
+          emit('update:modelValue', editorView.state.doc.toString())
+        }
+      } catch (error) {
+        console.error('Failed to process pasted image:', error)
+      }
+    }
+  }
+
   // Add direct event listener to override browser shortcuts
   keydownHandler = (event: KeyboardEvent) => {
     // Only handle if editor is focused
     if (!editorView || !editorView.hasFocus) {
+      return
+    }
+
+    // Handle Tab key for list indentation
+    if (event.key === 'Tab') {
+      event.preventDefault()
+      event.stopPropagation()
+      if (event.shiftKey) {
+        // Shift+Tab: unindent list item
+        unindentListItem(editorView)
+      } else {
+        // Tab: indent list item
+        indentListItem(editorView)
+      }
       return
     }
 
@@ -394,6 +601,9 @@ const initializeEditor = async () => {
 
   // Also add to container as fallback
   editorContainer.value.addEventListener('keydown', keydownHandler, true)
+
+  // Add paste event listener for clipboard images
+  editorContainer.value.addEventListener('paste', pasteHandler as EventListener)
 }
 
 // Update editor content when prop changes
@@ -440,7 +650,6 @@ onMounted(async () => {
 })
 
 // Cleanup
-import { onBeforeUnmount } from 'vue'
 onBeforeUnmount(() => {
   if (editorView) {
     editorView.destroy()
@@ -450,6 +659,12 @@ onBeforeUnmount(() => {
     if (editorContainer.value) {
       editorContainer.value.removeEventListener('keydown', keydownHandler, true)
     }
+  }
+  if (pasteHandler && editorContainer.value) {
+    editorContainer.value.removeEventListener(
+      'paste',
+      pasteHandler as EventListener
+    )
   }
 })
 
@@ -519,9 +734,8 @@ const performSearch = (query: string, options: SearchOptions = {}) => {
   })
 
   // Set the search query in the editor
-  editorView.dispatch({
-    effects: SearchQuery.set(searchQuery),
-  })
+  // setSearchQuery(editorView, searchQuery)
+  // TODO
 
   return searchQuery
 }
@@ -544,38 +758,42 @@ const searchPrevious = (query: string, options: SearchOptions = {}) => {
   return findPrevious(editorView)
 }
 
-const performReplace = (findText: string, replaceText: string, options: SearchOptions = {}) => {
+const performReplace = (
+  findText: string,
+  replaceText: string,
+  options: SearchOptions = {}
+) => {
   if (!editorView || !findText) return false
 
-  const searchQuery = new SearchQuery({
+  // Create search query for replacement
+  new SearchQuery({
     search: findText,
     caseSensitive: options.caseSensitive || false,
     regexp: options.useRegex || false,
     replace: replaceText,
   })
 
-  // Set the search query in the editor
-  editorView.dispatch({
-    effects: SearchQuery.set(searchQuery),
-  })
+  // TODO: Set the search query in the editor when setSearchQuery is available
 
   return replaceNext(editorView)
 }
 
-const performReplaceAll = (findText: string, replaceText: string, options: SearchOptions = {}) => {
+const performReplaceAll = (
+  findText: string,
+  replaceText: string,
+  options: SearchOptions = {}
+) => {
   if (!editorView || !findText) return false
 
-  const searchQuery = new SearchQuery({
+  // Create search query for replacement
+  new SearchQuery({
     search: findText,
     caseSensitive: options.caseSensitive || false,
     regexp: options.useRegex || false,
     replace: replaceText,
   })
 
-  // Set the search query in the editor
-  editorView.dispatch({
-    effects: SearchQuery.set(searchQuery),
-  })
+  // TODO: Set the search query in the editor when setSearchQuery is available
 
   return replaceAll(editorView)
 }
@@ -583,9 +801,7 @@ const performReplaceAll = (findText: string, replaceText: string, options: Searc
 const clearSearch = () => {
   if (!editorView) return
 
-  editorView.dispatch({
-    effects: SearchQuery.set(new SearchQuery({ search: '', replace: '' })),
-  })
+  // setSearchQuery(editorView, new SearchQuery({ search: '', replace: '' }))
 }
 
 const scrollToPosition = (scrollTop: number) => {

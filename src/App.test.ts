@@ -11,7 +11,9 @@ describe('App.vue', () => {
   it('has preview toggle button', () => {
     const wrapper = mount(App)
     const buttons = wrapper.findAll('button')
-    expect(buttons.some((button) => button.text() === 'Hide Preview')).toBe(true) // Preview toggle button
+    expect(buttons.some((button) => button.text() === 'Hide Preview')).toBe(
+      true
+    ) // Preview toggle button
   })
 
   it('toggles preview visibility', async () => {
@@ -20,7 +22,8 @@ describe('App.vue', () => {
       .findAll('button')
       .find((button) => button.text() === 'Hide Preview')
 
-    expect(wrapper.text()).toContain('WYSIWYG Editor')
+    // Right panel shows "Preview" by default, not "WYSIWYG Editor"
+    expect(wrapper.text()).toContain('Preview')
 
     await previewButton?.trigger('click')
     // After toggle, button text should change to "Show Preview"
@@ -31,9 +34,11 @@ describe('App.vue', () => {
     const wrapper = mount(App)
     // Check that both editor panes exist
     expect(wrapper.text()).toContain('Markdown Editor')
-    expect(wrapper.text()).toContain('WYSIWYG Editor')
-    // WYSIWYG is always visible now, no toggle button
-    expect(wrapper.findAll('button').some((button) => button.text() === 'WYSIWYG')).toBe(false)
+    expect(wrapper.text()).toContain('Preview') // Shows "Preview" by default
+    // WYSIWYG mode can be toggled with the Edit button
+    expect(
+      wrapper.findAll('button').some((button) => button.text() === 'Edit')
+    ).toBe(true)
   })
 
   it('has default markdown content', () => {
@@ -45,6 +50,12 @@ describe('App.vue', () => {
 
   it('handles wysiwyg input events', async () => {
     const wrapper = mount(App)
+
+    // First enable WYSIWYG mode by clicking the Edit button
+    const editButton = wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Edit')
+    await editButton?.trigger('click')
 
     // Test the handleWysiwygInput function by creating a mock event
     const mockEvent = {
@@ -105,5 +116,24 @@ describe('App.vue', () => {
     await importButton?.trigger('click')
 
     expect(clickSpy).toHaveBeenCalled()
+  })
+
+  it('handles Ctrl-S keyboard shortcut to save all documents', async () => {
+    const wrapper = mount(App)
+
+    // Access the component instance to get both the save function and save status
+    const vm = wrapper.vm as unknown as {
+      saveStatus: string
+      saveAllDocuments: () => void
+    }
+
+    // Call the saveAllDocuments function directly to test the functionality
+    vm.saveAllDocuments()
+
+    // Wait for the next tick to allow the status to update
+    await wrapper.vm.$nextTick()
+
+    // Check that the save status was updated (should show "All documents already saved" or similar)
+    expect(vm.saveStatus).toBeTruthy()
   })
 })

@@ -17,7 +17,21 @@ Multiple lines with search terms.`,
     await wrapper.vm.$nextTick()
 
     // Get the component instance with exposed methods
-    const component = wrapper.vm as any
+    const component = wrapper.vm as unknown as {
+      searchNext: (query: string, options?: object) => boolean
+      searchPrevious: (query: string, options?: object) => boolean
+      performReplace: (
+        findText: string,
+        replaceText: string,
+        options?: object
+      ) => boolean
+      performReplaceAll: (
+        findText: string,
+        replaceText: string,
+        options?: object
+      ) => boolean
+      clearSearch: () => void
+    }
 
     // Check that search methods are exposed
     expect(typeof component.searchNext).toBe('function')
@@ -36,7 +50,12 @@ Multiple lines with search terms.`,
 
     await wrapper.vm.$nextTick()
 
-    const component = wrapper.vm as any
+    const component = wrapper.vm as unknown as {
+      focus: () => void
+      getSelection: () => object
+      insertText: (text: string) => void
+      replaceSelection: (text: string) => void
+    }
 
     // Check that other methods are also exposed
     expect(typeof component.focus).toBe('function')
