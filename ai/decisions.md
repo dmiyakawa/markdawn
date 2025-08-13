@@ -113,16 +113,19 @@
 - **Data Structure**: Content + timestamp + version metadata for future compatibility
 - **Fallback**: Only show welcome content for new users without saved data
 
-### Testing Strategy: Playwright + Visual Regression First (Implemented)
+### Testing Strategy: Playwright + Visual Regression Complete (Implemented)
 - **Decision**: Playwright and visual regression testing as absolute first priority
 - **Rationale**: With UI complete, visual consistency and E2E reliability are critical before adding features
 - **Implementation Completed**: 
-  - ✅ Installed and configured Playwright with cross-browser support (Chromium, Firefox)
+  - ✅ Installed and configured Playwright with cross-browser support (Chromium, Firefox, Mobile Chrome)
   - ✅ Set up screenshot-based visual regression testing with baseline management
-  - ✅ Created comprehensive test suite structure with 4 test files covering all functionality
+  - ✅ Created comprehensive test suite structure with 5 test files covering all functionality
   - ✅ Implemented comprehensive test cases across desktop and mobile browsers
   - ✅ Added data-testid attributes for reliable element selection
   - ✅ Created CI/CD ready configuration with automatic dev server startup
+  - ✅ Fixed dual editor layout compatibility and CodeMirror integration
+  - ✅ Established Find/Replace E2E test coverage
+  - ✅ Updated visual regression baselines for current UI
 - **Results**: Complete E2E test coverage preventing regressions, visual consistency protection, performance monitoring
 - **Browser Support Decision**: Limited to Chromium and Firefox for practical testing efficiency (WebKit/Safari not required)
 
@@ -191,6 +194,25 @@
 - **Algorithm**: Calculate scroll percentage and apply proportionally to other editor
 - **Loop Prevention**: `isSyncingScroll` flag with 50ms timeout to prevent circular updates
 - **Benefits**: Maintains visual correspondence between markdown and WYSIWYG content
+
+### Multiple Document System: Tab-Based Architecture (Selected)
+- **Decision**: Implement complete multiple document management with tabbed interface
+- **Implementation Strategy**:
+  - **useDocuments Composable**: Central state management with reactive document array
+  - **TabBar Component**: Visual tab interface with create, switch, duplicate, close operations
+  - **Document State**: ID-based system with title, content, timestamps, unsaved flags
+  - **Persistence**: localStorage integration with active document tracking
+  - **ZIP Export Enhancement**: Export all documents with organized file structure
+- **Benefits**:
+  - Multiple document workflow support for complex projects
+  - Seamless document switching with preserved state
+  - Professional tab interface with visual indicators
+  - Complete project export with all documents and images
+- **Design Choices**:
+  - Document numbering: "Document 1", "Document 2", etc. with automatic increment
+  - Welcome document: Pre-populated for new users with feature overview
+  - Safe filename generation: Convert titles to filesystem-safe names for export
+  - Unsaved change tracking: Visual indicators and confirmation dialogs
 
 ### Development Workflow
 - **Scripts**: Comprehensive npm scripts for all operations

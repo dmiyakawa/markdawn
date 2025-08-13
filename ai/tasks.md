@@ -2,15 +2,32 @@
 
 ## High Priority - Next Session
 
-### Advanced Editor Features
-- Undo/redo functionality with command history (basic CodeMirror history enabled)
+### Advanced Editor Polish
+- **Fix Find/Replace CodeMirror Integration** - Replace functionality not working with CodeMirror search system
+- **Enhanced undo/redo** - Improve command history beyond basic CodeMirror
+- **Optimize CodeMirror performance** for large documents
 
-### Additional Testing Expansion  
-- **Fix E2E test issues with Playwright test runner** (current high priority)
-- **Update E2E tests to work with dual editor layout and CodeMirror selectors**
-- Enhanced performance testing scenarios
+### Testing Expansion  
+- Enhanced E2E test scenarios (file upload simulation, drag-and-drop testing)
+- Performance testing optimization for large documents
 - Accessibility testing and ARIA compliance improvements
-- Advanced E2E test scenarios (file upload, drag-and-drop simulation)
+
+### Image Management Interface
+- Create image gallery browser for stored images
+- Add image management panel (view, delete, organize stored images)
+- Implement batch image operations (select multiple, bulk delete)
+- Add image insertion helper with preview and alt text editing
+
+### Advanced Editor Features
+- **Advanced Tab Management Features** (basic tabs already implemented)
+  - **Current Implementation**: Tab bar with create, switch, rename, duplicate, close, context menus, unsaved indicators
+  - **High Priority Features**:
+    - **Tab Reordering**: Drag-and-drop tab reordering within tab bar
+    - **Tab Overflow Management**: Scrollable tabs, tab dropdown menu when too many tabs
+    - **Tab Pinning**: Pin important tabs to prevent accidental closing
+    - **Keyboard Navigation**: Tab switching shortcuts (Ctrl+Tab, Ctrl+1-9)
+- Document outline/table of contents generation
+- Advanced export formats (standalone HTML, styled PDF)
 
 ## Medium Priority
 
@@ -23,6 +40,25 @@
   - Simplify App.vue by reducing inline complexity
   - Enable better testing of individual pane components
   - Prepare for potential layout customization features
+
+### Enhanced Code Block Support
+- **Language-specific syntax highlighting with filename support** (Medium Priority)
+  - Extend markdown processing to support syntax like `\`\`\`ruby:example.rb`
+  - Parse language and filename from code block headers (format: `language:filename`)
+  - Display filename above code blocks in both preview and WYSIWYG modes
+  - Integrate with CodeMirror's language support for additional syntax highlighting
+  - Support common languages: JavaScript, TypeScript, Python, Ruby, Go, Java, C++, etc.
+  - Add copy-to-clipboard functionality for code blocks with filename context
+  - Maintain backward compatibility with existing `\`\`\`language` syntax
+
+### Interface Accessibility Improvements  
+- **Expand semantic ID coverage** (Medium Priority)
+  - ✅ **Basic IDs Added**: `tab-bar`, `left-pane`, `right-pane`, `markdown-editor`, `wysiwyg-editor`, `find-replace-panel`, `menu-bar`, `editor-container`, `image-uploader`, `tab-container`
+  - Add IDs to menu sections: `file-menu`, `export-menu`, `insert-menu`, `view-menu`
+  - Add IDs to specific buttons for automation/testing: `new-document-btn`, `save-btn`, `export-zip-btn`, etc.
+  - Add IDs to status/info elements for easier access
+  - Document ID naming conventions and usage patterns
+  - Consider ARIA labels and accessibility attributes
 
 ### Image Management Features
 - **Create dedicated `ImageManager.vue` component** (Medium Priority)
@@ -83,6 +119,12 @@
 - Document outline/table of contents
 - Print functionality
 - PDF export
+
+### Advanced Workspace Features (Future)
+- **Tab Groups/Workspaces**: Organize documents into named workspaces with separate tab sets
+- **Session Management**: Save/restore entire workspace sessions with all open documents
+- **Workspace Templates**: Predefined workspace layouts for different projects
+- **Tab Search**: Fuzzy search through all open document titles and content
 
 ### Performance Optimization
 - Code splitting for large markdown libraries

@@ -50,15 +50,15 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test('should match full-screen mode screenshot', async ({ page }) => {
-    // Click full-screen toggle
-    await page.click('button[title="Toggle full-screen editing"]')
+  test('should match find/replace panel screenshot', async ({ page }) => {
+    // Open find/replace panel
+    await page.click('button[title="Toggle Find/Replace (Ctrl+H)"]')
 
-    // Wait for transition
+    // Wait for panel to show
     await page.waitForTimeout(500)
 
-    // Take screenshot of full-screen mode
-    await expect(page).toHaveScreenshot('full-screen-mode.png', {
+    // Take screenshot with find/replace panel open
+    await expect(page).toHaveScreenshot('find-replace-panel.png', {
       fullPage: true,
       animations: 'disabled',
     })

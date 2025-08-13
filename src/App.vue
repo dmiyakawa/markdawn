@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-100">
-    <header class="bg-white shadow-sm border-b">
+    <header id="menu-bar" class="bg-white shadow-sm border-b">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex items-center py-2">
           <!-- Menu Bar Controls -->
@@ -155,11 +155,13 @@
 
     <main class="w-full px-4 sm:px-6 lg:px-8 py-4">
       <div
+        id="editor-container"
         ref="containerRef"
         class="flex flex-row gap-3 w-full h-[calc(100vh-200px)] min-h-[400px] max-h-[calc(100vh-150px)]"
       >
         <!-- Editor Panel (Left Side) -->
         <div
+          id="left-pane"
           ref="editorContainer"
           data-testid="editor-panel"
           :class="[
@@ -208,6 +210,7 @@
 
         <!-- Preview Panel (Right Side) -->
         <div
+          id="right-pane"
           v-show="showPreview"
           data-testid="preview-panel"
           :class="[
@@ -248,6 +251,7 @@
               @scroll="handleWysiwygScroll"
             >
               <div
+                id="wysiwyg-editor"
                 ref="wysiwygEditor"
                 :contenteditable="isWysiwygMode"
                 :class="[

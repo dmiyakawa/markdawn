@@ -1,5 +1,5 @@
 <template>
-  <div class="image-uploader" data-testid="image-uploader">
+  <div id="image-uploader" class="image-uploader" data-testid="image-uploader">
     <!-- File Input (Hidden) -->
     <input
       ref="fileInput"

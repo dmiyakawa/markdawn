@@ -1,5 +1,6 @@
 <template>
   <div
+    id="find-replace-panel"
     v-show="isVisible"
     class="bg-gray-50 border-b border-gray-200 px-4 py-2"
     data-testid="find-replace-panel"

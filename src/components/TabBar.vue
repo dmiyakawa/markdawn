@@ -1,9 +1,10 @@
 <template>
   <div
+    id="tab-bar"
     class="flex items-center bg-gray-50 border-b border-gray-200 min-h-[42px] px-4"
   >
     <!-- Document Tabs -->
-    <div class="flex-1 flex items-center space-x-1 overflow-x-auto">
+    <div id="tab-container" class="flex-1 flex items-center space-x-1 overflow-x-auto">
       <div
         v-for="document in documents"
         :key="document.id"

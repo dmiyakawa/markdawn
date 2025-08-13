@@ -31,20 +31,38 @@
 ```
 src/
 ├── components/           # Reusable Vue components
-│   ├── CodeMirrorEditor.vue # Professional code editor with emacs-style shortcuts
-│   ├── FindReplace.vue   # Find/Replace UI with regex and case-sensitive support
-│   └── ImageUploader.vue # Drag-and-drop image upload component
+│   ├── CodeMirrorEditor.vue     # Professional code editor with emacs-style shortcuts
+│   ├── FindReplace.vue          # Find/Replace UI with regex and case-sensitive support
+│   ├── ImageUploader.vue        # Drag-and-drop image upload component
+│   └── TabBar.vue              # Document tab management for multiple documents
 ├── composables/          # Vue composables for shared logic
-│   ├── useDarkMode.ts    # Theme management (future feature)
-│   ├── useDragAndDrop.ts # File drag-and-drop functionality
-│   └── useResizablePanes.ts # Split pane resizing logic
+│   ├── useDarkMode.ts           # Theme management (future feature)
+│   ├── useDocuments.ts          # Multiple document state management
+│   ├── useDragAndDrop.ts        # File drag-and-drop functionality
+│   └── useResizablePanes.ts     # Split pane resizing logic
+├── types/                # TypeScript type definitions
+│   └── document.ts              # Document and DocumentState interfaces
 ├── utils/                # Utility functions
-│   ├── fileOperations.ts # Import/export, localStorage, ZIP creation
-│   ├── imageOperations.ts # Image processing, storage, markdown generation
-│   └── markdown.ts       # Markdown/HTML conversion with image references
+│   ├── fileOperations.ts        # Import/export, localStorage, ZIP creation
+│   ├── imageOperations.ts       # Image processing, storage, markdown generation
+│   └── markdown.ts              # Markdown/HTML conversion with image references
+├── stores/               # State stores (empty - using composables pattern)
 ├── App.vue              # Main application component with menu bar and layout
 ├── main.ts              # Application entry point
 └── style.css            # Global styles and Tailwind imports
+```
+
+**Test Structure:**
+```
+tests/
+├── e2e/                  # End-to-end tests with Playwright
+│   ├── core-flows.spec.ts       # Core user workflows
+│   ├── find-replace.spec.ts     # Find/Replace functionality
+│   ├── image-upload.spec.ts     # Image upload and management
+│   ├── performance.spec.ts      # Performance testing
+│   └── visual-regression.spec.ts # Visual regression testing
+├── image-preservation.test.ts   # Image reference preservation
+└── search-integration.test.ts   # Search system integration
 ```
 
 ## Application Architecture
@@ -52,18 +70,19 @@ src/
 ### Core Features
 1. **Menu Bar Interface** - Professional controls organized in logical groups (File, Export, Insert, View) with Information Pane
 2. **Information Pane** - Real-time statistics (Words, Characters, Lines) and save status in header
-3. **Find/Replace System** - Advanced search functionality with regex, case-sensitive options, and keyboard shortcuts
-4. **Dual Editor Layout** - Markdown editor (left) and WYSIWYG editor (right) with simultaneous editing
-5. **CodeMirror Editor** - Professional code editor with syntax highlighting and emacs-style navigation
-6. **WYSIWYG Editor** - Rich text editor with bidirectional HTML↔Markdown sync and real-time updates
-7. **Resizable Panes** - Drag-to-resize functionality between editors with 20%-80% constraints
-8. **Preview Toggle** - Hide/Show WYSIWYG pane to expand markdown editor to full width
-9. **Image Upload System** - Complete image management with cursor-based insertion, drag-and-drop, and storage
-10. **File Operations** - Import, export (MD/ZIP), save/load, and document management
-11. **Auto-save & Persistence** - Background saving every 30 seconds + content preservation across reloads
-12. **Responsive Design** - Mobile/tablet optimization with adaptive menu wrapping
-13. **Scroll Synchronization** - Bidirectional scroll sync between editors with percentage-based positioning
-14. **Viewport Height Management** - Editors constrained to viewport bounds preventing infinite vertical expansion
+3. **Multiple Document Tabs** - Complete tab system for managing multiple documents with easy switching and organization
+4. **Find/Replace System** - Advanced search functionality with regex, case-sensitive options, and keyboard shortcuts
+5. **Dual Editor Layout** - Markdown editor (left) and WYSIWYG editor (right) with simultaneous editing
+6. **CodeMirror Editor** - Professional code editor with syntax highlighting and emacs-style navigation
+7. **WYSIWYG Editor** - Rich text editor with bidirectional HTML↔Markdown sync and real-time updates
+8. **Resizable Panes** - Drag-to-resize functionality between editors with 20%-80% constraints
+9. **Preview Toggle** - Hide/Show WYSIWYG pane to expand markdown editor to full width
+10. **Image Upload System** - Complete image management with cursor-based insertion, drag-and-drop, and storage
+11. **File Operations** - Import, export (MD/ZIP), save/load, and document management with multi-document support
+12. **Auto-save & Persistence** - Background saving every 30 seconds + content preservation across reloads
+13. **Responsive Design** - Mobile/tablet optimization with adaptive menu wrapping
+14. **Scroll Synchronization** - Bidirectional scroll sync between editors with percentage-based positioning
+15. **Viewport Height Management** - Editors constrained to viewport bounds preventing infinite vertical expansion
 
 ### CodeMirror Editor System
 - **Framework**: CodeMirror 6 with Vue.js integration
@@ -118,53 +137,79 @@ src/
 - **Validation**: File type and size validation with user feedback
 
 ### Data Flow
-- Reactive `markdownContent` ref stores the markdown source (single source of truth)
-- Dual editor synchronization:
-  - Markdown Editor: Updates `markdownContent` directly via CodeMirror
-  - WYSIWYG Editor: Converts HTML to markdown and updates `markdownContent`
+- **Document Management**: `useDocuments()` composable manages multiple documents with reactive state
+  - Global `documentState` with documents array, active document ID, and document numbering
+  - Automatic localStorage persistence with structured JSON format
+  - Document lifecycle: create, update, switch, duplicate, close operations
+- **Single Source of Truth**: Active document's `content` property stores markdown source
+- **Dual Editor Synchronization**:
+  - Markdown Editor: Updates active document content directly via CodeMirror
+  - WYSIWYG Editor: Converts HTML to markdown and updates active document content
   - Bidirectional sync prevents circular updates with `isUpdatingWysiwyg` flag
-- Real-time HTML conversion: `convertMarkdownToHtml()` with stored image reference preservation
-- Enhanced HTML to Markdown conversion: `convertListContent()` function provides recursive list processing
-  - Supports nested unordered lists (ul) and ordered lists (ol)
-  - Maintains proper indentation (2 spaces per level)
-  - Preserves list markers (-, numbers) based on nesting context
-  - Handles mixed nested lists with correct markdown syntax
-- Computed `stats` provides real-time content analysis (words/characters/lines) in header Information Pane
-- Image insertion uses CodeMirror cursor position for precise placement
-- Toggle states control WYSIWYG pane visibility and editor width
-- File operations update content with status feedback in Information Pane
+- **Real-time Processing**:
+  - HTML conversion: `convertMarkdownToHtml()` with stored image reference preservation
+  - Enhanced HTML to Markdown: `convertListContent()` with recursive list processing
+  - Statistics: Computed `stats` provides real-time analysis (words/characters/lines)
+- **Document Persistence**:
+  - Auto-save: Documents saved to localStorage every 30 seconds
+  - State persistence: Active document ID and document list preserved across reloads
+  - Content preservation: Unsaved changes tracked with `isUnsaved` flag
+- **Image Integration**: Cursor-based insertion with stored image reference system
+- **UI State**: Toggle states control WYSIWYG pane visibility and tab management
 
 ### Vue Composables Architecture
+- **useDocuments**: Central document management with reactive state and persistence
+  - Multiple document lifecycle (create, update, switch, close, duplicate)
+  - Auto-save and localStorage integration
+  - Document numbering and title management
+  - Active document tracking and unsaved changes
 - **useDragAndDrop**: Handles file drag-and-drop functionality with type validation
 - **useResizablePanes**: Manages split pane resizing with mouse event handling and constraints
 - **useDarkMode**: Theme management with persistent preferences and system detection (ready for future)
 
 ### User Interface Architecture
+- **Tab System**: Complete document tab management with TabBar component
+  - Create, switch, duplicate, and close document tabs
+  - Visual indicators for unsaved changes and active document
+  - Context menus and tab operations
 - **Menu Bar**: Logical grouping of controls with responsive behavior and Information Pane
   - File Menu: New, Import, Save, Load operations
-  - Export Menu: MD and ZIP export options
+  - Export Menu: MD and ZIP export options (supports all documents)
   - Insert Menu: Image upload functionality  
   - View Menu: Find/Replace toggle and WYSIWYG pane visibility toggle
   - Information Pane: Real-time statistics and save status with compact spacing
 - **Dual Editor Layout**: Always-visible Markdown (left) and WYSIWYG (right) editors
+- **Find/Replace Panel**: Positioned below menu bar with comprehensive search options
 - **Responsive Design**: Mobile-first with `hidden sm:inline` labels and flexible menu wrapping
 - **No Full-Screen Mode**: Removed in favor of WYSIWYG pane toggle for better workflow
 - **Visual Feedback**: Hover states, loading indicators, and status messaging in Information Pane
 
 ### Storage Strategy
-- **In-Memory**: Reactive refs for current document state
-- **Persistent**: localStorage with structured metadata (content, timestamp, version)
-- **Import/Export**: Browser APIs for file operations
-- **No Backend**: Complete client-side operation
+- **In-Memory**: Reactive document state with multiple documents array and active document tracking
+- **Persistent Document Storage**: localStorage with structured document metadata
+  - Documents stored as array with ID, title, content, timestamps, and unsaved flags
+  - Active document ID persisted separately for session continuity
+  - Automatic document numbering and title management
+- **Image Storage**: Separate localStorage entries for stored images with reference system
+- **Import/Export**: Browser APIs for file operations with multi-document ZIP support
+- **No Backend**: Complete client-side operation with offline capability
 
 ## Build and Development Commands
 
 ```bash
+# Development
 npm run dev          # Start development server
 npm run build        # Production build with type checking
 npm run preview      # Preview production build
+
+# Testing
 npm run test         # Run unit tests
 npm run test:coverage # Run tests with coverage report (80% threshold)
+npm run test:e2e     # Run E2E tests with Playwright
+npm run test:e2e:headed # Run E2E tests with browser visible
+npm run test:e2e:update # Update visual regression baselines
+
+# Code Quality
 npm run lint         # Lint and fix code issues
 npm run format       # Format code with Prettier
 ```
@@ -172,11 +217,13 @@ npm run format       # Format code with Prettier
 ## Quality Standards
 
 ### Testing Strategy
-- **Unit Testing**: Vitest with Vue Test Utils for component isolation (69 tests passing)
+- **Unit Testing**: Vitest with Vue Test Utils for component isolation (115 tests passing)
 - **Test Coverage**: Minimum 80% target maintained (branches, functions, lines, statements)
-- **E2E Testing**: Complete Playwright implementation with cross-browser testing (Chrome, Firefox)
+- **E2E Testing**: Complete Playwright implementation with cross-browser testing (Chromium, Firefox, Mobile Chrome)
 - **Visual Regression**: Screenshot-based UI consistency testing with baseline management
 - **Performance Testing**: Large document handling, memory management, and UI responsiveness
+- **Integration Testing**: Image reference preservation, search system integration
+- **Component Testing**: Comprehensive mocking strategy for CodeMirror dependencies
 - **Accessibility Testing**: Keyboard navigation and focus management (partial implementation)
 
 ### Code Quality

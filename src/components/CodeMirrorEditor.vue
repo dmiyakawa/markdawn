@@ -1,5 +1,6 @@
 <template>
   <div
+    id="markdown-editor"
     ref="editorContainer"
     class="w-full h-full codemirror-container"
     data-testid="codemirror-editor"
