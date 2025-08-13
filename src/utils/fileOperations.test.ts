@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   importMarkdownFile,
   exportMarkdownFile,
+  exportAllDocuments,
   saveToLocalStorage,
   loadFromLocalStorage,
   getSaveTimestamp,
@@ -142,6 +143,50 @@ describe('File Export Operations', () => {
     exportMarkdownFile(content, filename)
 
     expect(mockDocument.createElement).toHaveBeenCalledWith('a')
+  })
+
+  it('exports all documents as ZIP file', async () => {
+    // Mock JSZip
+    const mockZip = {
+      file: vi.fn(),
+      folder: vi.fn(() => ({
+        file: vi.fn(),
+      })),
+      generateAsync: vi.fn().mockResolvedValue(new Blob()),
+    }
+    vi.doMock('jszip', () => ({
+      default: vi.fn(() => mockZip),
+    }))
+
+    // Mock documents
+    const documents = [
+      {
+        id: '1',
+        title: 'Document 1',
+        content: '# First Document\n\nContent 1',
+        isUnsaved: false,
+        createdAt: '2023-01-01T00:00:00.000Z',
+        lastModified: '2023-01-01T00:00:00.000Z',
+      },
+      {
+        id: '2',
+        title: 'Document 2',
+        content: '# Second Document\n\nContent 2',
+        isUnsaved: false,
+        createdAt: '2023-01-01T00:00:00.000Z',
+        lastModified: '2023-01-01T00:00:00.000Z',
+      },
+    ]
+
+    // Mock image operations
+    vi.doMock('./imageOperations', () => ({
+      getStoredImages: () => [],
+    }))
+
+    await exportAllDocuments(documents)
+
+    expect(mockDocument.createElement).toHaveBeenCalledWith('a')
+    expect(mockURL.createObjectURL).toHaveBeenCalled()
   })
 })
 

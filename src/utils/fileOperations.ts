@@ -5,6 +5,7 @@
 
 import JSZip from 'jszip'
 import { getStoredImages, type StoredImage } from './imageOperations'
+import type { Document } from '../types/document'
 
 /**
  * Import markdown file from user's device
@@ -163,6 +164,91 @@ export async function exportAllFiles(
 
   // Add markdown file to zip
   zip.file(`${finalProjectName}.md`, processedMarkdown)
+
+  // Add images to zip if any exist
+  if (storedImages.length > 0) {
+    const imagesFolder = zip.folder('images')
+
+    for (const image of storedImages) {
+      try {
+        // Convert data URL to blob
+        const blob = dataURLToBlob(image.data)
+
+        // Generate filename with proper extension
+        const extension = getExtensionFromMimeType(image.type)
+        const filename = image.name.includes('.')
+          ? image.name
+          : `${image.name}.${extension}`
+
+        // Add to zip
+        imagesFolder?.file(filename, blob)
+      } catch (error) {
+        console.warn(`Failed to add image ${image.name} to zip:`, error)
+      }
+    }
+  }
+
+  try {
+    // Generate zip file
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+
+    // Create download link
+    const url = URL.createObjectURL(zipBlob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${finalProjectName}.zip`
+
+    // Trigger download
+    document.body.appendChild(a)
+    a.click()
+
+    // Cleanup
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    throw new Error(
+      `Failed to create zip file: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+/**
+ * Export all documents and images as a ZIP file
+ * @param documents - Array of documents to export
+ * @param projectName - Optional project name for the ZIP file
+ */
+export async function exportAllDocuments(
+  documents: Document[],
+  projectName?: string
+): Promise<void> {
+  const zip = new JSZip()
+  const storedImages = getStoredImages()
+
+  // Generate project name with timestamp if not provided
+  const defaultProjectName = `markdown-project-${new Date()
+    .toISOString()
+    .slice(0, 19)
+    .replace(/[:.]/g, '-')}`
+
+  const finalProjectName = projectName || defaultProjectName
+
+  // Add all documents to zip
+  for (const document of documents) {
+    // Convert stored image references to local paths for each document
+    const processedMarkdown = convertStoredImagesToLocalPaths(
+      document.content,
+      storedImages
+    )
+
+    // Generate safe filename from document title
+    const safeFilename = document.title
+      .replace(/[^a-zA-Z0-9-_\s]/g, '') // Remove invalid chars
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .toLowerCase()
+
+    // Add document to zip with safe filename
+    zip.file(`${safeFilename}.md`, processedMarkdown)
+  }
 
   // Add images to zip if any exist
   if (storedImages.length > 0) {

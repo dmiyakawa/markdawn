@@ -2,24 +2,7 @@
 
 ## High Priority - Next Session
 
-### ✅ COMPLETED: Critical Issues Fixed
-- ✅ **Image Reference Preservation**: Fixed stored:image-id references becoming data blobs with `findStoredImageByDataUrl()` function
-- ✅ **Find/Replace Integration**: Connected UI to CodeMirror search system with full regex and case-sensitive support
-- ✅ **Scroll Synchronization**: Implemented bidirectional percentage-based scroll sync between dual editors
-- ✅ **Viewport Height Management**: Constrained editor panes to viewport bounds preventing infinite vertical expansion
-
 ### Advanced Editor Features
-- **Multiple Document Tabs with File Management** (High Priority)
-  - Tab-based interface for handling multiple markdown files simultaneously
-  - File name display in tabs with double-click editing capability
-  - Active tab highlighting and proper tab switching functionality
-  - ZIP export enhancement to include all open markdown files along with stored images
-  - Document state management (unsaved changes indicators, auto-save per document)
-  - New document creation with default naming (Document 1, Document 2, etc.)
-  - Tab context menu with close, rename, duplicate options
-- ✅ **Scroll Synchronization**: Implemented bidirectional sync between dual editors
-- ✅ **Find/Replace Integration**: Connected to CodeMirror search system with full functionality
-- **Add unit tests for CodeMirrorEditor and FindReplace components**
 - Undo/redo functionality with command history (basic CodeMirror history enabled)
 
 ### Additional Testing Expansion  
@@ -31,11 +14,42 @@
 
 ## Medium Priority
 
+### Component Architecture Improvements
+- **Refactor panes into separate UI components** (Medium Priority)
+  - Extract left pane into dedicated `MarkdownEditor.vue` component
+  - Extract right pane into dedicated `Preview.vue` component
+  - Move WYSIWYG functionality into `Preview.vue` with mode toggle
+  - Improve code organization and component reusability
+  - Simplify App.vue by reducing inline complexity
+  - Enable better testing of individual pane components
+  - Prepare for potential layout customization features
+
 ### Image Management Features
+- **Create dedicated `ImageManager.vue` component** (Medium Priority)
+  - Build standalone image management interface with gallery view
+  - Include image preview, metadata display, and action buttons
+  - Implement batch operations (select multiple, bulk delete, export)
+  - Add search/filter functionality for stored images
+  - Integrate with existing image storage system
+  - Provide drag-and-drop organization capabilities
 - Create image management interface (view, delete stored images)
 - Add image gallery browser for stored images
 - Implement batch image operations (delete multiple, export)
 - Test image upload and resize functionality across browsers
+
+### Image Enhancement Features
+- **Image scaling and display control** (Medium Priority)
+  - Add image width/height controls in markdown syntax (e.g., `![alt](image.jpg){width=600px}`)
+  - Implement responsive image scaling in both markdown and WYSIWYG editors
+  - Show images with consistent maximum width (e.g., 600px) regardless of original size
+  - Add image resize handles in WYSIWYG mode for visual resizing
+  - Maintain aspect ratio during scaling operations
+  - Support CSS-style dimension attributes in image tags
+- **Image format and optimization support**
+  - Add support for common image formats (JPEG, PNG, WebP, GIF, SVG)
+  - Implement image optimization with compression quality settings
+  - Auto-convert large images to web-optimized formats
+  - Provide image quality/size trade-off controls
 
 ### Performance and Polish
 - Syntax highlighting optimization for large documents  
@@ -43,11 +57,26 @@
 - Performance monitoring and optimization
 - Loading states and progress indicators
 
-## Low Priority - Future Considerations
+### Deployment Options
+- **Docker and containerization** (Higher Priority)
+  - Create Dockerfile for production builds
+  - Add Docker Compose configuration for local development
+  - Multi-stage builds for optimized production images
+  - Environment configuration and secrets management
+- **Google Cloud Run deployment** (Higher Priority)
+  - Cloud Build integration for automated CI/CD
+  - Artifact Registry for container image storage
+  - Cloud Run service configuration with auto-scaling
+  - Custom domain and SSL certificate setup
+- **Static hosting alternatives** (Lower Priority)
+  - Netlify configuration for static deployment
+  - Vercel configuration with build optimizations
+  - GitHub Pages deployment workflow
+- **PWA capabilities** (Lower Priority)
+  - Service worker implementation for offline support
+  - App manifest and installable web app features
 
-### Image Enhancement Features
-- Add support for common image formats (JPEG, PNG, WebP, GIF)
-- Implement image optimization (compression quality settings)
+## Low Priority - Future Considerations
 
 ### Advanced Features
 - Plugin system for custom markdown extensions
@@ -60,37 +89,6 @@
 - Virtual scrolling for large documents
 - Web Workers for heavy markdown processing
 
-### Deployment Options
-- Static hosting configuration (Netlify, Vercel)
-- PWA capabilities (offline support)
-- Docker configuration for containerized deployment
-
-## Recent Completions (This Session)
-
-### Critical Bug Fixes
-- ✅ **List Conversion Enhancement**: Fixed WYSIWYG list editing losing markdown notation with recursive `convertListContent()` function
-  - Supports nested unordered (ul) and ordered (ol) lists with proper indentation
-  - Maintains list markers (-, numbers) based on context and nesting level
-  - Handles mixed nested lists with correct markdown syntax
-  - Preserves bidirectional sync integrity during WYSIWYG list editing
-- ✅ **Image Reference Preservation**: Fixed critical issue where stored:image-id became data blobs during WYSIWYG conversion
-- ✅ **Search System Integration**: Connected Find/Replace UI to CodeMirror's search engine with regex/case-sensitive support
-- ✅ **Scroll Synchronization**: Implemented bidirectional scroll sync between dual editors using percentage-based positioning
-- ✅ **Viewport Height Constraints**: Limited editor panes to viewport bounds preventing infinite vertical expansion
-
-### Advanced Features Implementation
-- ✅ **Professional Search**: Full regex support, case-sensitive options, visual highlighting, keyboard shortcuts
-- ✅ **Emacs-style Navigation**: Complete keyboard shortcuts with browser default overrides  
-- ✅ **Image Data Mapping**: Enhanced HTML↔Markdown conversion with stored image reference preservation
-- ✅ **Scroll Loop Prevention**: Smart synchronization with timing controls to prevent circular updates
-
-### Code Quality & Testing
-- ✅ **Unit Test Coverage**: 74/74 tests passing, maintained coverage above 80%
-- ✅ **Linting & Formatting**: All ESLint issues resolved, consistent code formatting with Prettier
-- ✅ **Type Safety**: Proper TypeScript interfaces and type definitions throughout
-- ✅ **Test Updates**: Fixed App.test.ts to match new Preview/WYSIWYG mode toggle behavior
-- ✅ **Documentation Updates**: Architecture, decisions, and task documentation updated with list conversion details
-
 ## Completed Tasks
 
 See [ai/completed_tasks.md](./completed_tasks.md) for detailed record of all completed features and implementations.
@@ -98,8 +96,6 @@ See [ai/completed_tasks.md](./completed_tasks.md) for detailed record of all com
 ## Unresolved Concerns
 
 ### Technical Decisions Needed  
-- ✅ **RESOLVED**: Editor library selection for syntax highlighting (CodeMirror 6 selected and implemented)
-- **Find/Replace search algorithm implementation** (decide on search strategy with CodeMirror)
 - State management approach as complexity grows (consider Pinia)
 - PWA capabilities and offline support strategy
 - Performance optimization for large image collections

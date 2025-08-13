@@ -280,7 +280,7 @@ import { useDocuments } from './composables/useDocuments'
 import {
   importMarkdownFile,
   exportMarkdownFile,
-  exportAllFiles,
+  exportAllDocuments,
   saveToLocalStorage,
   loadFromLocalStorage,
   getSaveTimestamp,
@@ -532,8 +532,8 @@ const exportAllFilesWithImages = async () => {
       saveStatus.value = `Creating ZIP with ${allDocs.length} document(s)...`
     }
 
-    // Export all documents - use active document for main file
-    await exportAllFiles(markdownContent.value)
+    // Export all documents using the new multi-document function
+    await exportAllDocuments(allDocs)
 
     saveStatus.value =
       totalImages > 0
@@ -588,7 +588,7 @@ const saveAllDocuments = () => {
     }
 
     let savedCount = 0
-    allDocs.forEach(doc => {
+    allDocs.forEach((doc) => {
       if (doc.isUnsaved) {
         markDocumentAsSaved(doc.id)
         savedCount++
@@ -596,15 +596,14 @@ const saveAllDocuments = () => {
     })
 
     lastSaved.value = new Date().toISOString()
-    
+
     if (savedCount > 0) {
-      saveStatus.value = savedCount === 1 
-        ? '1 document saved' 
-        : `${savedCount} documents saved`
+      saveStatus.value =
+        savedCount === 1 ? '1 document saved' : `${savedCount} documents saved`
     } else {
       saveStatus.value = 'All documents already saved'
     }
-    
+
     setTimeout(() => {
       saveStatus.value = ''
     }, 3000)
@@ -953,7 +952,7 @@ onMounted(async () => {
       saveAllDocuments()
     }
   }
-  
+
   document.addEventListener('keydown', globalKeydownHandler)
 })
 

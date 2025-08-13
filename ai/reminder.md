@@ -22,6 +22,8 @@
 - [ ] All new features have unit tests
 - [ ] Coverage thresholds are met (80% minimum)
 - [ ] All tests pass with `npm run test`
+- [ ] E2E tests with Playwright are working
+- [ ] Move completed tasks from `ai/tasks.md` to `ai/completed_tasks.md`
 
 ## Critical Reminders
 - Never leave the application in a broken state
