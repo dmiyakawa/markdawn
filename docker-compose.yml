@@ -1,0 +1,125 @@
+# Markdown Editor - Docker Compose Configuration
+# Development and production deployment options
+
+version: '3.8'
+
+services:
+  # Main application service
+  markdown-editor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: markdown-editor:latest
+    container_name: markdown-editor-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.docker.compose.service=markdown-editor"
+      - "org.opencontainers.image.title=Markdown Editor"
+      - "org.opencontainers.image.description=Professional markdown editor with dual-pane editing"
+    volumes:
+      # Optional: Custom nginx configuration
+      # - ./deployment/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      # - ./deployment/docker/default.conf:/etc/nginx/conf.d/default.conf:ro
+      
+      # Optional: Persistent logs
+      - markdown-editor-logs:/var/log/nginx
+    networks:
+      - markdown-editor-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:noexec,nosuid,size=100m
+      - /var/run:noexec,nosuid,size=100m
+      - /tmp:noexec,nosuid,size=100m
+
+  # Optional: Nginx reverse proxy (for advanced setups)
+  nginx-proxy:
+    image: nginx:1.25-alpine
+    container_name: markdown-editor-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - markdown-editor
+    volumes:
+      - ./deployment/docker/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deployment/docker/ssl:/etc/nginx/ssl:ro
+      - markdown-editor-proxy-logs:/var/log/nginx
+    networks:
+      - markdown-editor-network
+    profiles:
+      - proxy
+    security_opt:
+      - no-new-privileges:true
+
+  # Optional: Watchtower for automatic updates
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: markdown-editor-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_SCHEDULE=0 0 2 * * *  # Daily at 2 AM
+      - WATCHTOWER_NOTIFICATIONS=slack
+      # - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=your-slack-webhook
+    profiles:
+      - watchtower
+    security_opt:
+      - no-new-privileges:true
+
+  # Development service (override for local development)
+  markdown-editor-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: markdown-editor:dev
+    container_name: markdown-editor-dev
+    restart: "no"
+    ports:
+      - "5173:5173"  # Vite dev server
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=5173
+    volumes:
+      - .:/app:delegated
+      - /app/node_modules
+      - /app/dist
+    command: npm run dev
+    networks:
+      - markdown-editor-network
+    profiles:
+      - development
+
+# Named volumes
+volumes:
+  markdown-editor-logs:
+    driver: local
+  markdown-editor-proxy-logs:
+    driver: local
+
+# Networks
+networks:
+  markdown-editor-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -14,7 +14,9 @@ test.describe('Find/Replace Functionality', () => {
   })
 
   test('should open and close find/replace panel', async ({ page }) => {
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
 
     // Initially hidden
@@ -26,45 +28,56 @@ test.describe('Find/Replace Functionality', () => {
     await expect(findReplacePanel).toBeVisible()
 
     // Close panel with close button
-    const closeButton = findReplacePanel.locator('button[title="Close (Escape)"]')
+    const closeButton = findReplacePanel.locator(
+      'button[title="Close (Escape)"]'
+    )
     await closeButton.click()
     await page.waitForTimeout(300)
     await expect(findReplacePanel).toBeHidden()
   })
 
-
   test('should find text in document', async ({ page }) => {
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
-    
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
+
     // Add test content
     await editor.click()
     await page.keyboard.press('Control+a')
-    await page.keyboard.type('# Test Document\n\nThis is a test with some test text.\nAnother line with test content.')
+    await page.keyboard.type(
+      '# Test Document\n\nThis is a test with some test text.\nAnother line with test content.'
+    )
 
     // Open find/replace panel
     await findReplaceButton.click()
     await page.waitForTimeout(300)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
-    const searchInput = findReplacePanel.locator('input[placeholder*="Search text"]')
-    
+    const searchInput = findReplacePanel.locator(
+      'input[placeholder*="Search text"]'
+    )
+
     // Enter search term
     await searchInput.fill('test')
     await page.waitForTimeout(500)
 
     // Check that matches are highlighted in the editor
     // The exact selector may vary based on CodeMirror's search highlighting
-    const editorWithHighlights = page.locator('[data-testid="codemirror-editor"]')
-    
+    const editorWithHighlights = page.locator(
+      '[data-testid="codemirror-editor"]'
+    )
+
     // Verify search input has value
     await expect(searchInput).toHaveValue('test')
   })
 
   test('should navigate between search results', async ({ page }) => {
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
-    
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
+
     // Add test content with multiple instances
     await editor.click()
     await page.keyboard.press('Control+a')
@@ -75,10 +88,16 @@ test.describe('Find/Replace Functionality', () => {
     await page.waitForTimeout(300)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
-    const searchInput = findReplacePanel.locator('input[placeholder*="Search text"]')
-    const nextButton = findReplacePanel.locator('button[title="Find next (Enter)"]')
-    const prevButton = findReplacePanel.locator('button[title="Find previous (Shift+Enter)"]')
-    
+    const searchInput = findReplacePanel.locator(
+      'input[placeholder*="Search text"]'
+    )
+    const nextButton = findReplacePanel.locator(
+      'button[title="Find next (Enter)"]'
+    )
+    const prevButton = findReplacePanel.locator(
+      'button[title="Find previous (Shift+Enter)"]'
+    )
+
     // Enter search term
     await searchInput.fill('test')
     await page.waitForTimeout(500)
@@ -94,8 +113,10 @@ test.describe('Find/Replace Functionality', () => {
 
   test('should replace single occurrence', async ({ page }) => {
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
-    
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
+
     // Add test content
     await editor.click()
     await page.keyboard.press('Control+a')
@@ -106,10 +127,16 @@ test.describe('Find/Replace Functionality', () => {
     await page.waitForTimeout(300)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
-    const searchInput = findReplacePanel.locator('input[placeholder*="Search text"]')
-    const replaceInput = findReplacePanel.locator('input[placeholder*="Replace with"]')
-    const replaceButton = findReplacePanel.locator('button[title="Replace current match"]')
-    
+    const searchInput = findReplacePanel.locator(
+      'input[placeholder*="Search text"]'
+    )
+    const replaceInput = findReplacePanel.locator(
+      'input[placeholder*="Replace with"]'
+    )
+    const replaceButton = findReplacePanel.locator(
+      'button[title="Replace current match"]'
+    )
+
     // Enter search and replace terms
     await searchInput.fill('world')
     await replaceInput.fill('universe')
@@ -127,8 +154,10 @@ test.describe('Find/Replace Functionality', () => {
 
   test('should replace all occurrences', async ({ page }) => {
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
-    
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
+
     // Add test content
     await editor.click()
     await page.keyboard.press('Control+a')
@@ -139,10 +168,16 @@ test.describe('Find/Replace Functionality', () => {
     await page.waitForTimeout(300)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
-    const searchInput = findReplacePanel.locator('input[placeholder*="Search text"]')
-    const replaceInput = findReplacePanel.locator('input[placeholder*="Replace with"]')
-    const replaceAllButton = findReplacePanel.locator('button[title="Replace all matches"]')
-    
+    const searchInput = findReplacePanel.locator(
+      'input[placeholder*="Search text"]'
+    )
+    const replaceInput = findReplacePanel.locator(
+      'input[placeholder*="Replace with"]'
+    )
+    const replaceAllButton = findReplacePanel.locator(
+      'button[title="Replace all matches"]'
+    )
+
     // Enter search and replace terms
     await searchInput.fill('cat')
     await replaceInput.fill('dog')
@@ -159,8 +194,10 @@ test.describe('Find/Replace Functionality', () => {
 
   test('should support case-sensitive search', async ({ page }) => {
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
-    
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
+
     // Add test content with mixed case
     await editor.click()
     await page.keyboard.press('Control+a')
@@ -171,24 +208,30 @@ test.describe('Find/Replace Functionality', () => {
     await page.waitForTimeout(300)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
-    const searchInput = findReplacePanel.locator('input[placeholder*="Search text"]')
-    const caseSensitiveCheckbox = findReplacePanel.locator('input[type="checkbox"]').first()
-    
+    const searchInput = findReplacePanel.locator(
+      'input[placeholder*="Search text"]'
+    )
+    const caseSensitiveCheckbox = findReplacePanel
+      .locator('input[type="checkbox"]')
+      .first()
+
     // Enter search term
     await searchInput.fill('test')
-    
+
     // Toggle case sensitivity
     await caseSensitiveCheckbox.click()
     await page.waitForTimeout(300)
-    
+
     // Verify case-sensitive checkbox is checked
     await expect(caseSensitiveCheckbox).toBeChecked()
   })
 
   test('should support regular expression search', async ({ page }) => {
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
-    const findReplaceButton = page.locator('button[title="Toggle Find/Replace (Ctrl+H)"]')
-    
+    const findReplaceButton = page.locator(
+      'button[title="Toggle Find/Replace (Ctrl+H)"]'
+    )
+
     // Add test content
     await editor.click()
     await page.keyboard.press('Control+a')
@@ -199,17 +242,21 @@ test.describe('Find/Replace Functionality', () => {
     await page.waitForTimeout(300)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
-    const searchInput = findReplacePanel.locator('input[placeholder*="Search text"]')
-    const regexCheckbox = findReplacePanel.locator('input[type="checkbox"]').last()
-    
+    const searchInput = findReplacePanel.locator(
+      'input[placeholder*="Search text"]'
+    )
+    const regexCheckbox = findReplacePanel
+      .locator('input[type="checkbox"]')
+      .last()
+
     // Enable regex mode
     await regexCheckbox.click()
     await page.waitForTimeout(300)
-    
+
     // Enter regex pattern
     await searchInput.fill('\\d+')
     await page.waitForTimeout(500)
-    
+
     // Verify regex checkbox is checked
     await expect(regexCheckbox).toBeChecked()
   })

@@ -7,6 +7,7 @@ export interface Document {
   title: string
   content: string
   isUnsaved: boolean
+  isPinned: boolean
   createdAt: string
   lastModified: string
 }

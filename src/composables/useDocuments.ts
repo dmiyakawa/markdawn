@@ -51,6 +51,7 @@ export function useDocuments() {
 
 Start writing your markdown here...`,
       isUnsaved: false,
+      isPinned: false,
       createdAt: now,
       lastModified: now,
     }
@@ -120,6 +121,14 @@ Start writing your markdown here...`,
 
     const document = documentState.value.documents[documentIndex]
 
+    // Prevent closing pinned documents
+    if (document.isPinned) {
+      alert(
+        `"${document.title}" is pinned and cannot be closed. Unpin it first to close.`
+      )
+      return false
+    }
+
     // Check for unsaved changes
     if (document.isUnsaved) {
       const confirmed = confirm(
@@ -163,6 +172,7 @@ Start writing your markdown here...`,
       title: `${originalDoc.title} (Copy)`,
       content: originalDoc.content,
       isUnsaved: true,
+      isPinned: false, // Duplicated documents are not pinned by default
       createdAt: now,
       lastModified: now,
     }
@@ -178,6 +188,80 @@ Start writing your markdown here...`,
   const getAllDocuments = (): Document[] => {
     return [...documentState.value.documents]
   }
+
+  // Reorder documents for tab management
+  const reorderDocuments = (fromIndex: number, toIndex: number): void => {
+    if (
+      fromIndex < 0 ||
+      fromIndex >= documentState.value.documents.length ||
+      toIndex < 0 ||
+      toIndex >= documentState.value.documents.length ||
+      fromIndex === toIndex
+    ) {
+      return
+    }
+
+    const documents = [...documentState.value.documents]
+    const [movedDocument] = documents.splice(fromIndex, 1)
+    documents.splice(toIndex, 0, movedDocument)
+
+    documentState.value.documents = documents
+    saveToStorage()
+  }
+
+  // Get document index
+  const getDocumentIndex = (documentId: string): number => {
+    return documentState.value.documents.findIndex(
+      (doc) => doc.id === documentId
+    )
+  }
+
+  // Pin/Unpin document
+  const toggleDocumentPin = (documentId: string): boolean => {
+    const document = documentState.value.documents.find(
+      (doc) => doc.id === documentId
+    )
+    if (!document) return false
+
+    document.isPinned = !document.isPinned
+    document.lastModified = new Date().toISOString()
+    saveToStorage()
+    return document.isPinned
+  }
+
+  const pinDocument = (documentId: string): boolean => {
+    const document = documentState.value.documents.find(
+      (doc) => doc.id === documentId
+    )
+    if (!document) return false
+
+    document.isPinned = true
+    document.lastModified = new Date().toISOString()
+    saveToStorage()
+    return true
+  }
+
+  const unpinDocument = (documentId: string): boolean => {
+    const document = documentState.value.documents.find(
+      (doc) => doc.id === documentId
+    )
+    if (!document) return false
+
+    document.isPinned = false
+    document.lastModified = new Date().toISOString()
+    saveToStorage()
+    return true
+  }
+
+  // Get pinned documents
+  const pinnedDocuments = computed(() => {
+    return documentState.value.documents.filter((doc) => doc.isPinned)
+  })
+
+  // Get unpinned documents
+  const unpinnedDocuments = computed(() => {
+    return documentState.value.documents.filter((doc) => !doc.isPinned)
+  })
 
   // Save to localStorage
   const saveToStorage = (): void => {
@@ -207,7 +291,11 @@ Start writing your markdown here...`,
 
       if (stored) {
         const documents: Document[] = JSON.parse(stored)
-        documentState.value.documents = documents
+        // Ensure all documents have isPinned property for backward compatibility
+        documentState.value.documents = documents.map((doc) => ({
+          ...doc,
+          isPinned: doc.isPinned ?? false,
+        }))
 
         // Calculate next document number
         const maxNumber = documents.reduce((max, doc) => {
@@ -264,8 +352,9 @@ function hello() {
 - [ ] Add more features
 - [ ] Deploy the app
 
-> **Tip**: Use tabs to work with multiple documents simultaneously!`
+> **Tip**: Use tabs to work with multiple documents simultaneously! Pin important tabs to prevent accidental closing.`
         welcomeDoc.isUnsaved = false
+        welcomeDoc.isPinned = false
         saveToStorage()
       }
     }
@@ -278,6 +367,8 @@ function hello() {
     activeDocumentId: computed(() => documentState.value.activeDocumentId),
     hasUnsavedChanges,
     documentCount,
+    pinnedDocuments,
+    unpinnedDocuments,
 
     // Actions
     createNewDocument,
@@ -288,6 +379,11 @@ function hello() {
     closeDocument,
     duplicateDocument,
     getAllDocuments,
+    reorderDocuments,
+    getDocumentIndex,
+    toggleDocumentPin,
+    pinDocument,
+    unpinDocument,
     initializeDocuments,
     saveToStorage,
     loadFromStorage,

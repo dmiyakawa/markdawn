@@ -1,11 +1,27 @@
 # Remaining Tasks
 
+> **Recent Completions**: Advanced Editor Polish tasks (Find/Replace integration, enhanced undo/redo, performance optimization, tab reordering, tab overflow management) completed in January 13, 2025 session. See [ai/completed_tasks.md](./completed_tasks.md) for details.
+
 ## High Priority - Next Session
 
-### Advanced Editor Polish
-- **Fix Find/Replace CodeMirror Integration** - Replace functionality not working with CodeMirror search system
-- **Enhanced undo/redo** - Improve command history beyond basic CodeMirror
-- **Optimize CodeMirror performance** for large documents
+### Deployment Options (HIGHEST PRIORITY)
+- **Ubuntu Server with Apache 2.4 deployment** (NEW - High Priority)
+  - Create deployment guide for remote Ubuntu Server setup
+  - Configure Apache 2.4 virtual host configuration for the application
+  - Set up proper file permissions and security settings
+  - Add SSL certificate configuration (Let's Encrypt)
+  - Create deployment scripts for easy server setup
+  - Document domain configuration and DNS requirements
+- **Docker and containerization** (Moved from Medium Priority)
+  - Create Dockerfile for production builds
+  - Add Docker Compose configuration for local development
+  - Multi-stage builds for optimized production images
+  - Environment configuration and secrets management
+- **Google Cloud Run deployment** (Moved from Medium Priority)
+  - Cloud Build integration for automated CI/CD
+  - Artifact Registry for container image storage
+  - Cloud Run service configuration with auto-scaling
+  - Custom domain and SSL certificate setup
 
 ### Testing Expansion  
 - Enhanced E2E test scenarios (file upload simulation, drag-and-drop testing)
@@ -18,14 +34,13 @@
 - Implement batch image operations (select multiple, bulk delete)
 - Add image insertion helper with preview and alt text editing
 
-### Advanced Editor Features
-- **Advanced Tab Management Features** (basic tabs already implemented)
-  - **Current Implementation**: Tab bar with create, switch, rename, duplicate, close, context menus, unsaved indicators
-  - **High Priority Features**:
-    - **Tab Reordering**: Drag-and-drop tab reordering within tab bar
-    - **Tab Overflow Management**: Scrollable tabs, tab dropdown menu when too many tabs
-    - **Tab Pinning**: Pin important tabs to prevent accidental closing
-    - **Keyboard Navigation**: Tab switching shortcuts (Ctrl+Tab, Ctrl+1-9)
+### Advanced Tab Management Features (Remaining)
+- **Current Implementation**: Tab bar with create, switch, rename, duplicate, close, context menus, unsaved indicators, drag-and-drop reordering, overflow management
+- **Remaining High Priority Features**:
+  - **Tab Pinning**: Pin important tabs to prevent accidental closing
+  - **Keyboard Navigation**: Tab switching shortcuts (Ctrl+Tab, Ctrl+1-9)
+
+### Other Advanced Editor Features
 - Document outline/table of contents generation
 - Advanced export formats (standalone HTML, styled PDF)
 
@@ -93,17 +108,7 @@
 - Performance monitoring and optimization
 - Loading states and progress indicators
 
-### Deployment Options
-- **Docker and containerization** (Higher Priority)
-  - Create Dockerfile for production builds
-  - Add Docker Compose configuration for local development
-  - Multi-stage builds for optimized production images
-  - Environment configuration and secrets management
-- **Google Cloud Run deployment** (Higher Priority)
-  - Cloud Build integration for automated CI/CD
-  - Artifact Registry for container image storage
-  - Cloud Run service configuration with auto-scaling
-  - Custom domain and SSL certificate setup
+### Remaining Deployment Options
 - **Static hosting alternatives** (Lower Priority)
   - Netlify configuration for static deployment
   - Vercel configuration with build optimizations

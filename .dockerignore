@@ -1,0 +1,108 @@
+# Markdown Editor - Docker ignore file
+# Optimize build context and improve security
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs (keep dist for Docker builds)
+.vite/
+.next/
+out/
+
+# Environment and config files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (exclude from production build)
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+docs/
+
+# Test files
+test/
+tests/
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+coverage/
+.nyc_output/
+jest.config.*
+cypress/
+e2e/
+
+# Development tools
+.eslintrc.*
+.prettierrc.*
+tsconfig.json
+vite.config.*
+vitest.config.*
+playwright.config.*
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Docker files (don't include in build context)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Deployment files (keep Docker configs)
+deployment/ubuntu-apache/
+scripts/
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+
+# AI development files
+ai/
+
+# Backup files
+*.backup
+*.bak
+*.orig

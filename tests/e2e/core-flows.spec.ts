@@ -33,7 +33,7 @@ test.describe('Core User Flows', () => {
 
       // Wait for preview to update
       await page.waitForTimeout(500)
-      
+
       // Verify preview renders HTML correctly - target exact elements
       const preview = page.locator('[data-testid="preview-panel"] .prose')
       await expect(preview.locator('h1').last()).toContainText('My Document')
@@ -98,7 +98,7 @@ test.describe('Core User Flows', () => {
 
       // Wait a bit for the new document to be created
       await page.waitForTimeout(500)
-      
+
       // Verify new document template is loaded (should be Document 2 since Welcome document is Document 1)
       const editorContent = await editor.textContent()
       expect(editorContent).toMatch(/# Document \d+/)
@@ -151,7 +151,6 @@ test.describe('Core User Flows', () => {
       expect(download.suggestedFilename()).toMatch(/markdown-project.*\.zip$/)
     })
   })
-
 
   test.describe('Responsive Design', () => {
     test('should adapt to mobile viewport', async ({ page }) => {

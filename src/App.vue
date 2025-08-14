@@ -48,6 +48,30 @@
               </button>
             </div>
 
+            <!-- Edit Menu -->
+            <div class="flex items-center space-x-1">
+              <span
+                class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
+                >Edit</span
+              >
+              <button
+                @click="performUndo"
+                :disabled="!canUndo"
+                class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Undo (Ctrl+Z)"
+              >
+                ↶ Undo
+              </button>
+              <button
+                @click="performRedo"
+                :disabled="!canRedo"
+                class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Redo (Ctrl+Y)"
+              >
+                ↷ Redo
+              </button>
+            </div>
+
             <!-- Export Menu -->
             <div class="flex items-center space-x-1">
               <span
@@ -60,6 +84,24 @@
                 title="Export as markdown file"
               >
                 MD
+              </button>
+              <button
+                @click="openHTMLExportModal"
+                :disabled="exportingHTML"
+                class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export as styled HTML file"
+              >
+                <span v-if="!exportingHTML">HTML</span>
+                <span v-else>⏳</span>
+              </button>
+              <button
+                @click="openPDFExportModal"
+                :disabled="exportingPDF"
+                class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export as PDF (print dialog)"
+              >
+                <span v-if="!exportingPDF">PDF</span>
+                <span v-else>⏳</span>
               </button>
               <button
                 @click="exportAllFilesWithImages"
@@ -98,6 +140,18 @@
                 title="Toggle Find/Replace (Ctrl+H)"
               >
                 🔍
+              </button>
+              <button
+                @click="toggleOutline"
+                :class="[
+                  'px-2 py-1 text-xs rounded',
+                  showOutline
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                ]"
+                title="Toggle document outline"
+              >
+                📋 Outline
               </button>
               <button
                 @click="togglePreview"
@@ -148,6 +202,15 @@
       @replace-next="handleReplaceNext"
       @replace-all="handleReplaceAll"
       ref="findReplaceRef"
+    />
+
+    <!-- Export Modal -->
+    <ExportModal
+      v-model:visible="showExportModal"
+      :export-type="exportModalType"
+      :default-title="activeDocument?.title || 'Markdown Document'"
+      @confirm="handleExportConfirm"
+      @cancel="handleExportCancel"
     />
 
     <!-- Tab Bar -->
@@ -266,6 +329,17 @@
             </div>
           </div>
         </div>
+
+        <!-- Document Outline Sidebar -->
+        <DocumentOutline
+          v-show="showOutline"
+          ref="documentOutlineRef"
+          :markdown-content="markdownContent"
+          :word-count="stats.words"
+          :visible="showOutline"
+          @scroll-to-line="scrollToLine"
+          @scroll-to-position="scrollToPosition"
+        />
       </div>
     </main>
   </div>
@@ -278,6 +352,8 @@ import ImageUploader from './components/ImageUploader.vue'
 import CodeMirrorEditor from './components/CodeMirrorEditor.vue'
 import FindReplace from './components/FindReplace.vue'
 import TabBar from './components/TabBar.vue'
+import DocumentOutline from './components/DocumentOutline.vue'
+import ExportModal from './components/ExportModal.vue'
 import { useDragAndDrop } from './composables/useDragAndDrop'
 import { useResizablePanes } from './composables/useResizablePanes'
 import { useDocuments } from './composables/useDocuments'
@@ -294,11 +370,19 @@ import {
   getLineCount,
   getExportStats,
 } from './utils/fileOperations'
+import {
+  exportAsHTML as exportHTMLFile,
+  exportAsPDF as exportPDFFile,
+  exportDocumentsAsHTML,
+  type ExportOptions,
+} from './utils/advancedExport'
 
 // Document management
 const {
   activeDocument,
   activeDocumentId,
+  documents,
+  switchToDocument,
   updateDocumentContent,
   markDocumentAsSaved,
   initializeDocuments,
@@ -316,11 +400,15 @@ const markdownContent = computed({
 })
 const showPreview = ref(true)
 const showFindReplace = ref(false)
+const showOutline = ref(false)
 const isWysiwygMode = ref(false) // false = Preview mode, true = WYSIWYG mode
 
 // Template refs for drag-and-drop
 const editorContainer = ref<HTMLElement | null>(null)
 const findReplaceRef = ref<InstanceType<typeof FindReplace> | null>(null)
+const documentOutlineRef = ref<InstanceType<typeof DocumentOutline> | null>(
+  null
+)
 const wysiwygEditor = ref<HTMLElement | null>(null)
 const wysiwygScrollContainer = ref<HTMLElement | null>(null)
 const codeMirrorEditor = ref<InstanceType<typeof CodeMirrorEditor> | null>(null)
@@ -330,6 +418,14 @@ const fileInput = ref<HTMLInputElement>()
 const lastSaved = ref<string | null>(null)
 const saveStatus = ref<string>('')
 const exportingZip = ref(false)
+const exportingHTML = ref(false)
+const exportingPDF = ref(false)
+const showExportModal = ref(false)
+const exportModalType = ref<'html' | 'pdf'>('html')
+
+// Undo/Redo state
+const canUndo = ref(false)
+const canRedo = ref(false)
 
 // Global keyboard handler
 let globalKeydownHandler: ((event: KeyboardEvent) => void) | null = null
@@ -349,6 +445,10 @@ const saveStatusClass = computed(() => ({
 
 const togglePreview = () => {
   showPreview.value = !showPreview.value
+}
+
+const toggleOutline = () => {
+  showOutline.value = !showOutline.value
 }
 
 const toggleFindReplace = () => {
@@ -554,6 +654,70 @@ const exportAllFilesWithImages = async () => {
     }, 5000)
   } finally {
     exportingZip.value = false
+  }
+}
+
+// Export modal handlers
+const openHTMLExportModal = () => {
+  exportModalType.value = 'html'
+  showExportModal.value = true
+}
+
+const openPDFExportModal = () => {
+  exportModalType.value = 'pdf'
+  showExportModal.value = true
+}
+
+const handleExportConfirm = async (options: ExportOptions) => {
+  if (exportModalType.value === 'html') {
+    await exportAsHTML(options)
+  } else if (exportModalType.value === 'pdf') {
+    await exportAsPDF(options)
+  }
+  showExportModal.value = false
+}
+
+const handleExportCancel = () => {
+  showExportModal.value = false
+}
+
+const exportAsHTML = async (options: ExportOptions) => {
+  exportingHTML.value = true
+
+  try {
+    exportHTMLFile(markdownContent.value, options)
+
+    saveStatus.value = 'HTML file exported successfully'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 3000)
+  } catch (error) {
+    saveStatus.value = `HTML export error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 5000)
+  } finally {
+    exportingHTML.value = false
+  }
+}
+
+const exportAsPDF = async (options: ExportOptions) => {
+  exportingPDF.value = true
+
+  try {
+    await exportPDFFile(markdownContent.value, options)
+
+    saveStatus.value = 'PDF export opened in print dialog'
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 3000)
+  } catch (error) {
+    saveStatus.value = `PDF export error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    setTimeout(() => {
+      saveStatus.value = ''
+    }, 5000)
+  } finally {
+    exportingPDF.value = false
   }
 }
 
@@ -853,6 +1017,52 @@ const handleReplaceAll = (
   }
 }
 
+// Enhanced Undo/Redo functionality
+const performUndo = () => {
+  if (!codeMirrorEditor.value) return
+
+  const result = codeMirrorEditor.value.performUndo()
+  if (result) {
+    updateUndoRedoState()
+  }
+}
+
+const performRedo = () => {
+  if (!codeMirrorEditor.value) return
+
+  const result = codeMirrorEditor.value.performRedo()
+  if (result) {
+    updateUndoRedoState()
+  }
+}
+
+const updateUndoRedoState = () => {
+  if (!codeMirrorEditor.value) return
+
+  canUndo.value = codeMirrorEditor.value.canUndo()
+  canRedo.value = codeMirrorEditor.value.canRedo()
+}
+
+// Document outline scroll methods
+const scrollToLine = (line: number) => {
+  if (!codeMirrorEditor.value) return
+
+  // Use CodeMirror's built-in scrollToLine method
+  codeMirrorEditor.value.scrollToLine(line)
+  codeMirrorEditor.value.focus()
+}
+
+const scrollToPosition = (position: number) => {
+  if (!codeMirrorEditor.value) return
+
+  // Focus the editor and set cursor to the specified position
+  codeMirrorEditor.value.focus()
+
+  // Use CodeMirror's method to set selection at the position
+  // This is a simplified approach - we could enhance it further
+  console.log(`Scrolling to position: ${position}`)
+}
+
 // Scroll synchronization
 interface ScrollInfo {
   scrollTop: number
@@ -955,6 +1165,60 @@ onMounted(async () => {
       event.preventDefault()
       saveAllDocuments()
     }
+    
+    // Tab navigation shortcuts
+    // Ctrl+Tab: Switch to next tab
+    if (event.ctrlKey && event.key === 'Tab' && !event.shiftKey) {
+      event.preventDefault()
+      const currentIndex = documents.value.findIndex(doc => doc.id === activeDocumentId.value)
+      const nextIndex = (currentIndex + 1) % documents.value.length
+      if (documents.value[nextIndex]) {
+        switchToDocument(documents.value[nextIndex].id)
+      }
+    }
+    
+    // Ctrl+Shift+Tab: Switch to previous tab
+    if (event.ctrlKey && event.shiftKey && event.key === 'Tab') {
+      event.preventDefault()
+      const currentIndex = documents.value.findIndex(doc => doc.id === activeDocumentId.value)
+      const prevIndex = currentIndex === 0 ? documents.value.length - 1 : currentIndex - 1
+      if (documents.value[prevIndex]) {
+        switchToDocument(documents.value[prevIndex].id)
+      }
+    }
+    
+    // Ctrl+1-9: Switch to specific tab by number
+    if (event.ctrlKey && !event.shiftKey && !event.altKey) {
+      const numKey = parseInt(event.key)
+      if (numKey >= 1 && numKey <= 9) {
+        event.preventDefault()
+        const targetDoc = documents.value[numKey - 1]
+        if (targetDoc) {
+          switchToDocument(targetDoc.id)
+        }
+      }
+    }
+    
+    // Ctrl-Z: Undo (only if not in CodeMirror editor)
+    if (
+      event.ctrlKey &&
+      event.key === 'z' &&
+      !event.shiftKey &&
+      event.target !== codeMirrorEditor.value?.$el
+    ) {
+      event.preventDefault()
+      performUndo()
+    }
+    // Ctrl-Y or Ctrl-Shift-Z: Redo (only if not in CodeMirror editor)
+    if (
+      (event.ctrlKey && event.key === 'y') ||
+      (event.ctrlKey && event.shiftKey && event.key === 'z')
+    ) {
+      if (event.target !== codeMirrorEditor.value?.$el) {
+        event.preventDefault()
+        performRedo()
+      }
+    }
   }
 
   document.addEventListener('keydown', globalKeydownHandler)
@@ -972,9 +1236,34 @@ watch(markdownContent, () => {
   if (!isUpdatingWysiwyg) {
     nextTick(() => {
       updateWysiwygContent()
+      updateUndoRedoState() // Update undo/redo state when content changes
     })
   }
 })
+
+// Initialize undo/redo state when CodeMirror editor is ready
+watch(codeMirrorEditor, (newEditor) => {
+  if (newEditor) {
+    nextTick(() => {
+      updateUndoRedoState()
+    })
+  }
+})
+
+// Update active heading when content changes
+watch(markdownContent, () => {
+  nextTick(() => {
+    updateActiveHeading()
+    updateUndoRedoState() // Update undo/redo state when content changes
+  })
+})
+
+const updateActiveHeading = () => {
+  if (!codeMirrorEditor.value || !documentOutlineRef.value) return
+
+  const currentLine = codeMirrorEditor.value.getCurrentLine()
+  documentOutlineRef.value.updateActiveHeadingByLine(currentLine)
+}
 </script>
 
 <style scoped></style>

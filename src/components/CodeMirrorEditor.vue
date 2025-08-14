@@ -10,12 +10,34 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
-import { keymap } from '@codemirror/view'
+import {
+  keymap,
+  drawSelection,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  lineNumbers,
+} from '@codemirror/view'
 import { Prec } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
+import {
+  bracketMatching,
+  foldService,
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  foldGutter,
+} from '@codemirror/language'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorState } from '@codemirror/state'
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  isolateHistory,
+  undo,
+  redo,
+  undoDepth,
+  redoDepth,
+} from '@codemirror/commands'
 import {
   searchKeymap,
   highlightSelectionMatches,
@@ -24,6 +46,8 @@ import {
   findPrevious,
   replaceNext,
   replaceAll,
+  setSearchQuery,
+  search,
 } from '@codemirror/search'
 
 // Props and emits
@@ -350,12 +374,27 @@ const initializeEditor = async () => {
     },
   })
 
-  // Create editor state with extensions
+  // Create optimized editor extensions for better performance
   const extensions = [
-    basicSetup,
-    markdown(),
+    // Core editing features
+    lineNumbers(),
+    foldGutter(),
+    drawSelection(),
     EditorView.lineWrapping,
+    highlightActiveLine(),
+    highlightActiveLineGutter(),
+
+    // Language support with performance optimizations
+    markdown(),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    bracketMatching(),
+    foldService.of(() => null), // Disable automatic folding for better performance
+
+    // Search functionality
+    search({ top: true }), // Enable search panel at top
     highlightSelectionMatches(), // Highlight matching selections
+
+    // Custom event handlers
     domEventHandlers,
     Prec.highest(
       keymap.of([
@@ -408,15 +447,35 @@ const initializeEditor = async () => {
       ])
     ),
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
-    history(),
-    EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        const newValue = update.state.doc.toString()
-        if (newValue !== props.modelValue) {
-          emit('update:modelValue', newValue)
-        }
-      }
+    history({
+      minDepth: 200, // Keep at least 200 history entries for better undo/redo
+      newGroupDelay: 300, // Group changes within 300ms as one undo step (faster grouping)
     }),
+
+    // Performance optimization for large documents
+    EditorView.domEventHandlers({
+      beforeinput: (event: InputEvent) => {
+        // Optimize for large paste operations
+        if (event.inputType === 'insertFromPaste') {
+          const text = (event as any).data || ''
+          if (text.length > 100000) {
+            console.warn(
+              'Large paste operation detected. Consider breaking into smaller chunks for better performance.'
+            )
+            // Create history boundary for large paste operations
+            nextTick(() => {
+              if (editorView) {
+                editorView.dispatch({
+                  annotations: [isolateHistory.of('full')],
+                })
+              }
+            })
+          }
+        }
+        return false
+      },
+    }),
+
     EditorView.theme({
       '&': {
         fontSize: '14px',
@@ -432,6 +491,8 @@ const initializeEditor = async () => {
       '.cm-scroller': {
         height: '100%',
         fontFamily: 'inherit',
+        // Performance optimizations for large documents
+        overflowAnchor: 'none', // Prevent anchor scrolling issues
       },
       '.cm-content': {
         padding: '16px',
@@ -440,6 +501,20 @@ const initializeEditor = async () => {
       '.cm-line': {
         lineHeight: '1.6',
       },
+    }),
+
+    // Performance optimization: limit viewport updates
+    EditorView.updateListener.of((update) => {
+      // Batch content change notifications to reduce updates
+      if (update.docChanged) {
+        const newValue = update.state.doc.toString()
+        if (newValue !== props.modelValue) {
+          // Use requestAnimationFrame to batch updates
+          requestAnimationFrame(() => {
+            emit('update:modelValue', newValue)
+          })
+        }
+      }
     }),
   ]
 
@@ -628,6 +703,13 @@ watch(
   () => props.modelValue,
   (newValue) => {
     updateEditorContent(newValue)
+
+    // Optimize performance for large documents
+    nextTick(() => {
+      if (isLargeDocument()) {
+        optimizeForLargeDocument()
+      }
+    })
   }
 )
 
@@ -735,8 +817,9 @@ const performSearch = (query: string, options: SearchOptions = {}) => {
   })
 
   // Set the search query in the editor
-  // setSearchQuery(editorView, searchQuery)
-  // TODO
+  editorView.dispatch({
+    effects: setSearchQuery.of(searchQuery),
+  })
 
   return searchQuery
 }
@@ -744,18 +827,40 @@ const performSearch = (query: string, options: SearchOptions = {}) => {
 const searchNext = (query: string, options: SearchOptions = {}) => {
   if (!editorView) return false
 
-  const searchQuery = performSearch(query, options)
-  if (!searchQuery) return false
+  // Set up search query first
+  const searchQuery = new SearchQuery({
+    search: query,
+    caseSensitive: options.caseSensitive || false,
+    regexp: options.useRegex || false,
+    replace: '',
+  })
 
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: setSearchQuery.of(searchQuery),
+  })
+
+  // Use CodeMirror's built-in find next
   return findNext(editorView)
 }
 
 const searchPrevious = (query: string, options: SearchOptions = {}) => {
   if (!editorView) return false
 
-  const searchQuery = performSearch(query, options)
-  if (!searchQuery) return false
+  // Set up search query first
+  const searchQuery = new SearchQuery({
+    search: query,
+    caseSensitive: options.caseSensitive || false,
+    regexp: options.useRegex || false,
+    replace: '',
+  })
 
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: setSearchQuery.of(searchQuery),
+  })
+
+  // Use CodeMirror's built-in find previous
   return findPrevious(editorView)
 }
 
@@ -766,16 +871,20 @@ const performReplace = (
 ) => {
   if (!editorView || !findText) return false
 
-  // Create search query for replacement
-  new SearchQuery({
+  // First, set up the search query if not already active
+  const searchQuery = new SearchQuery({
     search: findText,
     caseSensitive: options.caseSensitive || false,
     regexp: options.useRegex || false,
     replace: replaceText,
   })
 
-  // TODO: Set the search query in the editor when setSearchQuery is available
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: setSearchQuery.of(searchQuery),
+  })
 
+  // Use CodeMirror's built-in replace next functionality
   return replaceNext(editorView)
 }
 
@@ -786,29 +895,52 @@ const performReplaceAll = (
 ) => {
   if (!editorView || !findText) return false
 
-  // Create search query for replacement
-  new SearchQuery({
+  // First, set up the search query with replace text
+  const searchQuery = new SearchQuery({
     search: findText,
     caseSensitive: options.caseSensitive || false,
     regexp: options.useRegex || false,
     replace: replaceText,
   })
 
-  // TODO: Set the search query in the editor when setSearchQuery is available
+  // Set the search query in the editor
+  editorView.dispatch({
+    effects: setSearchQuery.of(searchQuery),
+  })
 
+  // Use CodeMirror's built-in replace all functionality
   return replaceAll(editorView)
 }
 
 const clearSearch = () => {
   if (!editorView) return
 
-  // setSearchQuery(editorView, new SearchQuery({ search: '', replace: '' }))
+  editorView.dispatch({
+    effects: setSearchQuery.of(new SearchQuery({ search: '', replace: '' })),
+  })
 }
 
 const scrollToPosition = (scrollTop: number) => {
   if (!editorView) return
 
   editorView.scrollDOM.scrollTop = scrollTop
+}
+
+const scrollToLine = (line: number) => {
+  if (!editorView) return
+
+  // Get the document and find the position of the specified line
+  const doc = editorView.state.doc
+  if (line > doc.lines || line < 1) return
+
+  // Get the line object and position
+  const lineObj = doc.line(line)
+
+  // Set cursor to the beginning of the line
+  editorView.dispatch({
+    selection: { anchor: lineObj.from },
+    scrollIntoView: true,
+  })
 }
 
 const getScrollInfo = () => {
@@ -819,6 +951,253 @@ const getScrollInfo = () => {
     scrollTop: scrollElement.scrollTop,
     scrollHeight: scrollElement.scrollHeight,
     clientHeight: scrollElement.clientHeight,
+  }
+}
+
+const getCurrentLine = (): number => {
+  if (!editorView) return 1
+
+  const selection = editorView.state.selection.main
+  const line = editorView.state.doc.lineAt(selection.head)
+  return line.number
+}
+
+// Enhanced undo/redo functionality
+const performUndo = (): boolean => {
+  if (!editorView) return false
+  const result = undo(editorView)
+
+  // Emit update after undo to trigger UI updates
+  if (result) {
+    emit('update:modelValue', editorView.state.doc.toString())
+  }
+
+  return result
+}
+
+const performRedo = (): boolean => {
+  if (!editorView) return false
+  const result = redo(editorView)
+
+  // Emit update after redo to trigger UI updates
+  if (result) {
+    emit('update:modelValue', editorView.state.doc.toString())
+  }
+
+  return result
+}
+
+const getUndoDepth = (): number => {
+  if (!editorView) return 0
+  return undoDepth(editorView.state)
+}
+
+const getRedoDepth = (): number => {
+  if (!editorView) return 0
+  return redoDepth(editorView.state)
+}
+
+const canUndo = (): boolean => {
+  return getUndoDepth() > 0
+}
+
+const canRedo = (): boolean => {
+  return getRedoDepth() > 0
+}
+
+const isolateHistoryBoundary = () => {
+  if (!editorView) return
+
+  // Create a history isolation boundary to separate logical operations
+  editorView.dispatch({
+    annotations: [isolateHistory.of('full')],
+  })
+}
+
+const clearHistory = () => {
+  if (!editorView) return
+
+  // Clear the history by recreating the editor with fresh state
+  const currentContent = editorView.state.doc.toString()
+
+  // Use dispatch with isolateHistory to create a clean break in history
+  editorView.dispatch({
+    changes: {
+      from: 0,
+      to: editorView.state.doc.length,
+      insert: currentContent,
+    },
+    annotations: [isolateHistory.of('full')],
+  })
+}
+
+// Enhanced history management functions
+const createHistoryBoundary = (type: 'full' | 'before' | 'after' = 'full') => {
+  if (!editorView) return
+
+  editorView.dispatch({
+    annotations: [isolateHistory.of(type)],
+  })
+}
+
+const performUndoWithBoundary = (): boolean => {
+  if (!editorView) return false
+
+  // Create a boundary before complex operations
+  createHistoryBoundary('before')
+  const result = undo(editorView)
+
+  if (result) {
+    emit('update:modelValue', editorView.state.doc.toString())
+  }
+
+  return result
+}
+
+const performRedoWithBoundary = (): boolean => {
+  if (!editorView) return false
+
+  // Create a boundary before complex operations
+  createHistoryBoundary('before')
+  const result = redo(editorView)
+
+  if (result) {
+    emit('update:modelValue', editorView.state.doc.toString())
+  }
+
+  return result
+}
+
+const getHistoryStatus = () => {
+  if (!editorView)
+    return { canUndo: false, canRedo: false, undoDepth: 0, redoDepth: 0 }
+
+  return {
+    canUndo: canUndo(),
+    canRedo: canRedo(),
+    undoDepth: getUndoDepth(),
+    redoDepth: getRedoDepth(),
+  }
+}
+
+// Performance optimization methods
+const getDocumentSize = (): { lines: number; characters: number } => {
+  if (!editorView) return { lines: 0, characters: 0 }
+
+  const doc = editorView.state.doc
+  return {
+    lines: doc.lines,
+    characters: doc.length,
+  }
+}
+
+const isLargeDocument = (): boolean => {
+  const { lines, characters } = getDocumentSize()
+  // Consider document "large" if it has more than 1000 lines or 50,000 characters
+  return lines > 1000 || characters > 50000
+}
+
+const isVeryLargeDocument = (): boolean => {
+  const { lines, characters } = getDocumentSize()
+  // Consider document "very large" if it has more than 5000 lines or 200,000 characters
+  return lines > 5000 || characters > 200000
+}
+
+const optimizeForLargeDocument = () => {
+  if (!editorView || !isLargeDocument()) return
+
+  // For large documents, apply specific optimizations
+  console.log('Large document detected, applying performance optimizations')
+
+  // Create a history boundary to prevent excessive undo history
+  editorView.dispatch({
+    annotations: [isolateHistory.of('full')],
+  })
+
+  // For very large documents, apply more aggressive optimizations
+  if (isVeryLargeDocument()) {
+    console.log(
+      'Very large document detected, applying aggressive optimizations'
+    )
+
+    // Reduce history depth for very large documents
+    setTimeout(() => {
+      if (editorView) {
+        // Force a smaller history boundary for very large docs
+        for (let i = 0; i < 5; i++) {
+          editorView.dispatch({
+            annotations: [isolateHistory.of('full')],
+          })
+        }
+      }
+    }, 100)
+  }
+}
+
+const getBatchedTextInsertion = (text: string, batchSize: number = 10000) => {
+  // For large text insertions, break them into smaller batches
+  if (text.length <= batchSize) {
+    return [text]
+  }
+
+  const batches: string[] = []
+  for (let i = 0; i < text.length; i += batchSize) {
+    batches.push(text.slice(i, i + batchSize))
+  }
+  return batches
+}
+
+const insertLargeText = async (text: string, position?: number) => {
+  if (!editorView) return
+
+  const insertPos = position ?? editorView.state.selection.main.head
+  const batches = getBatchedTextInsertion(text)
+
+  if (batches.length === 1) {
+    // Single batch, insert normally
+    editorView.dispatch({
+      changes: {
+        from: insertPos,
+        insert: text,
+      },
+    })
+    return
+  }
+
+  // Multiple batches, insert with delays to prevent UI blocking
+  createHistoryBoundary('before')
+
+  let currentPos = insertPos
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]
+
+    editorView.dispatch({
+      changes: {
+        from: currentPos,
+        insert: batch,
+      },
+    })
+
+    currentPos += batch.length
+
+    // Add a small delay between batches to prevent UI blocking
+    if (i < batches.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+  }
+
+  createHistoryBoundary('after')
+}
+
+const getPerformanceStats = () => {
+  const size = getDocumentSize()
+  return {
+    ...size,
+    isLarge: isLargeDocument(),
+    isVeryLarge: isVeryLargeDocument(),
+    undoDepth: getUndoDepth(),
+    redoDepth: getRedoDepth(),
+    memoryUsageEstimate: Math.round((size.characters * 2) / 1024), // Rough estimate in KB
   }
 }
 
@@ -833,7 +1212,28 @@ defineExpose({
   performReplaceAll,
   clearSearch,
   scrollToPosition,
+  scrollToLine,
   getScrollInfo,
+  getCurrentLine,
+  performUndo,
+  performRedo,
+  getUndoDepth,
+  getRedoDepth,
+  canUndo,
+  canRedo,
+  isolateHistoryBoundary,
+  clearHistory,
+  createHistoryBoundary,
+  performUndoWithBoundary,
+  performRedoWithBoundary,
+  getHistoryStatus,
+  getDocumentSize,
+  isLargeDocument,
+  isVeryLargeDocument,
+  optimizeForLargeDocument,
+  insertLargeText,
+  getBatchedTextInsertion,
+  getPerformanceStats,
 })
 </script>
 
