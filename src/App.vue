@@ -386,7 +386,7 @@ const codeMirrorEditor = computed(
 
 // File operations
 const fileInput = ref<HTMLInputElement>()
-const lastSaved = ref<string | null>(null)
+const lastSaved = ref<string | undefined>(undefined)
 const saveStatus = ref<string>('')
 const exportingZip = ref(false)
 const exportingHTML = ref(false)
@@ -1133,7 +1133,7 @@ onMounted(async () => {
       updateDocumentContent(legacyDoc.id, savedContent)
       markDocumentAsSaved(legacyDoc.id)
     }
-    lastSaved.value = getSaveTimestamp()
+    lastSaved.value = getSaveTimestamp() || undefined
   }
 
   // Enable auto-save

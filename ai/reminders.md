@@ -82,6 +82,7 @@ The application now provides a comprehensive, professional markdown editing expe
 ### Before Ending Any Development Session
 
 #### Code Quality Checks
+- [ ] Run `npm run build` to ensure TypeScript compilation succeeds
 - [ ] Run `npm run lint` to check for linting issues
 - [ ] Run `npm run format` to ensure consistent formatting
 - [ ] Run `npm run test:coverage` to verify 80% test coverage maintained

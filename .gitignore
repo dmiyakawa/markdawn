@@ -90,3 +90,6 @@ pnpm-lock.yaml
 *.pid
 *.pid.lock
 .DS_Store?
+
+# See also https://docs.anthropic.com/ja/docs/claude-code/settings
+.claude/settings.local.json

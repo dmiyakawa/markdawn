@@ -57,10 +57,8 @@ sudo chmod -R 755 /var/www/markdown-editor
 From your local machine, upload the built application:
 
 ```bash
-# Build the application locally first
+npm install
 npm run build
-
-# Upload to server (replace your-server-ip with actual IP/domain)
 scp -r dist/* user@your-server-ip:/var/www/markdown-editor/
 ```
 
@@ -250,12 +248,14 @@ sudo tar -czf /backup/apache-config-$(date +%Y%m%d).tar.gz /etc/apache2/sites-av
 For high-traffic sites, consider:
 
 1. **Enable Compression**
+
    ```bash
    sudo a2enmod deflate
    sudo systemctl restart apache2
    ```
 
 2. **Enable Caching**
+
    ```bash
    sudo a2enmod expires
    sudo a2enmod headers
@@ -269,6 +269,7 @@ For high-traffic sites, consider:
 ## Support
 
 For additional help:
+
 - Check Apache documentation: https://httpd.apache.org/docs/2.4/
 - Ubuntu Server documentation: https://ubuntu.com/server/docs
 - Let's Encrypt documentation: https://letsencrypt.org/docs/
