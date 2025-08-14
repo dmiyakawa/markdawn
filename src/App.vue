@@ -121,6 +121,13 @@
                 >Insert</span
               >
               <ImageUploader :onImageInsert="insertImageIntoEditor" />
+              <button
+                @click="toggleImageManager"
+                class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                title="Manage stored images"
+              >
+                Gallery
+              </button>
             </div>
 
             <!-- View Menu -->
@@ -213,6 +220,20 @@
       @cancel="handleExportCancel"
     />
 
+    <!-- Image Manager Modal -->
+    <div
+      v-if="showImageManager"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      @click="showImageManager = false"
+    >
+      <div class="w-full max-w-6xl max-h-full" @click.stop>
+        <ImageManager
+          @close="showImageManager = false"
+          @insert-image="handleImageManagerInsert"
+        />
+      </div>
+    </div>
+
     <!-- Tab Bar -->
     <TabBar />
 
@@ -223,36 +244,15 @@
         class="flex flex-row gap-3 w-full h-[calc(100vh-200px)] min-h-[400px] max-h-[calc(100vh-150px)]"
       >
         <!-- Editor Panel (Left Side) -->
-        <div
-          id="left-pane"
-          ref="editorContainer"
-          data-testid="editor-panel"
-          :class="[
-            'bg-white flex flex-col rounded-lg shadow border border-gray-200 h-full',
-            { 'border-blue-400 bg-blue-50': isDragging },
-          ]"
-          :style="{ width: showPreview ? `${leftPaneWidth}%` : '100%' }"
-        >
-          <div
-            class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between min-h-8"
-          >
-            <h3 class="text-sm font-medium text-gray-700">Markdown Editor</h3>
-            <div class="flex items-center space-x-2">
-              <!-- Editor controls can be added here if needed -->
-            </div>
-          </div>
-          <div class="flex-1 overflow-hidden">
-            <CodeMirrorEditor
-              ref="codeMirrorEditor"
-              v-model="markdownContent"
-              :dark-mode="false"
-              placeholder="Start typing your markdown here..."
-              class="w-full h-full"
-              @toggle-find-replace="toggleFindReplace"
-              @scroll="handleEditorScroll"
-            />
-          </div>
-        </div>
+        <MarkdownEditor
+          ref="markdownEditorRef"
+          v-model:markdown-content="markdownContent"
+          :show-preview="showPreview"
+          :left-pane-width="leftPaneWidth"
+          :is-dragging="isDragging"
+          @toggle-find-replace="toggleFindReplace"
+          @scroll="handleEditorScroll"
+        />
 
         <!-- Resize Handle -->
         <div
@@ -272,63 +272,18 @@
         </div>
 
         <!-- Preview Panel (Right Side) -->
-        <div
-          id="right-pane"
-          v-show="showPreview"
-          data-testid="preview-panel"
-          :class="[
-            'bg-white rounded-lg shadow border border-gray-200 flex flex-col h-full',
-          ]"
-          :style="{ width: `${100 - leftPaneWidth}%` }"
-        >
-          <div
-            class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between min-h-8"
-          >
-            <h3 class="text-sm font-medium text-gray-700">
-              {{ isWysiwygMode ? 'WYSIWYG Editor' : 'Preview' }}
-            </h3>
-            <div class="flex items-center space-x-2">
-              <button
-                @click="toggleWysiwygMode"
-                :class="[
-                  'px-2 py-1 text-xs rounded transition-colors duration-200',
-                  isWysiwygMode
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-                ]"
-                :title="
-                  isWysiwygMode
-                    ? 'Switch to Preview mode'
-                    : 'Switch to WYSIWYG editing mode'
-                "
-              >
-                {{ isWysiwygMode ? 'Preview' : 'Edit' }}
-              </button>
-            </div>
-          </div>
-          <div class="flex-1 overflow-hidden">
-            <div
-              ref="wysiwygScrollContainer"
-              class="h-full overflow-auto"
-              style="padding: 0 16px"
-              @scroll="handleWysiwygScroll"
-            >
-              <div
-                id="wysiwyg-editor"
-                ref="wysiwygEditor"
-                :contenteditable="isWysiwygMode"
-                :class="[
-                  'w-full h-full prose prose-sm max-w-none wysiwyg-editor',
-                  isWysiwygMode ? 'focus:outline-none' : 'cursor-default',
-                  !isWysiwygMode ? 'bg-gray-50' : '',
-                ]"
-                @input="handleWysiwygInput"
-                @blur="syncWysiwygContent"
-                @paste="handleWysiwygPaste"
-              />
-            </div>
-          </div>
-        </div>
+        <Preview
+          ref="previewRef"
+          :show-preview="showPreview"
+          :left-pane-width="leftPaneWidth"
+          :is-wysiwyg-mode="isWysiwygMode"
+          :html-content="htmlContent"
+          @toggle-wysiwyg-mode="toggleWysiwygMode"
+          @wysiwyg-scroll="handleWysiwygScroll"
+          @wysiwyg-input="handleWysiwygInput"
+          @wysiwyg-blur="syncWysiwygContent"
+          @wysiwyg-paste="handleWysiwygPaste"
+        />
 
         <!-- Document Outline Sidebar -->
         <DocumentOutline
@@ -348,8 +303,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { convertMarkdownToHtml, convertHtmlToMarkdown } from './utils/markdown'
+import type { StoredImage } from './utils/imageOperations'
 import ImageUploader from './components/ImageUploader.vue'
-import CodeMirrorEditor from './components/CodeMirrorEditor.vue'
+import ImageManager from './components/ImageManager.vue'
+import MarkdownEditor from './components/MarkdownEditor.vue'
+import Preview from './components/Preview.vue'
 import FindReplace from './components/FindReplace.vue'
 import TabBar from './components/TabBar.vue'
 import DocumentOutline from './components/DocumentOutline.vue'
@@ -373,7 +331,6 @@ import {
 import {
   exportAsHTML as exportHTMLFile,
   exportAsPDF as exportPDFFile,
-  exportDocumentsAsHTML,
   type ExportOptions,
 } from './utils/advancedExport'
 
@@ -401,6 +358,7 @@ const markdownContent = computed({
 const showPreview = ref(true)
 const showFindReplace = ref(false)
 const showOutline = ref(false)
+const showImageManager = ref(false)
 const isWysiwygMode = ref(false) // false = Preview mode, true = WYSIWYG mode
 
 // Template refs for drag-and-drop
@@ -409,9 +367,17 @@ const findReplaceRef = ref<InstanceType<typeof FindReplace> | null>(null)
 const documentOutlineRef = ref<InstanceType<typeof DocumentOutline> | null>(
   null
 )
-const wysiwygEditor = ref<HTMLElement | null>(null)
-const wysiwygScrollContainer = ref<HTMLElement | null>(null)
-const codeMirrorEditor = ref<InstanceType<typeof CodeMirrorEditor> | null>(null)
+const markdownEditorRef = ref<InstanceType<typeof MarkdownEditor> | null>(null)
+const previewRef = ref<InstanceType<typeof Preview> | null>(null)
+
+// Legacy ref getters for compatibility
+const wysiwygEditor = computed(() => previewRef.value?.wysiwygEditor || null)
+const wysiwygScrollContainer = computed(
+  () => previewRef.value?.wysiwygScrollContainer || null
+)
+const codeMirrorEditor = computed(
+  () => markdownEditorRef.value?.codeMirrorEditor || null
+)
 
 // File operations
 const fileInput = ref<HTMLInputElement>()
@@ -443,6 +409,9 @@ const saveStatusClass = computed(() => ({
   'text-yellow-600': saveStatus.value.includes('loading'),
 }))
 
+// HTML content for preview
+const htmlContent = computed(() => convertMarkdownToHtml(markdownContent.value))
+
 const togglePreview = () => {
   showPreview.value = !showPreview.value
 }
@@ -458,6 +427,17 @@ const toggleFindReplace = () => {
   if (!showFindReplace.value && codeMirrorEditor.value) {
     codeMirrorEditor.value.clearSearch()
   }
+}
+
+const toggleImageManager = () => {
+  showImageManager.value = !showImageManager.value
+}
+
+const handleImageManagerInsert = (image: StoredImage) => {
+  // Generate markdown for the stored image
+  const imageMarkdown = `![${image.name}](stored:${image.id})`
+  insertImageIntoEditor(imageMarkdown)
+  showImageManager.value = false
 }
 
 const toggleWysiwygMode = () => {
@@ -1165,28 +1145,33 @@ onMounted(async () => {
       event.preventDefault()
       saveAllDocuments()
     }
-    
+
     // Tab navigation shortcuts
     // Ctrl+Tab: Switch to next tab
     if (event.ctrlKey && event.key === 'Tab' && !event.shiftKey) {
       event.preventDefault()
-      const currentIndex = documents.value.findIndex(doc => doc.id === activeDocumentId.value)
+      const currentIndex = documents.value.findIndex(
+        (doc) => doc.id === activeDocumentId.value
+      )
       const nextIndex = (currentIndex + 1) % documents.value.length
       if (documents.value[nextIndex]) {
         switchToDocument(documents.value[nextIndex].id)
       }
     }
-    
+
     // Ctrl+Shift+Tab: Switch to previous tab
     if (event.ctrlKey && event.shiftKey && event.key === 'Tab') {
       event.preventDefault()
-      const currentIndex = documents.value.findIndex(doc => doc.id === activeDocumentId.value)
-      const prevIndex = currentIndex === 0 ? documents.value.length - 1 : currentIndex - 1
+      const currentIndex = documents.value.findIndex(
+        (doc) => doc.id === activeDocumentId.value
+      )
+      const prevIndex =
+        currentIndex === 0 ? documents.value.length - 1 : currentIndex - 1
       if (documents.value[prevIndex]) {
         switchToDocument(documents.value[prevIndex].id)
       }
     }
-    
+
     // Ctrl+1-9: Switch to specific tab by number
     if (event.ctrlKey && !event.shiftKey && !event.altKey) {
       const numKey = parseInt(event.key)
@@ -1198,7 +1183,7 @@ onMounted(async () => {
         }
       }
     }
-    
+
     // Ctrl-Z: Undo (only if not in CodeMirror editor)
     if (
       event.ctrlKey &&

@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import { EditorView, basicSetup } from 'codemirror'
+import { EditorView } from 'codemirror'
 import {
   keymap,
   drawSelection,
@@ -51,14 +51,14 @@ import {
 } from '@codemirror/search'
 
 // Props and emits
-interface Props {
+export interface EditorProps {
   modelValue: string
   placeholder?: string
   darkMode?: boolean
   readonly?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<EditorProps>(), {
   placeholder: 'Start typing your markdown here...',
   darkMode: false,
   readonly: false,
@@ -801,7 +801,7 @@ const replaceSelection = (text: string) => {
 }
 
 // Search functionality
-interface SearchOptions {
+export interface SearchOptions {
   caseSensitive?: boolean
   useRegex?: boolean
 }

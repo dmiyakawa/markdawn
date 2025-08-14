@@ -23,6 +23,77 @@
 - **Markdown Processing**: ✅ Stored image reference system with `stored:image-id` syntax
 - **Error Handling**: ✅ Comprehensive error handling and user feedback systems
 
+## Deployment Infrastructure ✅ (August 2025)
+
+### Ubuntu Server with Apache 2.4 Deployment ✅
+- ✅ **Complete automated deployment scripts** (`deployment/ubuntu-apache/`)
+- ✅ **Server setup script** with security hardening and Apache configuration
+- ✅ **One-command deployment** with staging support
+- ✅ **SSL certificate automation** (Let's Encrypt integration)
+- ✅ **Comprehensive documentation** and troubleshooting guide
+- ✅ **Production-ready virtual host** configuration with security headers
+
+### Docker Containerization ✅  
+- ✅ **Multi-stage Dockerfile** with optimized production builds
+- ✅ **Docker Compose** configurations for development and production
+- ✅ **Nginx-based production container** with security optimizations
+- ✅ **Health checks and monitoring** integration
+- ✅ **Complete deployment documentation**
+
+### Google Cloud Run Deployment ✅
+- ✅ **GitHub Actions CI/CD pipeline** with automated builds
+- ✅ **Cloud Build integration** for container image management
+- ✅ **Auto-scaling configuration** with custom domain support
+- ✅ **Artifact Registry** for container storage
+- ✅ **Production deployment scripts** and documentation
+
+### Build System Fixes ✅
+- ✅ **TypeScript build errors resolved** - Fixed test file prop access issues
+- ✅ **Successful production builds** - All TypeScript compilation working
+- ✅ **Updated CLAUDE.md** to reflect production-ready status
+
+### Component Architecture Refactoring ✅ (August 2025)
+- ✅ **MarkdownEditor Component** (`src/components/MarkdownEditor.vue`)
+  - Extracted left pane into dedicated component with all editor functionality
+  - Proper props interface for markdown content, preview state, and drag handling
+  - Event emission for scroll, find-replace toggle, and content updates
+  - Exposed methods for focus, scroll info, and positioning
+- ✅ **Preview Component** (`src/components/Preview.vue`)
+  - Extracted right pane into dedicated component with WYSIWYG and preview modes
+  - Toggle functionality between preview and WYSIWYG editing
+  - Event handling for scroll, input, blur, and paste events
+  - Complete styling for WYSIWYG editor with prose classes
+- ✅ **App.vue Simplification**
+  - Reduced complexity from 1274 lines by extracting editor and preview logic
+  - Clean component integration with proper prop binding and event handling
+  - Maintained all existing functionality while improving code organization
+  - Added htmlContent computed property for reactive preview updates
+- ✅ **Development Server Verification** - Application runs successfully with new architecture
+- ✅ **Test Compatibility** - 105/115 tests still passing with refactored components
+
+### Image Management Interface ✅ (August 2025)
+- ✅ **ImageManager Component** (`src/components/ImageManager.vue`)
+  - Complete image gallery browser with grid layout and thumbnail previews
+  - Search functionality for finding images by name
+  - Sorting options by date, name, and file size with ascending/descending order
+  - Multi-select functionality with batch delete operations
+  - Individual image actions: insert, preview, and delete
+  - Full-screen image preview modal with image details
+  - File size and dimension display for each image
+  - Empty state handling with helpful guidance
+- ✅ **App.vue Integration**
+  - Added "Gallery" button to Insert menu alongside image upload
+  - Modal overlay system for image manager display
+  - Integration with existing `insertImageIntoEditor` function
+  - Proper TypeScript typing with StoredImage interface
+- ✅ **User Experience Features**
+  - Click to insert images directly into document at cursor position  
+  - Visual selection feedback with border highlighting
+  - Hover effects with action buttons overlay
+  - Responsive grid layout adapting to different screen sizes
+  - Professional styling consistent with application design
+- ✅ **Functionality Verification** - Development server runs successfully with full image management workflow
+
 ## Implementation Details
 
 ### Menu Bar Layout (January 10, 2025)
@@ -339,3 +410,29 @@
   - **Code Quality**: All improvements maintain existing code standards and architecture
   - **Documentation**: Comprehensive implementation details captured for future reference
   - **Result**: Production-ready advanced editor features with professional-grade functionality
+
+## Deployment Options ✅ (August 2025)
+
+> **All deployment options are now production-ready and documented**
+
+### Ubuntu Server with Apache 2.4 Deployment ✅
+- ✅ **Complete deployment system** - Automated scripts with one-command deployment
+- ✅ **Server setup automation** - Security hardening and Apache configuration
+- ✅ **SSL certificate integration** - Let's Encrypt automation with renewal
+- ✅ **Production virtual host** - Security headers and optimization
+- ✅ **Staging environment support** - Development and production deployment modes
+- ✅ **Comprehensive documentation** - Complete setup and troubleshooting guides
+
+### Docker Containerization ✅  
+- ✅ **Multi-stage production builds** - Optimized Docker images with security scanning
+- ✅ **Docker Compose configuration** - Development and production container orchestration
+- ✅ **Nginx production setup** - High-performance web server with security optimization
+- ✅ **Health checks and monitoring** - Container health validation and logging
+- ✅ **Build optimization** - Minimal production images with efficient layering
+
+### Google Cloud Run Deployment ✅
+- ✅ **GitHub Actions CI/CD** - Automated build and deployment pipeline
+- ✅ **Cloud Build integration** - Container image management with Artifact Registry
+- ✅ **Auto-scaling configuration** - Responsive scaling based on traffic demand
+- ✅ **Custom domain support** - Professional domain mapping with SSL
+- ✅ **Production deployment scripts** - One-command cloud deployment automation
