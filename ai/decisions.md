@@ -232,3 +232,56 @@
 ### Complex State Management
 - **Rejected**: Vuex, Pinia (for now)
 - **Reason**: Simple state requirements don't justify complexity
+
+## UI/UX Design Decisions (August 2025)
+
+### Tailwind CSS v4 Compatibility: Opacity Syntax Update (Selected)
+- **Issue**: Tailwind v4 changed `bg-opacity-*` utility syntax causing transparent overlays to appear as solid black
+- **Solution**: Updated from `bg-black bg-opacity-30` to `bg-black/30` syntax 
+- **Implementation**: Applied throughout ImageManager overlays, modals, and semi-transparent elements
+- **Rationale**: Maintain visual consistency with modern Tailwind v4 opacity syntax
+- **Components Affected**: ImageManager hover overlays, modal backgrounds, button highlights
+
+### Image Usage Tracking and Deletion Protection (Selected)
+- **Decision**: Implement comprehensive image usage tracking with deletion warnings
+- **Implementation Strategy**:
+  - **Usage Counting**: `countImageUsage()`, `getImageUsageStats()`, `findDocumentsUsingImage()` utility functions
+  - **Visual Indicators**: Usage badges on each image showing "N uses" with blue (used) or gray (unused) styling
+  - **Deletion Warnings**: Detailed alerts showing which documents use images before deletion
+  - **Batch Operations**: Multi-select deletion with comprehensive usage summaries
+- **User Protection**: Prevents accidental deletion of images still referenced in documents
+- **Information Architecture**: Usage stats prominently displayed in image gallery interface
+- **Alternative Considered**: Simple confirmation dialogs - rejected for lack of usage context
+
+### Button Positioning: Contextual Placement Strategy (Selected)
+- **Decision**: Position control buttons next to their related content rather than separated in UI corners
+- **TabBar "New Document" Button**: Moved from right end to directly after last tab on left side
+  - **Rationale**: More intuitive tab workflow similar to modern browsers
+  - **Implementation**: Positioned within scrollable tab container with `flex-shrink-0`
+- **Preview "Edit" Button**: Moved from right side to directly next to "Preview" title
+  - **Rationale**: Creates more cohesive header with related controls grouped together
+  - **Implementation**: Changed from `justify-between` to inline positioning with `ml-2` spacing
+- **Benefits**: More logical information architecture, reduced cognitive load, familiar UI patterns
+
+### Document Statistics Repositioning: Editor Context Integration (Selected)
+- **Decision**: Move document statistics from header Information Pane to MarkdownEditor title area
+- **Information Order**: Standardized to Lines → Words → Characters (user requested sequence)
+- **Implementation**: 
+  - Added `stats` prop to MarkdownEditor component with computed statistics
+  - Positioned directly next to "Markdown Editor" title with `ml-3` spacing
+  - Maintained small text styling (`text-xs`) and subtle gray color
+- **Rationale**: Statistics are more contextually relevant next to the content they describe
+- **Benefits**: Cleaner header, more logical information grouping, immediate document context
+
+### Save Status Information Consolidation (Selected)
+- **Decision**: Consolidate all save-related information in TabBar next to document management controls
+- **Implementation**:
+  - **Last Saved Timestamp**: Positioned after "New document" button in subtle gray (`text-gray-500`)
+  - **Save Status Messages**: Positioned next to timestamp with original prominence (green for success)
+  - **Spacing**: Wider separation (`ml-4`) with proper spacing between elements (`space-x-3`)
+- **Information Architecture**: All document-related status grouped with document tabs
+- **Color Strategy**: 
+  - Persistent information (timestamps) in subtle gray
+  - Action feedback (save confirmations) in original prominent colors
+- **Header Cleanup**: Removed Information Pane entirely as all content moved to contextual locations
+- **Benefits**: Single location for document status, cleaner header, logical information grouping

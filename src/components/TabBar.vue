@@ -124,6 +124,38 @@
           </svg>
         </button>
       </div>
+
+      <!-- New Tab Button - positioned after tabs -->
+      <button
+        class="ml-1 p-2 rounded hover:bg-gray-200 transition-colors duration-200 flex-shrink-0"
+        @click="() => createNewDocument()"
+        title="New document"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </button>
+
+      <!-- Save Status - positioned after new button -->
+      <div class="ml-4 flex items-center space-x-3 text-xs flex-shrink-0">
+        <span
+          v-if="lastSaved"
+          class="text-gray-500"
+          title="Last saved time"
+        >
+          Saved: {{ formatTimestamp(lastSaved) }}
+        </span>
+        <span
+          v-if="saveStatus"
+          :class="saveStatusClass"
+        >
+          {{ saveStatus }}
+        </span>
+      </div>
     </div>
 
     <!-- Scroll Right Button -->
@@ -196,20 +228,6 @@
       </div>
     </div>
 
-    <!-- New Tab Button -->
-    <button
-      class="ml-2 p-2 rounded hover:bg-gray-200 transition-colors duration-200"
-      @click="() => createNewDocument()"
-      title="New document"
-    >
-      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-        <path
-          fill-rule="evenodd"
-          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-          clip-rule="evenodd"
-        />
-      </svg>
-    </button>
 
     <!-- Context Menu -->
     <div
@@ -289,6 +307,14 @@
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useDocuments } from '../composables/useDocuments'
 import type { TabContextMenuOptions } from '../types/document'
+
+// Props
+const props = defineProps<{
+  lastSaved?: string
+  saveStatus?: string
+  saveStatusClass: Record<string, boolean>
+  formatTimestamp: (timestamp: string) => string
+}>()
 
 // Document management
 const {

@@ -9,29 +9,27 @@
     :style="{ width: `${100 - leftPaneWidth}%` }"
   >
     <div
-      class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between min-h-8"
+      class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center min-h-8"
     >
       <h3 class="text-sm font-medium text-gray-700">
         {{ isWysiwygMode ? 'WYSIWYG Editor' : 'Preview' }}
       </h3>
-      <div class="flex items-center space-x-2">
-        <button
-          @click="$emit('toggle-wysiwyg-mode')"
-          :class="[
-            'px-2 py-1 text-xs rounded transition-colors duration-200',
-            isWysiwygMode
-              ? 'bg-blue-500 text-white hover:bg-blue-600'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-          ]"
-          :title="
-            isWysiwygMode
-              ? 'Switch to Preview mode'
-              : 'Switch to WYSIWYG editing mode'
-          "
-        >
-          {{ isWysiwygMode ? 'Preview' : 'Edit' }}
-        </button>
-      </div>
+      <button
+        @click="$emit('toggle-wysiwyg-mode')"
+        :class="[
+          'ml-2 px-2 py-1 text-xs rounded transition-colors duration-200',
+          isWysiwygMode
+            ? 'bg-blue-500 text-white hover:bg-blue-600'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+        ]"
+        :title="
+          isWysiwygMode
+            ? 'Switch to Preview mode'
+            : 'Switch to WYSIWYG editing mode'
+        "
+      >
+        {{ isWysiwygMode ? 'Preview' : 'Edit' }}
+      </button>
     </div>
     <div class="flex-1 overflow-hidden">
       <div

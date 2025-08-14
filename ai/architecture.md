@@ -34,7 +34,10 @@ src/
 │   ├── CodeMirrorEditor.vue     # Professional code editor with emacs-style shortcuts
 │   ├── FindReplace.vue          # Find/Replace UI with regex and case-sensitive support
 │   ├── ImageUploader.vue        # Drag-and-drop image upload component
-│   └── TabBar.vue              # Document tab management for multiple documents
+│   ├── ImageManager.vue         # Image gallery with usage tracking and deletion warnings
+│   ├── MarkdownEditor.vue       # Left pane editor with integrated document statistics
+│   ├── Preview.vue              # Right pane preview/WYSIWYG with inline edit toggle
+│   └── TabBar.vue              # Document tabs with integrated save status information
 ├── composables/          # Vue composables for shared logic
 │   ├── useDarkMode.ts           # Theme management (future feature)
 │   ├── useDocuments.ts          # Multiple document state management
@@ -44,7 +47,7 @@ src/
 │   └── document.ts              # Document and DocumentState interfaces
 ├── utils/                # Utility functions
 │   ├── fileOperations.ts        # Import/export, localStorage, ZIP creation
-│   ├── imageOperations.ts       # Image processing, storage, markdown generation
+│   ├── imageOperations.ts       # Image processing, storage, usage tracking, markdown generation
 │   └── markdown.ts              # Markdown/HTML conversion with image references
 ├── stores/               # State stores (empty - using composables pattern)
 ├── App.vue              # Main application component with menu bar and layout
@@ -68,16 +71,16 @@ tests/
 ## Application Architecture
 
 ### Core Features
-1. **Menu Bar Interface** - Professional controls organized in logical groups (File, Export, Insert, View) with Information Pane
-2. **Information Pane** - Real-time statistics (Words, Characters, Lines) and save status in header
-3. **Multiple Document Tabs** - Complete tab system for managing multiple documents with easy switching and organization
+1. **Menu Bar Interface** - Professional controls organized in logical groups (File, Export, Insert, View) with streamlined header
+2. **Integrated Information Display** - Document statistics in MarkdownEditor header, save status in TabBar
+3. **Multiple Document Tabs** - Complete tab system with integrated save status and document management
 4. **Find/Replace System** - Advanced search functionality with regex, case-sensitive options, and keyboard shortcuts
 5. **Dual Editor Layout** - Markdown editor (left) and WYSIWYG editor (right) with simultaneous editing
 6. **CodeMirror Editor** - Professional code editor with syntax highlighting and emacs-style navigation
 7. **WYSIWYG Editor** - Rich text editor with bidirectional HTML↔Markdown sync and real-time updates
 8. **Resizable Panes** - Drag-to-resize functionality between editors with 20%-80% constraints
 9. **Preview Toggle** - Hide/Show WYSIWYG pane to expand markdown editor to full width
-10. **Image Upload System** - Complete image management with cursor-based insertion, drag-and-drop, and storage
+10. **Image Management System** - Complete image operations with usage tracking, deletion protection, cursor-based insertion, and drag-and-drop
 11. **File Operations** - Import, export (MD/ZIP), save/load, and document management with multi-document support
 12. **Auto-save & Persistence** - Background saving every 30 seconds + content preservation across reloads
 13. **Responsive Design** - Mobile/tablet optimization with adaptive menu wrapping
@@ -168,21 +171,27 @@ tests/
 - **useDarkMode**: Theme management with persistent preferences and system detection (ready for future)
 
 ### User Interface Architecture
-- **Tab System**: Complete document tab management with TabBar component
+- **Tab System**: Document tab management with integrated save status display
   - Create, switch, duplicate, and close document tabs
   - Visual indicators for unsaved changes and active document
   - Context menus and tab operations
-- **Menu Bar**: Logical grouping of controls with responsive behavior and Information Pane
+  - Integrated save timestamp and status messages next to "New document" button
+- **Menu Bar**: Streamlined controls with logical grouping and responsive behavior
   - File Menu: New, Import, Save, Load operations
   - Export Menu: MD and ZIP export options (supports all documents)
-  - Insert Menu: Image upload functionality  
+  - Insert Menu: Image upload and gallery management functionality  
   - View Menu: Find/Replace toggle and WYSIWYG pane visibility toggle
-  - Information Pane: Real-time statistics and save status with compact spacing
-- **Dual Editor Layout**: Always-visible Markdown (left) and WYSIWYG (right) editors
+  - Clean header design with information moved to contextual locations
+- **Dual Editor Layout**: Markdown editor (left) with integrated statistics and WYSIWYG editor (right) with inline edit toggle
+  - MarkdownEditor: Document statistics (Lines, Words, Chars) next to title
+  - Preview: Edit/Preview toggle button positioned next to pane title
+- **Image Management**: Comprehensive gallery system with usage tracking and deletion protection
+  - Visual usage indicators showing reference counts across documents
+  - Detailed deletion warnings preventing accidental removal of used images
+  - Multi-select operations with batch usage analysis
 - **Find/Replace Panel**: Positioned below menu bar with comprehensive search options
+- **Contextual Information Placement**: All UI information positioned near related functionality
 - **Responsive Design**: Mobile-first with `hidden sm:inline` labels and flexible menu wrapping
-- **No Full-Screen Mode**: Removed in favor of WYSIWYG pane toggle for better workflow
-- **Visual Feedback**: Hover states, loading indicators, and status messaging in Information Pane
 
 ### Storage Strategy
 - **In-Memory**: Reactive document state with multiple documents array and active document tracking

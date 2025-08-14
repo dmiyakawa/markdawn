@@ -10,11 +10,13 @@
     :style="{ width: showPreview ? `${leftPaneWidth}%` : '100%' }"
   >
     <div
-      class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between min-h-8"
+      class="px-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center min-h-8"
     >
       <h3 class="text-sm font-medium text-gray-700">Markdown Editor</h3>
-      <div class="flex items-center space-x-2">
-        <!-- Editor controls can be added here if needed -->
+      <div class="ml-3 flex items-center text-xs text-gray-600">
+        <span class="mr-3">Lines: {{ stats.lines }}</span>
+        <span class="mr-3">Words: {{ stats.words }}</span>
+        <span>Chars: {{ stats.characters.withSpaces }}</span>
       </div>
     </div>
     <div class="flex-1 overflow-hidden">
@@ -51,6 +53,10 @@ const props = defineProps({
   },
   isDragging: {
     type: Boolean,
+    required: true,
+  },
+  stats: {
+    type: Object,
     required: true,
   },
 })

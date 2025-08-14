@@ -137,9 +137,16 @@
               <span class="text-xs text-gray-500">{{ formatFileSize(image.size) }}</span>
               <span class="text-xs text-gray-500">{{ image.width }}×{{ image.height }}</span>
             </div>
-            <p class="text-xs text-gray-400 mt-1">
-              {{ formatDate(image.uploadedAt) }}
-            </p>
+            <div class="flex justify-between items-center mt-1">
+              <span class="text-xs text-gray-400">{{ formatDate(image.uploadedAt) }}</span>
+              <span 
+                class="text-xs px-1.5 py-0.5 rounded"
+                :class="imageUsageStats[image.id] > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'"
+                :title="imageUsageStats[image.id] > 0 ? `Used ${imageUsageStats[image.id]} time${imageUsageStats[image.id] > 1 ? 's' : ''} in documents` : 'Not used in any document'"
+              >
+                {{ imageUsageStats[image.id] || 0 }} use{{ (imageUsageStats[image.id] || 0) === 1 ? '' : 's' }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -187,7 +194,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getStoredImages, deleteStoredImage, type StoredImage } from '../utils/imageOperations'
+import { getStoredImages, deleteStoredImage, countImageUsage, findDocumentsUsingImage, type StoredImage } from '../utils/imageOperations'
+
+// Props
+const props = defineProps<{
+  documents: Array<{id: string, title: string, content: string}>
+}>()
 
 // Emits
 const emit = defineEmits<{
@@ -202,6 +214,15 @@ const searchQuery = ref('')
 const sortBy = ref<'uploadedAt' | 'name' | 'size'>('uploadedAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const previewingImage = ref<StoredImage | null>(null)
+
+// Computed usage statistics
+const imageUsageStats = computed(() => {
+  const stats: Record<string, number> = {}
+  images.value.forEach(image => {
+    stats[image.id] = countImageUsage(image.id, props.documents)
+  })
+  return stats
+})
 
 // Load images
 const loadImages = () => {
@@ -248,7 +269,26 @@ const selectForInsertion = (image: StoredImage) => {
 }
 
 const deleteImage = async (imageId: string) => {
-  if (confirm('Are you sure you want to delete this image?')) {
+  const usage = imageUsageStats.value[imageId] || 0
+  const image = images.value.find(img => img.id === imageId)
+  const imageName = image?.name || 'Unknown image'
+  
+  let confirmMessage = `Are you sure you want to delete "${imageName}"?`
+  
+  if (usage > 0) {
+    const usingDocuments = findDocumentsUsingImage(imageId, props.documents)
+    const docList = usingDocuments.map(doc => `• ${doc.title} (${doc.count} time${doc.count > 1 ? 's' : ''})`).join('\n')
+    
+    confirmMessage = `⚠️ WARNING: "${imageName}" is currently being used in ${usage} location${usage > 1 ? 's' : ''} across ${usingDocuments.length} document${usingDocuments.length > 1 ? 's' : ''}:
+
+${docList}
+
+Deleting this image will break these references and show as missing images in your documents.
+
+Are you sure you want to delete it anyway?`
+  }
+  
+  if (confirm(confirmMessage)) {
     if (deleteStoredImage(imageId)) {
       loadImages()
       selectedImages.value = selectedImages.value.filter(id => id !== imageId)
@@ -260,7 +300,28 @@ const deleteSelected = async () => {
   if (selectedImages.value.length === 0) return
   
   const count = selectedImages.value.length
-  if (confirm(`Are you sure you want to delete ${count} selected image${count > 1 ? 's' : ''}?`)) {
+  const imagesInUse = selectedImages.value.filter(id => (imageUsageStats.value[id] || 0) > 0)
+  
+  let confirmMessage = `Are you sure you want to delete ${count} selected image${count > 1 ? 's' : ''}?`
+  
+  if (imagesInUse.length > 0) {
+    const totalUsages = imagesInUse.reduce((total, id) => total + (imageUsageStats.value[id] || 0), 0)
+    const usageDetails = imagesInUse.map(id => {
+      const image = images.value.find(img => img.id === id)
+      const usage = imageUsageStats.value[id] || 0
+      return `• ${image?.name || 'Unknown'} (used ${usage} time${usage > 1 ? 's' : ''})`
+    }).join('\n')
+    
+    confirmMessage = `⚠️ WARNING: ${imagesInUse.length} of the selected images are currently being used in your documents (${totalUsages} total usage${totalUsages > 1 ? 's' : ''}):
+
+${usageDetails}
+
+Deleting these images will break references and show as missing images in your documents.
+
+Are you sure you want to delete ${count} selected image${count > 1 ? 's' : ''} anyway?`
+  }
+  
+  if (confirm(confirmMessage)) {
     selectedImages.value.forEach(imageId => {
       deleteStoredImage(imageId)
     })
