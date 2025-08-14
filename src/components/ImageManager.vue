@@ -101,7 +101,7 @@
             />
             
             <!-- Overlay with actions -->
-            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
               <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
                 <button
                   @click="selectForInsertion(image)"
@@ -148,13 +148,13 @@
     <!-- Image Preview Modal -->
     <div
       v-if="previewingImage"
-      class="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black/75 flex flex-col items-center justify-center z-50 p-4"
       @click="closePreview"
     >
       <!-- Close button -->
       <button
         @click="closePreview"
-        class="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 z-10"
+        class="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/75 z-10"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -172,7 +172,7 @@
       </div>
 
       <!-- Image details panel - always at bottom -->
-      <div class="mt-4 bg-black bg-opacity-50 text-white p-3 rounded-lg w-full max-w-lg">
+      <div class="mt-4 bg-black/50 text-white p-3 rounded-lg w-full max-w-lg">
         <p class="font-medium text-center">{{ previewingImage.name }}</p>
         <p class="text-sm opacity-75 text-center">
           {{ previewingImage.width }}×{{ previewingImage.height }} • {{ formatFileSize(previewingImage.size) }}
