@@ -108,7 +108,7 @@ describe('CodeMirrorEditor', () => {
       },
     })
 
-    expect(wrapper.props('modelValue')).toBe(testContent)
+    expect((wrapper.vm as any).$props.modelValue).toBe(testContent)
   })
 
   it('accepts placeholder prop', () => {
@@ -120,7 +120,7 @@ describe('CodeMirrorEditor', () => {
       },
     })
 
-    expect(wrapper.props('placeholder')).toBe(placeholder)
+    expect((wrapper.vm as any).$props.placeholder).toBe(placeholder)
   })
 
   it('accepts darkMode prop', () => {
@@ -131,7 +131,7 @@ describe('CodeMirrorEditor', () => {
       },
     })
 
-    expect(wrapper.props('darkMode')).toBe(true)
+    expect((wrapper.vm as any).$props.darkMode).toBe(true)
   })
 
   it('accepts readonly prop', () => {
@@ -142,7 +142,7 @@ describe('CodeMirrorEditor', () => {
       },
     })
 
-    expect(wrapper.props('readonly')).toBe(true)
+    expect((wrapper.vm as any).$props.readonly).toBe(true)
   })
 
   it('emits update:modelValue when content changes', async () => {

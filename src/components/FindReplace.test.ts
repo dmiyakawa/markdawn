@@ -228,12 +228,16 @@ describe('FindReplace', () => {
     const caseSensitiveCheckbox = checkboxes[0]
 
     // Should start as not checked
-    expect(caseSensitiveCheckbox.element.checked).toBe(false)
+    expect((caseSensitiveCheckbox.element as HTMLInputElement).checked).toBe(
+      false
+    )
 
-    await caseSensitiveCheckbox.setChecked(true)
+    await caseSensitiveCheckbox.setValue(true)
 
     // Should become checked after toggle
-    expect(caseSensitiveCheckbox.element.checked).toBe(true)
+    expect((caseSensitiveCheckbox.element as HTMLInputElement).checked).toBe(
+      true
+    )
   })
 
   it('toggles regex option', async () => {
@@ -247,12 +251,12 @@ describe('FindReplace', () => {
     const regexCheckbox = checkboxes[1]
 
     // Should start as not checked
-    expect(regexCheckbox.element.checked).toBe(false)
+    expect((regexCheckbox.element as HTMLInputElement).checked).toBe(false)
 
-    await regexCheckbox.setChecked(true)
+    await regexCheckbox.setValue(true)
 
     // Should become checked after toggle
-    expect(regexCheckbox.element.checked).toBe(true)
+    expect((regexCheckbox.element as HTMLInputElement).checked).toBe(true)
   })
 
   it('updates visible prop when close button is clicked', async () => {
@@ -260,7 +264,7 @@ describe('FindReplace', () => {
       props: {
         visible: true,
         'onUpdate:visible': (value: boolean) =>
-          wrapper.setProps({ visible: value }),
+          wrapper?.setProps({ visible: value }),
       },
     })
 
@@ -270,7 +274,7 @@ describe('FindReplace', () => {
     // Should emit update:visible event
     const visibleEvents = wrapper.emitted('update:visible')
     expect(visibleEvents).toBeTruthy()
-    expect(visibleEvents[0]).toEqual([false])
+    expect(visibleEvents![0]).toEqual([false])
   })
 
   it('handles Enter key in find input to trigger find next', async () => {
@@ -311,7 +315,7 @@ describe('FindReplace', () => {
       props: {
         visible: true,
         'onUpdate:visible': (value: boolean) =>
-          wrapper.setProps({ visible: value }),
+          wrapper?.setProps({ visible: value }),
       },
     })
 
@@ -320,7 +324,7 @@ describe('FindReplace', () => {
 
     const visibleEvents = wrapper.emitted('update:visible')
     expect(visibleEvents).toBeTruthy()
-    expect(visibleEvents[0]).toEqual([false])
+    expect(visibleEvents![0]).toEqual([false])
   })
 
   it('focuses find input when panel becomes visible', async () => {
