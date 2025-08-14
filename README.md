@@ -1,12 +1,15 @@
 # Markdown Editor
 
-プロフェッショナルなWebベースのMarkdownエディターです。リアルタイムプレビュー、画像アップロード機能、完全なファイル操作機能を備えています。
+主に個人利用のために作られたWebベースのMarkdownエディターです。静的ファイルだけで動作します。メモ書きにどうぞ。
 
-## 📋 プロジェクト概要
+Claude Codeに主に書かせています。AIっぽいのは大体AIだからです。`README.md`は少し人が直してます。なんかキモいね。
+
+## プロジェクト概要
 
 このプロジェクトは、モダンなWebテクノロジーを使用して構築されたMarkdownエディターです。主な特徴：
 
-### ✨ 主要機能
+### 主要機能
+
 - **CodeMirror 6統合**: シンタックスハイライト付きのプロフェッショナルなエディター
 - **Emacs風キーバインド**: 完全なナビゲーションショートカット（Ctrl-a, Ctrl-e, Ctrl-k等）
 - **検索・置換機能**: 正規表現と大文字小文字区別対応の高度な検索システム
@@ -18,48 +21,57 @@
 - **自動保存**: 30秒間隔のバックグラウンド保存
 - **リアルタイムプレビュー**: GitHubフレーバーMarkdown対応
 
-### 🛠 技術スタック
+### 技術スタック
+
 - **Vue.js 3.5.18** - Composition API使用
 - **TypeScript 5.9.2** - 型安全な開発
 - **CodeMirror 6** - プロフェッショナルなコードエディター
 - **Tailwind CSS 4.1.11** - ユーティリティファーストCSS
 - **Vite 7.1.1** - 高速ビルドツール
-- **Vitest 3.2.4** - 単体テストフレームワーク  
+- **Vitest 3.2.4** - 単体テストフレームワーク
 - **Playwright** - E2Eテスト・ビジュアルリグレッションテスト
 
-## 🚀 ローカル起動方法
+## ローカル起動方法
 
 ### 前提条件
-- Node.js 18以上
-- npm または yarn
+
+- Node.js 20以上
+- npm
 
 ### インストールと起動
+
 ```bash
-# リポジトリをクローン
-git clone <repository-url>
-cd rss3
-
-# 依存関係をインストール
 npm install
-
-# 開発サーバーを起動
 npm run dev
 ```
 
 開発サーバーが起動後、ブラウザーで `http://localhost:5173` にアクセスしてください。
 
 ### プロダクションビルド
-```bash
-# プロダクション用にビルド
-npm run build
 
-# ビルド結果をプレビュー
+```bash
+npm run build
 npm run preview
+```
+
+Apache2を経由して静的ファイルのみで設置が可能です。`deployment/ubuntu-apache/` にいくらか資料があります。ただし、ルートに直接配置する前提でえーあいがやたら書き殴っているだけです。パスを変更する場合は [base](https://vite.dev/guide/build.html#public-base-path) の設定を変更してから `npm run build` をしてください。
+
+```
+export default defineConfig({
+  plugins: [vue(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
+  base: '/markdown-editor/',    <--- ここ
+})
 ```
 
 ## 🧪 テストの実行方法
 
 ### 単体テスト（Unit Test）
+
 ```bash
 # 全ての単体テストを実行
 npm run test
@@ -74,6 +86,7 @@ npm run test:watch
 **テストカバレッジ**: 現在80%以上のカバレッジを維持（69個のテストが全て通過）
 
 ### E2Eテスト（End-to-End Test）
+
 ```bash
 # E2Eテストを実行
 npm run test:e2e
@@ -95,6 +108,7 @@ npm run test:e2e:report
 **対応ブラウザー**: Chromium、Firefox、Mobile Chrome
 
 ### コード品質チェック
+
 ```bash
 # ESLintでコード検査
 npm run lint
@@ -139,7 +153,7 @@ rss3/
 ├── test-results/                 # テスト結果（自動生成）
 ├── package.json                  # 依存関係・スクリプト定義
 ├── vite.config.ts               # Vite設定
-├── vitest.config.ts             # Vitest設定  
+├── vitest.config.ts             # Vitest設定
 ├── playwright.config.ts         # Playwright設定
 ├── tsconfig.json                # TypeScript設定
 ├── tailwind.config.js           # Tailwind CSS設定
@@ -149,16 +163,19 @@ rss3/
 ### 🎯 重要なファイル説明
 
 #### コアコンポーネント
+
 - **`src/App.vue`**: メインレイアウト、メニューバー、分割パネル管理
 - **`src/components/CodeMirrorEditor.vue`**: CodeMirror 6統合エディター
 - **`src/components/FindReplace.vue`**: 検索・置換UI（メニューバー下に配置）
 
 #### ユーティリティ
+
 - **`src/utils/markdown.ts`**: Markdown↔HTML変換（marked.js使用）
 - **`src/utils/fileOperations.ts`**: ファイルI/O、localStorage、ZIP作成
 - **`src/utils/imageOperations.ts`**: 画像処理、リサイズ、ブラウザー保存
 
 #### テスト
+
 - **単体テスト**: `*.test.ts`ファイルで各機能をテスト
 - **E2Eテスト**: `tests/e2e/`でユーザーワークフローをテスト
 - **ビジュアルリグレッション**: スクリーンショット比較でUI一貫性を保証
@@ -166,8 +183,9 @@ rss3/
 ## 🎮 キーボードショートカット
 
 ### Emacs風ナビゲーション
+
 - **Ctrl-a**: 行頭に移動
-- **Ctrl-e**: 行末に移動  
+- **Ctrl-e**: 行末に移動
 - **Ctrl-b**: カーソルを左に移動
 - **Ctrl-f**: カーソルを右に移動
 - **Ctrl-n**: 次の行に移動（列位置を保持）
@@ -176,21 +194,22 @@ rss3/
 - **Ctrl-y**: 切り取ったテキストを貼り付け（ヤンク）
 
 ### その他
+
 - **Ctrl-h**: 検索・置換パネルの表示切り替え
 
 ## 🔧 開発コマンド一覧
 
-| コマンド | 説明 |
-|---------|-----|
-| `npm run dev` | 開発サーバー起動 |
-| `npm run build` | プロダクションビルド |
-| `npm run preview` | ビルド結果をプレビュー |
-| `npm run test` | 単体テスト実行 |
-| `npm run test:coverage` | カバレッジ付きテスト |
-| `npm run test:e2e` | E2Eテスト実行 |
+| コマンド                  | 説明                      |
+| ------------------------- | ------------------------- |
+| `npm run dev`             | 開発サーバー起動          |
+| `npm run build`           | プロダクションビルド      |
+| `npm run preview`         | ビルド結果をプレビュー    |
+| `npm run test`            | 単体テスト実行            |
+| `npm run test:coverage`   | カバレッジ付きテスト      |
+| `npm run test:e2e`        | E2Eテスト実行             |
 | `npm run test:e2e:headed` | ブラウザー表示でE2Eテスト |
-| `npm run lint` | コード検査 |
-| `npm run format` | コード整形 |
+| `npm run lint`            | コード検査                |
+| `npm run format`          | コード整形                |
 
 ## 📝 ライセンス
 
