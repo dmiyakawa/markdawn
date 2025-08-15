@@ -155,7 +155,7 @@ export async function processImageForStorage(
 
     // Import generateImageId dynamically to avoid circular dependency
     const { generateImageId } = await import('./imageStorage')
-    
+
     const storedImage: StoredImage = {
       id: generateImageId(),
       name: file.name,

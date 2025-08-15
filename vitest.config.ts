@@ -13,6 +13,7 @@ export default defineConfig({
       exclude: [
         '**/node_modules/**',
         '**/tests/e2e/**',
+        '**/dist/**',
         '**/*.config.*',
         '**/useDarkMode.ts', // Unused feature
       ],
