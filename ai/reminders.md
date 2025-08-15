@@ -9,8 +9,10 @@ This file contains what must be done during development.
 #### Code Quality Checks
 
 - [ ] Run `npm run build` to ensure TypeScript compilation succeeds
-- [ ] Run `npm run lint` to check for linting issues
 - [ ] Run `npm run format` to ensure consistent formatting
+- [ ] Run `npm run lint` to check for linting issues
+- [ ] All new features have unit tests
+- [ ] All tests pass with `npm run test`
 - [ ] Run `npm run test:coverage` to verify 80% test coverage maintained
 - [ ] Run `npm run test:e2e` to verify E2E tests are working
 
@@ -18,23 +20,15 @@ This file contains what must be done during development.
 
 - [ ] Update `ai/architecture.md` if any architectural decisions were made
 - [ ] Update `ai/decisions.md` if any development choices were made
-- [ ] Update `ai/tasks.md` with any new tasks discovered or remaining work
-- [ ] Move completed tasks in `ai/tasks.md` to `ai/completed_tasks.md`
 - [ ] Update `ai/reminders.md` if project status changed significantly
+- [ ] Update `ai/tasks.md` with any new tasks discovered or remaining work
+- [ ] Move completed tasks from `ai/tasks.md` to `ai/completed_tasks.md`
 
 #### Development State
 
 - [ ] Commit significant progress (if requested by user)
 - [ ] Record what was accomplished in `ai/logs/` directory
 - [ ] Ensure application is in a working state (can run `npm run dev` successfully)
-
-#### Testing Requirements
-
-- [ ] All new features have unit tests
-- [ ] Coverage thresholds are met (80% minimum)
-- [ ] All tests pass with `npm run test`
-- [ ] E2E tests with Playwright are working
-- [ ] Move completed tasks from `ai/tasks.md` to `ai/completed_tasks.md`
 
 ## Critical Development Reminders
 

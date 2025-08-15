@@ -300,7 +300,8 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useDocuments } from '../composables/useDocuments'
 import type { TabContextMenuOptions } from '../types/document'
 
-// Props
+// Props - used in template
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
   lastSaved?: string
   saveStatus?: string

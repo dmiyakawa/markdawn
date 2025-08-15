@@ -2,6 +2,7 @@
  * Test setup file for Vitest
  * Mocks browser APIs that are not available in the test environment
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
 declare const global: any
 

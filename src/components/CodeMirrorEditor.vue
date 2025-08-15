@@ -463,7 +463,8 @@ const initializeEditor = async () => {
       beforeinput: (event: InputEvent) => {
         // Optimize for large paste operations
         if (event.inputType === 'insertFromPaste') {
-          const text = (event as any).data || ''
+          const clipboardEvent = event as unknown as ClipboardEvent
+          const text = clipboardEvent.clipboardData?.getData('text') || ''
           if (text.length > 100000) {
             console.warn(
               'Large paste operation detected. Consider breaking into smaller chunks for better performance.'
@@ -812,7 +813,8 @@ export interface SearchOptions {
   useRegex?: boolean
 }
 
-const performSearch = (query: string, options: SearchOptions = {}) => {
+// Search functionality - currently unused but may be needed for future features
+/* const performSearch = (query: string, options: SearchOptions = {}) => {
   if (!editorView || !query) return null
 
   const searchQuery = new SearchQuery({
@@ -828,7 +830,7 @@ const performSearch = (query: string, options: SearchOptions = {}) => {
   })
 
   return searchQuery
-}
+} */
 
 const searchNext = (query: string, options: SearchOptions = {}) => {
   if (!editorView) return false

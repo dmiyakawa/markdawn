@@ -196,9 +196,7 @@ End of document.`
 
       // Add content with image reference
       await editor.click()
-      await editor.fill(
-        '# Document\n\n![Sample](sample.jpg)\n\nContent.'
-      )
+      await editor.fill('# Document\n\n![Sample](sample.jpg)\n\nContent.')
 
       // Set up download promise
       const downloadPromise = page.waitForEvent('download')

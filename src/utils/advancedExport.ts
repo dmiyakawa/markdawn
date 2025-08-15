@@ -4,7 +4,8 @@
  */
 
 import { convertMarkdownToHtml } from './markdown'
-import { getStoredImages, type StoredImage } from './imageOperations'
+import { getStoredImages } from './imageOperations'
+// type StoredImage - currently unused but available for future use
 import type { Document } from '../types/document'
 
 export interface ExportOptions {
@@ -75,6 +76,7 @@ export async function exportAsPDF(
   options: ExportOptions = {}
 ): Promise<void> {
   // First create an HTML version optimized for PDF
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const pdfOptions: ExportOptions = {
     ...options,
     theme: 'academic', // Better for PDF

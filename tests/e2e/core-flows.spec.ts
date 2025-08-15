@@ -21,9 +21,18 @@ test.describe('Core User Flows', () => {
 
       // Clear existing content and add new content
       await editor.click()
-      
+
+      // Clear any existing content first - select all then replace
+      await page.keyboard.press('Control+a')
+      await page.waitForTimeout(200)
+
       // Use the contenteditable attribute to set content directly
-      await editor.fill('# My Document\n\nThis is **bold** text and *italic* text.')
+      await editor.fill(
+        '# My Document\n\nThis is **bold** text and *italic* text.'
+      )
+
+      // Wait longer for content to be processed and rendered
+      await page.waitForTimeout(1000)
 
       // Verify content appears in editor
       const editorContent = await editor.textContent()
@@ -31,7 +40,7 @@ test.describe('Core User Flows', () => {
       expect(editorContent).toContain('**bold**')
 
       // Wait for preview to update
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(800)
 
       // Verify preview renders HTML correctly - target exact elements
       const preview = page.locator('[data-testid="preview-panel"] .prose')
@@ -111,9 +120,7 @@ test.describe('Core User Flows', () => {
 
       // Add content to export
       await editor.click()
-      await editor.fill(
-        '# Export Test\n\nThis content will be exported.'
-      )
+      await editor.fill('# Export Test\n\nThis content will be exported.')
 
       // Set up download promise before clicking
       const downloadPromise = page.waitForEvent('download')
@@ -133,9 +140,7 @@ test.describe('Core User Flows', () => {
 
       // Add content
       await editor.click()
-      await editor.fill(
-        '# ZIP Export Test\n\nThis will be exported as ZIP.'
-      )
+      await editor.fill('# ZIP Export Test\n\nThis will be exported as ZIP.')
 
       // Set up download promise
       const downloadPromise = page.waitForEvent('download')

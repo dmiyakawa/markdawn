@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import CodeMirrorEditor from './CodeMirrorEditor.vue'
@@ -153,7 +154,7 @@ describe('CodeMirrorEditor', () => {
     })
 
     // Simulate content change by accessing the component's internal methods
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const vm = wrapper.vm as any
 
     // Wait for component to be fully mounted
@@ -173,7 +174,7 @@ describe('CodeMirrorEditor', () => {
     await wrapper.vm.$nextTick()
 
     // Access the component's methods to test find/replace toggle
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const vm = wrapper.vm as any
     expect(typeof vm.clearSearch).toBe('function')
     expect(typeof vm.searchNext).toBe('function')
@@ -189,7 +190,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
 
     // Check that all required methods are exposed
@@ -215,7 +215,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
 
     // Should not throw when calling focus
@@ -231,7 +230,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
     const selection = vm.getSelection()
 
@@ -250,7 +248,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
 
     // Should not throw when calling insertText
@@ -266,7 +263,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
 
     // Should not throw when calling search methods
@@ -288,7 +284,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
 
     // Should not throw when calling replace methods
@@ -315,7 +310,6 @@ describe('CodeMirrorEditor', () => {
 
     await wrapper.vm.$nextTick()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vm = wrapper.vm as any
 
     // Should not throw when calling scroll methods

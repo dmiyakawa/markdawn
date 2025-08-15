@@ -48,33 +48,6 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 
 ## Medium Priority
 
-### Component Architecture Improvements
-
-- ✅ **COMPLETED - Refactor panes into separate UI components**
-  - ✅ Extracted left pane into dedicated `MarkdownEditor.vue` component
-  - ✅ Extracted right pane into dedicated `Preview.vue` component  
-  - ✅ Moved WYSIWYG functionality into `Preview.vue` with mode toggle
-  - ✅ Improved code organization and component reusability
-  - ✅ Simplified App.vue by reducing inline complexity
-  - ✅ Enabled better testing of individual pane components
-  - ✅ Prepared for potential layout customization features
-
-### Image Management Interface
-
-- ✅ **COMPLETED - Full Image Management System**
-  - ✅ Created image gallery browser for stored images
-  - ✅ Added image management panel (view, delete, organize stored images)
-  - ✅ Implemented batch image operations (select multiple, bulk delete)
-  - ✅ Added image insertion helper with preview and alt text editing
-  - ✅ **Created dedicated `ImageManager.vue` component**
-    - ✅ Built standalone image management interface with gallery view
-    - ✅ Included image preview, metadata display, and action buttons
-    - ✅ Implemented batch operations (select multiple, bulk delete, export)
-    - ✅ Added search/filter functionality for stored images
-    - ✅ Integrated with existing image storage system
-    - ✅ Provided drag-and-drop organization capabilities
-- ✅ Tested image upload and resize functionality across browsers
-
 ### Advanced Tab Management Features
 
 - **Current Implementation**: Tab bar with create, switch, rename, duplicate, close, context menus, unsaved indicators, drag-and-drop reordering, overflow management
@@ -249,6 +222,40 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 3. Focus on Mobile Chrome browser for consistent reproduction
 
 **Priority**: Medium - Performance testing important but flaky tests violate reliability requirements
+
+### Find/Replace Single Occurrence Test Flakiness (Medium Priority)
+
+**Problem**: E2E find/replace test failing due to content setting and selection race conditions
+
+**Location**: `tests/e2e/find-replace.spec.ts:116` - "should replace single occurrence"
+
+**Status**: Currently disabled with `test.skip()`
+
+**Issue Description**:
+- Test attempts to set content "Hello world! This is a world of tests."
+- Content gets scrambled/mixed with welcome content during setting process
+- Multiple `Control+a` selections and `fill()` operations cause race conditions
+- Results in content like "sts. teofld wors as iThi! rldwo# Welcome to Markdown Editor..."
+
+**Root Cause**: CodeMirror content setting race conditions
+- `Control+a` keyboard selections not completing before `fill()` operation
+- CodeMirror's custom keybindings interfering with standard selection behavior
+- Content mixing between original welcome text and test content
+- Timing issues between keyboard events and editor state updates
+
+**Investigation Needed**:
+1. Develop more reliable content clearing approach for CodeMirror
+2. Find alternative to `Control+a` + `fill()` pattern for content replacement
+3. Add proper wait conditions for editor state stabilization
+4. Consider using CodeMirror's direct API instead of keyboard simulation
+5. Test alternative content setting methods (direct dispatching vs keyboard events)
+
+**Re-enabling Instructions**:
+1. Remove `test.skip()` from line 116 in `tests/e2e/find-replace.spec.ts`
+2. Test will immediately reproduce the content scrambling issue
+3. Focus on content replacement timing and method reliability
+
+**Priority**: Medium - Find/replace functionality is important but test stability more critical than coverage
 
 ### Browser Compatibility
 

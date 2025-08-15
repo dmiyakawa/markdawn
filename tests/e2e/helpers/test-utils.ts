@@ -14,19 +14,19 @@ export async function setEditorContent(
   content: string
 ): Promise<void> {
   await editor.click()
-  
+
   // Use Ctrl+A to select all
   await page.keyboard.press('Control+a')
-  
+
   // Try different approaches to clear content
   await page.keyboard.press('Backspace')
-  
+
   // Add a small delay to ensure the content is cleared
   await page.waitForTimeout(100)
-  
+
   // Type the new content
   await page.keyboard.type(content)
-  
+
   // Wait for the content to be processed
   await page.waitForTimeout(200)
 }
