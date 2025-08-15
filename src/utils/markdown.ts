@@ -1,5 +1,5 @@
 import { marked } from 'marked'
-import { getStoredImage, getStoredImages } from './imageOperations'
+import { getStoredImage, getStoredImages } from './imageStorage'
 
 /**
  * Configure marked with safe defaults and syntax highlighting support

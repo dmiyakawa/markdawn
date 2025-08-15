@@ -181,7 +181,7 @@ describe('File Export Operations', () => {
     ]
 
     // Mock image operations
-    vi.doMock('./imageOperations', () => ({
+    vi.doMock('./imageStorage', () => ({
       getStoredImages: () => [],
     }))
 

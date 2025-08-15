@@ -558,11 +558,12 @@ const initializeEditor = async () => {
         if (!file) return
 
         // Import image processing utilities
-        const {
-          processImageForStorage,
-          saveImageToStorage,
-          generateImageMarkdown,
-        } = await import('../utils/imageOperations')
+        const { processImageForStorage } = await import(
+          '../utils/imageProcessing'
+        )
+        const { saveImageToStorage, generateImageMarkdown } = await import(
+          '../utils/imageStorage'
+        )
 
         // Process and save the image
         const processedImage = await processImageForStorage(file)

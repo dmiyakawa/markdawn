@@ -259,7 +259,7 @@ import {
   countImageUsage,
   findDocumentsUsingImage,
   type StoredImage,
-} from '../utils/imageOperations'
+} from '../utils/imageStorage'
 
 // Props
 const props = defineProps<{
@@ -344,9 +344,13 @@ const deleteImage = async (imageId: string) => {
   if (usage > 0) {
     const usingDocuments = findDocumentsUsingImage(imageId, props.documents)
     const docList = usingDocuments
-      .map(
-        (doc) => `• ${doc.title} (${doc.count} time${doc.count > 1 ? 's' : ''})`
-      )
+      .map((doc) => {
+        const docWithContent = props.documents.find((d) => d.id === doc.id)
+        const count = docWithContent
+          ? countImageUsage(imageId, [docWithContent])
+          : 0
+        return `• ${doc.title} (${count} time${count !== 1 ? 's' : ''})`
+      })
       .join('\n')
 
     confirmMessage = `⚠️ WARNING: "${imageName}" is currently being used in ${usage} location${usage > 1 ? 's' : ''} across ${usingDocuments.length} document${usingDocuments.length > 1 ? 's' : ''}:

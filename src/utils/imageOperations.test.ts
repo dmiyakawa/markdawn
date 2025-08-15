@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   generateImageId,
-  isValidImageFile,
   getStoredImages,
   saveImageToStorage,
   getStoredImage,
@@ -10,7 +9,8 @@ import {
   clearImageStorage,
   generateImageMarkdown,
   type StoredImage,
-} from './imageOperations'
+} from './imageStorage'
+import { isValidImageFile } from './imageProcessing'
 
 // Mock localStorage
 const localStorageMock = {
@@ -265,7 +265,7 @@ describe('imageOperations', () => {
 
     it('uses filename as alt text when not provided', () => {
       const result = generateImageMarkdown(mockImage)
-      expect(result).toBe('![my-photo](stored:test-id)')
+      expect(result).toBe('![my-photo.jpg](stored:test-id)')
     })
 
     it('handles filenames without extensions', () => {

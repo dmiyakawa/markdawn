@@ -4,7 +4,7 @@
  */
 
 import { convertMarkdownToHtml } from './markdown'
-import { getStoredImages } from './imageOperations'
+import { getStoredImages } from './imageStorage'
 // type StoredImage - currently unused but available for future use
 import type { Document } from '../types/document'
 

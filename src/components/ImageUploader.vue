@@ -39,12 +39,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import {
-  processImageForStorage,
-  saveImageToStorage,
-  generateImageMarkdown,
-  type ImageResizeOptions,
-} from '../utils/imageOperations'
+import type { ImageResizeOptions } from '../utils/imageStorage'
 
 // Props
 interface Props {
@@ -117,7 +112,14 @@ const processFiles = async (files: File[]) => {
     uploadProgress.value.current = i + 1
 
     try {
-      // Process and store image
+      // Process and store image (dynamic import for heavy processing)
+      const { processImageForStorage } = await import(
+        '../utils/imageProcessing'
+      )
+      const { saveImageToStorage, generateImageMarkdown } = await import(
+        '../utils/imageStorage'
+      )
+
       const processedImage = await processImageForStorage(
         file,
         props.resizeOptions

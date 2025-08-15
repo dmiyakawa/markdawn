@@ -307,7 +307,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { convertMarkdownToHtml, convertHtmlToMarkdown } from './utils/markdown'
-import type { StoredImage } from './utils/imageOperations'
+import type { StoredImage } from './utils/imageStorage'
 import ImageUploader from './components/ImageUploader.vue'
 import ImageManager from './components/ImageManager.vue'
 import MarkdownEditor from './components/MarkdownEditor.vue'
@@ -509,11 +509,10 @@ const handleWysiwygPaste = async (event: ClipboardEvent) => {
       if (!file) return
 
       // Import image processing utilities
-      const {
-        processImageForStorage,
-        saveImageToStorage,
-        generateImageMarkdown,
-      } = await import('./utils/imageOperations')
+      const { processImageForStorage } = await import('./utils/imageProcessing')
+      const { saveImageToStorage, generateImageMarkdown } = await import(
+        './utils/imageStorage'
+      )
 
       // Process and save the image
       const processedImage = await processImageForStorage(file)
@@ -872,11 +871,10 @@ const insertImageIntoEditor = (markdown: string) => {
 const { isDragging } = useDragAndDrop(editorContainer, {
   onFilesDropped: async (files: File[]) => {
     // Import processImageForStorage for drag-and-drop
-    const {
-      processImageForStorage,
-      saveImageToStorage,
-      generateImageMarkdown,
-    } = await import('./utils/imageOperations')
+    const { processImageForStorage } = await import('./utils/imageProcessing')
+    const { saveImageToStorage, generateImageMarkdown } = await import(
+      './utils/imageStorage'
+    )
 
     for (const file of files) {
       try {

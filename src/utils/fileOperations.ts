@@ -4,7 +4,7 @@
  */
 
 import JSZip from 'jszip'
-import { getStoredImages, type StoredImage } from './imageOperations'
+import { getStoredImages, type StoredImage } from './imageStorage'
 import type { Document } from '../types/document'
 
 /**

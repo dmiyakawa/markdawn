@@ -3,10 +3,7 @@ import {
   convertMarkdownToHtml,
   convertHtmlToMarkdown,
 } from '../src/utils/markdown'
-import {
-  saveImageToStorage,
-  type StoredImage,
-} from '../src/utils/imageOperations'
+import { saveImageToStorage, type StoredImage } from '../src/utils/imageStorage'
 
 describe('Image Reference Preservation', () => {
   // Mock localStorage for tests
