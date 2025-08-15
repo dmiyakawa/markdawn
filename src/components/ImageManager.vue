@@ -28,7 +28,7 @@
           </button>
         </div>
       </div>
-      
+
       <!-- Search and Filter Bar -->
       <div class="mt-3 flex items-center space-x-3">
         <div class="flex-1">
@@ -60,24 +60,47 @@
     <div class="p-4">
       <div v-if="filteredImages.length === 0" class="text-center py-12">
         <div class="text-gray-400 mb-2">
-          <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg
+            class="mx-auto h-12 w-12"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
         </div>
-        <p class="text-gray-500">{{ searchQuery ? 'No images match your search' : 'No images stored yet' }}</p>
+        <p class="text-gray-500">
+          {{
+            searchQuery ? 'No images match your search' : 'No images stored yet'
+          }}
+        </p>
         <p class="text-sm text-gray-400 mt-1">
-          {{ searchQuery ? 'Try a different search term' : 'Upload images using the Insert menu' }}
+          {{
+            searchQuery
+              ? 'Try a different search term'
+              : 'Upload images using the Insert menu'
+          }}
         </p>
       </div>
 
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div
+        v-else
+        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+      >
         <div
           v-for="image in filteredImages"
           :key="image.id"
           class="relative group bg-gray-50 rounded-lg overflow-hidden border-2 transition-all duration-200"
           :class="{
             'border-blue-500 bg-blue-50': selectedImages.includes(image.id),
-            'border-gray-200 hover:border-gray-300': !selectedImages.includes(image.id)
+            'border-gray-200 hover:border-gray-300': !selectedImages.includes(
+              image.id
+            ),
           }"
         >
           <!-- Selection Checkbox -->
@@ -91,7 +114,7 @@
           </div>
 
           <!-- Image Preview -->
-          <div class="relative" style="aspect-ratio: 1 / 1;">
+          <div class="relative" style="aspect-ratio: 1 / 1">
             <img
               :src="image.data"
               :alt="image.name"
@@ -99,10 +122,14 @@
               @click="selectForInsertion(image)"
               @error="handleImageError(image)"
             />
-            
+
             <!-- Overlay with actions -->
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
-              <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
+            <div
+              class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center"
+            >
+              <div
+                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2"
+              >
                 <button
                   @click="selectForInsertion(image)"
                   class="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
@@ -130,21 +157,40 @@
 
           <!-- Image Info -->
           <div class="p-2">
-            <p class="text-xs font-medium text-gray-900 truncate" :title="image.name">
+            <p
+              class="text-xs font-medium text-gray-900 truncate"
+              :title="image.name"
+            >
               {{ image.name }}
             </p>
             <div class="flex justify-between items-center mt-1">
-              <span class="text-xs text-gray-500">{{ formatFileSize(image.size) }}</span>
-              <span class="text-xs text-gray-500">{{ image.width }}×{{ image.height }}</span>
+              <span class="text-xs text-gray-500">{{
+                formatFileSize(image.size)
+              }}</span>
+              <span class="text-xs text-gray-500"
+                >{{ image.width }}×{{ image.height }}</span
+              >
             </div>
             <div class="flex justify-between items-center mt-1">
-              <span class="text-xs text-gray-400">{{ formatDate(image.uploadedAt) }}</span>
-              <span 
+              <span class="text-xs text-gray-400">{{
+                formatDate(image.uploadedAt)
+              }}</span>
+              <span
                 class="text-xs px-1.5 py-0.5 rounded"
-                :class="imageUsageStats[image.id] > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'"
-                :title="imageUsageStats[image.id] > 0 ? `Used ${imageUsageStats[image.id]} time${imageUsageStats[image.id] > 1 ? 's' : ''} in documents` : 'Not used in any document'"
+                :class="
+                  imageUsageStats[image.id] > 0
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-500'
+                "
+                :title="
+                  imageUsageStats[image.id] > 0
+                    ? `Used ${imageUsageStats[image.id]} time${imageUsageStats[image.id] > 1 ? 's' : ''} in documents`
+                    : 'Not used in any document'
+                "
               >
-                {{ imageUsageStats[image.id] || 0 }} use{{ (imageUsageStats[image.id] || 0) === 1 ? '' : 's' }}
+                {{ imageUsageStats[image.id] || 0 }} use{{
+                  (imageUsageStats[image.id] || 0) === 1 ? '' : 's'
+                }}
               </span>
             </div>
           </div>
@@ -163,13 +209,25 @@
         @click="closePreview"
         class="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/75 z-10"
       >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
 
       <!-- Image container -->
-      <div class="flex-1 flex items-center justify-center min-h-0 w-full max-w-5xl">
+      <div
+        class="flex-1 flex items-center justify-center min-h-0 w-full max-w-5xl"
+      >
         <img
           :src="previewingImage.data"
           :alt="previewingImage.name"
@@ -182,7 +240,8 @@
       <div class="mt-4 bg-black/50 text-white p-3 rounded-lg w-full max-w-lg">
         <p class="font-medium text-center">{{ previewingImage.name }}</p>
         <p class="text-sm opacity-75 text-center">
-          {{ previewingImage.width }}×{{ previewingImage.height }} • {{ formatFileSize(previewingImage.size) }}
+          {{ previewingImage.width }}×{{ previewingImage.height }} •
+          {{ formatFileSize(previewingImage.size) }}
         </p>
         <p class="text-xs opacity-60 text-center mt-1">
           {{ formatDate(previewingImage.uploadedAt) }}
@@ -194,16 +253,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getStoredImages, deleteStoredImage, countImageUsage, findDocumentsUsingImage, type StoredImage } from '../utils/imageOperations'
+import {
+  getStoredImages,
+  deleteStoredImage,
+  countImageUsage,
+  findDocumentsUsingImage,
+  type StoredImage,
+} from '../utils/imageOperations'
 
 // Props
 const props = defineProps<{
-  documents: Array<{id: string, title: string, content: string}>
+  documents: Array<{ id: string; title: string; content: string }>
 }>()
 
 // Emits
 const emit = defineEmits<{
-  'close': []
+  close: []
   'insert-image': [image: StoredImage]
 }>()
 
@@ -218,7 +283,7 @@ const previewingImage = ref<StoredImage | null>(null)
 // Computed usage statistics
 const imageUsageStats = computed(() => {
   const stats: Record<string, number> = {}
-  images.value.forEach(image => {
+  images.value.forEach((image) => {
     stats[image.id] = countImageUsage(image.id, props.documents)
   })
   return stats
@@ -236,7 +301,7 @@ const filteredImages = computed(() => {
   // Apply search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(image => 
+    filtered = filtered.filter((image) =>
       image.name.toLowerCase().includes(query)
     )
   }
@@ -244,7 +309,7 @@ const filteredImages = computed(() => {
   // Apply sorting
   filtered.sort((a, b) => {
     let comparison = 0
-    
+
     switch (sortBy.value) {
       case 'name':
         comparison = a.name.localeCompare(b.name)
@@ -253,10 +318,11 @@ const filteredImages = computed(() => {
         comparison = a.size - b.size
         break
       case 'uploadedAt':
-        comparison = new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime()
+        comparison =
+          new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime()
         break
     }
-    
+
     return sortOrder.value === 'desc' ? -comparison : comparison
   })
 
@@ -270,15 +336,19 @@ const selectForInsertion = (image: StoredImage) => {
 
 const deleteImage = async (imageId: string) => {
   const usage = imageUsageStats.value[imageId] || 0
-  const image = images.value.find(img => img.id === imageId)
+  const image = images.value.find((img) => img.id === imageId)
   const imageName = image?.name || 'Unknown image'
-  
+
   let confirmMessage = `Are you sure you want to delete "${imageName}"?`
-  
+
   if (usage > 0) {
     const usingDocuments = findDocumentsUsingImage(imageId, props.documents)
-    const docList = usingDocuments.map(doc => `• ${doc.title} (${doc.count} time${doc.count > 1 ? 's' : ''})`).join('\n')
-    
+    const docList = usingDocuments
+      .map(
+        (doc) => `• ${doc.title} (${doc.count} time${doc.count > 1 ? 's' : ''})`
+      )
+      .join('\n')
+
     confirmMessage = `⚠️ WARNING: "${imageName}" is currently being used in ${usage} location${usage > 1 ? 's' : ''} across ${usingDocuments.length} document${usingDocuments.length > 1 ? 's' : ''}:
 
 ${docList}
@@ -287,31 +357,38 @@ Deleting this image will break these references and show as missing images in yo
 
 Are you sure you want to delete it anyway?`
   }
-  
+
   if (confirm(confirmMessage)) {
     if (deleteStoredImage(imageId)) {
       loadImages()
-      selectedImages.value = selectedImages.value.filter(id => id !== imageId)
+      selectedImages.value = selectedImages.value.filter((id) => id !== imageId)
     }
   }
 }
 
 const deleteSelected = async () => {
   if (selectedImages.value.length === 0) return
-  
+
   const count = selectedImages.value.length
-  const imagesInUse = selectedImages.value.filter(id => (imageUsageStats.value[id] || 0) > 0)
-  
+  const imagesInUse = selectedImages.value.filter(
+    (id) => (imageUsageStats.value[id] || 0) > 0
+  )
+
   let confirmMessage = `Are you sure you want to delete ${count} selected image${count > 1 ? 's' : ''}?`
-  
+
   if (imagesInUse.length > 0) {
-    const totalUsages = imagesInUse.reduce((total, id) => total + (imageUsageStats.value[id] || 0), 0)
-    const usageDetails = imagesInUse.map(id => {
-      const image = images.value.find(img => img.id === id)
-      const usage = imageUsageStats.value[id] || 0
-      return `• ${image?.name || 'Unknown'} (used ${usage} time${usage > 1 ? 's' : ''})`
-    }).join('\n')
-    
+    const totalUsages = imagesInUse.reduce(
+      (total, id) => total + (imageUsageStats.value[id] || 0),
+      0
+    )
+    const usageDetails = imagesInUse
+      .map((id) => {
+        const image = images.value.find((img) => img.id === id)
+        const usage = imageUsageStats.value[id] || 0
+        return `• ${image?.name || 'Unknown'} (used ${usage} time${usage > 1 ? 's' : ''})`
+      })
+      .join('\n')
+
     confirmMessage = `⚠️ WARNING: ${imagesInUse.length} of the selected images are currently being used in your documents (${totalUsages} total usage${totalUsages > 1 ? 's' : ''}):
 
 ${usageDetails}
@@ -320,9 +397,9 @@ Deleting these images will break references and show as missing images in your d
 
 Are you sure you want to delete ${count} selected image${count > 1 ? 's' : ''} anyway?`
   }
-  
+
   if (confirm(confirmMessage)) {
-    selectedImages.value.forEach(imageId => {
+    selectedImages.value.forEach((imageId) => {
       deleteStoredImage(imageId)
     })
     loadImages()
@@ -361,7 +438,8 @@ const formatDate = (dateString: string): string => {
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    year:
+      date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
   })
 }
 

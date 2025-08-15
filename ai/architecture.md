@@ -7,6 +7,22 @@
 - **TypeScript 5.9.2** - Type-safe JavaScript development
 - **Vite 7.1.1** - Fast build tool and dev server
 
+## Component Architecture (Updated December 2024)
+
+### Architectural Decision: Component Extraction
+The application has been successfully refactored from a monolithic App.vue structure into a clean component-based architecture:
+
+#### Extracted Components:
+- **MarkdownEditor.vue** - Encapsulates left pane with CodeMirror integration
+- **Preview.vue** - Handles right pane with WYSIWYG functionality and mode toggling  
+- **ImageManager.vue** - Complete gallery browser with batch operations and search/filter
+
+#### Benefits Achieved:
+- **Improved Testability** - Each component can be tested in isolation (66 component tests passing)
+- **Better Code Organization** - Clear separation of concerns and responsibilities
+- **Enhanced Maintainability** - Easier to modify individual features without affecting others
+- **Simplified App.vue** - Reduced from complex inline logic to clean component orchestration
+
 ### Editor Framework
 - **CodeMirror 6** - Professional code editor with syntax highlighting
   - `codemirror@6.0.2` - Core editor framework

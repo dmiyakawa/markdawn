@@ -21,10 +21,9 @@ test.describe('Core User Flows', () => {
 
       // Clear existing content and add new content
       await editor.click()
-      await page.keyboard.press('Control+a')
-      await page.keyboard.type(
-        '# My Document\n\nThis is **bold** text and *italic* text.'
-      )
+      
+      // Use the contenteditable attribute to set content directly
+      await editor.fill('# My Document\n\nThis is **bold** text and *italic* text.')
 
       // Verify content appears in editor
       const editorContent = await editor.textContent()
@@ -47,20 +46,21 @@ test.describe('Core User Flows', () => {
       const editor = page.locator(
         '[data-testid="codemirror-editor"] .cm-content'
       )
-      const statusBar = page.locator('footer')
+      // Look for statistics in the MarkdownEditor header
+      const editorPanel = page.locator('[data-testid="editor-panel"]')
+      const statsArea = editorPanel.locator('.text-xs.text-gray-600')
 
       // Add content
       await editor.click()
-      await page.keyboard.press('Control+a')
-      await page.keyboard.type(
+      await editor.fill(
         '# Test Document\n\nThis is a test with multiple words.'
       )
       await page.waitForTimeout(500)
 
-      // Check status bar updates
-      await expect(statusBar).toContainText('Words:')
-      await expect(statusBar).toContainText('Characters:')
-      await expect(statusBar).toContainText('Lines:')
+      // Check statistics updates in the editor header
+      await expect(statsArea).toContainText('Lines:')
+      await expect(statsArea).toContainText('Words:')
+      await expect(statsArea).toContainText('Chars:')
     })
 
     test('should toggle preview visibility', async ({ page }) => {
@@ -87,8 +87,7 @@ test.describe('Core User Flows', () => {
 
       // Add some content first
       await editor.click()
-      await page.keyboard.press('Control+a')
-      await page.keyboard.type('# Existing Content')
+      await editor.fill('# Existing Content')
 
       // Handle the confirmation dialog by accepting it
       page.on('dialog', (dialog) => dialog.accept())
@@ -112,8 +111,7 @@ test.describe('Core User Flows', () => {
 
       // Add content to export
       await editor.click()
-      await page.keyboard.press('Control+a')
-      await page.keyboard.type(
+      await editor.fill(
         '# Export Test\n\nThis content will be exported.'
       )
 
@@ -135,8 +133,7 @@ test.describe('Core User Flows', () => {
 
       // Add content
       await editor.click()
-      await page.keyboard.press('Control+a')
-      await page.keyboard.type(
+      await editor.fill(
         '# ZIP Export Test\n\nThis will be exported as ZIP.'
       )
 
@@ -178,8 +175,7 @@ test.describe('Core User Flows', () => {
         '[data-testid="codemirror-editor"] .cm-content'
       )
       await editor.click()
-      await page.keyboard.press('Control+a')
-      await page.keyboard.type('# Tablet Test\n\nTesting on tablet viewport.')
+      await editor.fill('# Tablet Test\n\nTesting on tablet viewport.')
 
       // Wait for preview to update
       await page.waitForTimeout(500)
@@ -196,12 +192,9 @@ test.describe('Core User Flows', () => {
         '[data-testid="codemirror-editor"] .cm-content'
       )
 
-      // Focus editor and clear existing content
+      // Focus editor and set content
       await editor.click()
-      await page.keyboard.press('Control+a')
-
-      // Type content
-      await page.keyboard.type('# Keyboard Test')
+      await editor.fill('# Keyboard Test')
 
       // Verify content was entered
       const editorContent = await editor.textContent()
@@ -217,11 +210,8 @@ test.describe('Core User Flows', () => {
       // Type content
       await page.keyboard.type('Some text to select')
 
-      // Select all with Ctrl+A
-      await page.keyboard.press('Control+a')
-
-      // Type replacement text
-      await page.keyboard.type('# New Content')
+      // Replace content
+      await editor.fill('# New Content')
 
       // Verify content was replaced
       const editorContent = await editor.textContent()

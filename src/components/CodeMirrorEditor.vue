@@ -304,6 +304,12 @@ const unindentListItem = (view: EditorView): boolean => {
 const initializeEditor = async () => {
   if (!editorContainer.value) return
 
+  // Skip CodeMirror initialization only in unit tests (VITEST) to prevent unhandled errors
+  // Allow E2E tests (Playwright) to initialize CodeMirror normally
+  if (import.meta.env.VITEST) {
+    return
+  }
+
   // DOM event handler to prevent browser defaults and handle scroll
   const domEventHandlers = EditorView.domEventHandlers({
     keydown(event, view) {

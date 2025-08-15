@@ -60,28 +60,33 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+// Component name for linting
+defineOptions({
+  name: 'PreviewPanel',
+})
+
 // Props using defineProps with object syntax to avoid interface conflicts
 const props = defineProps({
   showPreview: {
     type: Boolean,
-    required: true
+    required: true,
   },
   leftPaneWidth: {
     type: Number,
-    required: true
+    required: true,
   },
   isWysiwygMode: {
     type: Boolean,
-    required: true
+    required: true,
   },
   htmlContent: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 })
 
 // Emits
-const emit = defineEmits<{
+defineEmits<{
   'toggle-wysiwyg-mode': []
   'wysiwyg-scroll': [event: Event]
   'wysiwyg-input': [event: Event]
@@ -95,19 +100,20 @@ const wysiwygEditor = ref<HTMLElement>()
 
 // Expose methods
 const getScrollInfo = () => {
-  if (!wysiwygScrollContainer.value) return { scrollTop: 0, scrollHeight: 0, clientHeight: 0 }
-  
+  if (!wysiwygScrollContainer.value)
+    return { scrollTop: 0, scrollHeight: 0, clientHeight: 0 }
+
   const container = wysiwygScrollContainer.value
   return {
     scrollTop: container.scrollTop,
     scrollHeight: container.scrollHeight,
-    clientHeight: container.clientHeight
+    clientHeight: container.clientHeight,
   }
 }
 
 const scrollToPercentage = (percentage: number) => {
   if (!wysiwygScrollContainer.value) return
-  
+
   const container = wysiwygScrollContainer.value
   const maxScroll = container.scrollHeight - container.clientHeight
   container.scrollTop = maxScroll * (percentage / 100)
@@ -124,7 +130,7 @@ defineExpose({
   scrollToPercentage,
   focus,
   wysiwygScrollContainer,
-  wysiwygEditor
+  wysiwygEditor,
 })
 </script>
 

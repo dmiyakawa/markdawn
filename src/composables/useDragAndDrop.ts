@@ -8,7 +8,7 @@ export interface DragAndDropOptions {
 }
 
 export function useDragAndDrop(
-  targetRef: Ref<HTMLElement | null>,
+  targetRef: Ref<HTMLElement | null | undefined>,
   options: DragAndDropOptions = {}
 ) {
   const {

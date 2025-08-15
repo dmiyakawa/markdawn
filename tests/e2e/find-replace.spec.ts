@@ -44,8 +44,7 @@ test.describe('Find/Replace Functionality', () => {
 
     // Add test content
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type(
+    await editor.fill(
       '# Test Document\n\nThis is a test with some test text.\nAnother line with test content.'
     )
 
@@ -80,8 +79,7 @@ test.describe('Find/Replace Functionality', () => {
 
     // Add test content with multiple instances
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type('test one test two test three')
+    await editor.fill('test one test two test three')
 
     // Open find/replace panel
     await findReplaceButton.click()
@@ -119,14 +117,16 @@ test.describe('Find/Replace Functionality', () => {
 
     // Add test content
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type('Hello world! This is a world of tests.')
+    await editor.fill('Hello world! This is a world of tests.')
+    await page.waitForTimeout(500)
 
     // Open find/replace panel
     await findReplaceButton.click()
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(500)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
+    await expect(findReplacePanel).toBeVisible()
+    
     const searchInput = findReplacePanel.locator(
       'input[placeholder*="Search text"]'
     )
@@ -137,14 +137,28 @@ test.describe('Find/Replace Functionality', () => {
       'button[title="Replace current match"]'
     )
 
+    // Wait for inputs to be visible
+    await expect(searchInput).toBeVisible()
+    await expect(replaceInput).toBeVisible()
+    await expect(replaceButton).toBeVisible()
+
     // Enter search and replace terms
     await searchInput.fill('world')
+    await page.waitForTimeout(300)
+    
+    // Find first to ensure search is active
+    const findNextButton = findReplacePanel.locator(
+      'button[title="Find next (Enter)"]'
+    )
+    await findNextButton.click()
+    await page.waitForTimeout(300)
+    
     await replaceInput.fill('universe')
     await page.waitForTimeout(500)
 
     // Replace single occurrence
     await replaceButton.click()
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Verify replacement occurred
     const editorContent = await editor.textContent()
@@ -160,14 +174,16 @@ test.describe('Find/Replace Functionality', () => {
 
     // Add test content
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type('cat and cat and another cat')
+    await editor.fill('cat and cat and another cat')
+    await page.waitForTimeout(500)
 
     // Open find/replace panel
     await findReplaceButton.click()
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(500)
 
     const findReplacePanel = page.locator('[data-testid="find-replace-panel"]')
+    await expect(findReplacePanel).toBeVisible()
+    
     const searchInput = findReplacePanel.locator(
       'input[placeholder*="Search text"]'
     )
@@ -178,14 +194,28 @@ test.describe('Find/Replace Functionality', () => {
       'button[title="Replace all matches"]'
     )
 
+    // Wait for inputs to be visible
+    await expect(searchInput).toBeVisible()
+    await expect(replaceInput).toBeVisible()
+    await expect(replaceAllButton).toBeVisible()
+
     // Enter search and replace terms
     await searchInput.fill('cat')
+    await page.waitForTimeout(300)
+    
+    // Find first to ensure search is active
+    const findNextButton = findReplacePanel.locator(
+      'button[title="Find next (Enter)"]'
+    )
+    await findNextButton.click()
+    await page.waitForTimeout(300)
+    
     await replaceInput.fill('dog')
     await page.waitForTimeout(500)
 
     // Replace all occurrences
     await replaceAllButton.click()
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Verify all replacements occurred
     const editorContent = await editor.textContent()
@@ -200,8 +230,7 @@ test.describe('Find/Replace Functionality', () => {
 
     // Add test content with mixed case
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type('Test test TEST')
+    await editor.fill('Test test TEST')
 
     // Open find/replace panel
     await findReplaceButton.click()
@@ -234,8 +263,7 @@ test.describe('Find/Replace Functionality', () => {
 
     // Add test content
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type('123 test 456 example 789')
+    await editor.fill('123 test 456 example 789')
 
     // Open find/replace panel
     await findReplaceButton.click()

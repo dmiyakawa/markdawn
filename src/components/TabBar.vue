@@ -142,17 +142,10 @@
 
       <!-- Save Status - positioned after new button -->
       <div class="ml-4 flex items-center space-x-3 text-xs flex-shrink-0">
-        <span
-          v-if="lastSaved"
-          class="text-gray-500"
-          title="Last saved time"
-        >
+        <span v-if="lastSaved" class="text-gray-500" title="Last saved time">
           Saved: {{ formatTimestamp(lastSaved) }}
         </span>
-        <span
-          v-if="saveStatus"
-          :class="saveStatusClass"
-        >
+        <span v-if="saveStatus" :class="saveStatusClass">
           {{ saveStatus }}
         </span>
       </div>
@@ -227,7 +220,6 @@
         </button>
       </div>
     </div>
-
 
     <!-- Context Menu -->
     <div

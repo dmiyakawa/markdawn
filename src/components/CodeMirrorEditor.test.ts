@@ -28,11 +28,11 @@ vi.mock('@codemirror/view', () => ({
   },
   EditorView: {
     lineWrapping: {},
+    domEventHandlers: vi.fn(() => ({})),
     updateListener: {
       of: vi.fn(() => ({})),
     },
     theme: vi.fn(() => ({})),
-    domEventHandlers: vi.fn(() => ({})),
   },
 }))
 

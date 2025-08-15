@@ -111,17 +111,17 @@ test.describe('Visual Regression Tests', () => {
     // Type some content to populate status bar
     const editor = page.locator('[data-testid="codemirror-editor"] .cm-content')
     await editor.click()
-    await page.keyboard.press('Control+a')
-    await page.keyboard.type(
+    await editor.fill(
       '# Test Content\n\nThis is a test document with **bold** text.'
     )
 
     // Wait for status update
     await page.waitForTimeout(500)
 
-    // Focus on status bar
-    const statusBar = page.locator('footer')
-    await expect(statusBar).toHaveScreenshot('status-bar.png', {
+    // Focus on editor statistics area
+    const editorPanel = page.locator('[data-testid="editor-panel"]')
+    const statsArea = editorPanel.locator('.text-xs.text-gray-600')
+    await expect(statsArea).toHaveScreenshot('status-bar.png', {
       animations: 'disabled',
     })
   })

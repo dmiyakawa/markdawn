@@ -194,7 +194,6 @@
               <span class="hidden sm:inline">GitHub</span>
             </a>
           </div>
-
         </div>
       </div>
     </header>
@@ -234,11 +233,11 @@
     </div>
 
     <!-- Tab Bar -->
-    <TabBar 
-      :lastSaved="lastSaved" 
+    <TabBar
+      :lastSaved="lastSaved"
       :saveStatus="saveStatus"
       :saveStatusClass="saveStatusClass"
-      :formatTimestamp="formatTimestamp" 
+      :formatTimestamp="formatTimestamp"
     />
 
     <main class="w-full px-4 sm:px-6 lg:px-8 py-4">

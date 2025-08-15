@@ -255,31 +255,39 @@ export function generateImageMarkdown(
 /**
  * Count usage of an image across all documents
  */
-export function countImageUsage(imageId: string, documents: Array<{content: string}>): number {
-  const pattern = new RegExp(`stored:${imageId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
+export function countImageUsage(
+  imageId: string,
+  documents: Array<{ content: string }>
+): number {
+  const pattern = new RegExp(
+    `stored:${imageId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+    'g'
+  )
   let totalUsage = 0
-  
-  documents.forEach(doc => {
+
+  documents.forEach((doc) => {
     const matches = doc.content.match(pattern)
     if (matches) {
       totalUsage += matches.length
     }
   })
-  
+
   return totalUsage
 }
 
 /**
  * Get usage statistics for all stored images
  */
-export function getImageUsageStats(documents: Array<{content: string}>): Record<string, number> {
+export function getImageUsageStats(
+  documents: Array<{ content: string }>
+): Record<string, number> {
   const usageStats: Record<string, number> = {}
   const storedImages = getStoredImages()
-  
-  storedImages.forEach(image => {
+
+  storedImages.forEach((image) => {
     usageStats[image.id] = countImageUsage(image.id, documents)
   })
-  
+
   return usageStats
 }
 
@@ -287,22 +295,25 @@ export function getImageUsageStats(documents: Array<{content: string}>): Record<
  * Find which documents use a specific image
  */
 export function findDocumentsUsingImage(
-  imageId: string, 
-  documents: Array<{id: string, title: string, content: string}>
-): Array<{id: string, title: string, count: number}> {
-  const pattern = new RegExp(`stored:${imageId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
-  const usingDocuments: Array<{id: string, title: string, count: number}> = []
-  
-  documents.forEach(doc => {
+  imageId: string,
+  documents: Array<{ id: string; title: string; content: string }>
+): Array<{ id: string; title: string; count: number }> {
+  const pattern = new RegExp(
+    `stored:${imageId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+    'g'
+  )
+  const usingDocuments: Array<{ id: string; title: string; count: number }> = []
+
+  documents.forEach((doc) => {
     const matches = doc.content.match(pattern)
     if (matches && matches.length > 0) {
       usingDocuments.push({
         id: doc.id,
         title: doc.title,
-        count: matches.length
+        count: matches.length,
       })
     }
   })
-  
+
   return usingDocuments
 }

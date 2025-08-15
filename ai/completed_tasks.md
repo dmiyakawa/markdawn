@@ -7,6 +7,14 @@
 - ✅ **Full-Screen Mode**: Distraction-free writing with header/status bar hiding
 - ✅ **Resizable Panes**: Drag-to-resize split between editor and preview panels
 
+## Component Architecture Refactoring ✅ (December 2024)
+- ✅ **MarkdownEditor.vue Component**: Extracted left pane into dedicated component with CodeMirror integration
+- ✅ **Preview.vue Component**: Extracted right pane with WYSIWYG functionality and mode toggling
+- ✅ **ImageManager.vue Component**: Complete gallery browser with batch operations, search/filter, and drag-and-drop
+- ✅ **App.vue Simplification**: Reduced inline complexity by moving logic to dedicated components
+- ✅ **Component Testing**: Individual component tests working (66/66 passing)
+- ✅ **Better Code Organization**: Improved reusability and maintainability
+
 ## Core Features Completed ✅
 - **Layout System**: ✅ Fixed side-by-side layout with flexbox (src/App.vue:117)
 - **Menu Bar Interface**: ✅ Complete UI reorganization with logical control groups (src/App.vue:7-93)
