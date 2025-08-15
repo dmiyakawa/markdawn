@@ -106,7 +106,7 @@ fi
 # =============================================================================
 # CHECK 3: Unit Tests Success
 # =============================================================================
-if run_check "Unit Tests" "npm run test -- --run" "All unit tests passed" "Unit tests failed"; then
+if run_check "Unit Tests" "npm run test" "All unit tests passed" "Unit tests failed"; then
     :
 else
     echo -e "\n${RED}Unit tests failed. Please fix failing tests before proceeding.${NC}"
@@ -117,11 +117,11 @@ fi
 # CHECK 4: Test Coverage > 80%
 # =============================================================================
 echo -e "\n${BLUE}Running: Test Coverage Analysis${NC}"
-echo "Command: npm run test:coverage -- --run"
+echo "Command: npm run test:coverage"
 echo "----------------------------------------"
 
 # Capture coverage output
-COVERAGE_OUTPUT=$(npm run test:coverage -- --run 2>&1) || {
+COVERAGE_OUTPUT=$(npm run test:coverage 2>&1) || {
     print_status "FAIL" "Test coverage command failed"
     echo -e "\n${RED}Coverage check failed. Please ensure tests run properly.${NC}"
     exit 1
