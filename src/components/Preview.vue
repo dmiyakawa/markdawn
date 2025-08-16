@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 
 // Component name for linting
 defineOptions({
@@ -86,12 +86,13 @@ const props = defineProps({
 })
 
 // Emits
-defineEmits<{
+const emit = defineEmits<{
   'toggle-wysiwyg-mode': []
   'wysiwyg-scroll': [event: Event]
   'wysiwyg-input': [event: Event]
   'wysiwyg-blur': []
   'wysiwyg-paste': [event: ClipboardEvent]
+  'content-updated': []
 }>()
 
 // Refs
@@ -124,6 +125,145 @@ const focus = () => {
     wysiwygEditor.value.focus()
   }
 }
+
+// Image resize functionality
+const addResizeHandlesToImages = () => {
+  if (!wysiwygEditor.value || !props.isWysiwygMode) return
+
+  const images = wysiwygEditor.value.querySelectorAll('img')
+  images.forEach(addResizeHandlesToImage)
+}
+
+const addResizeHandlesToImage = (img: HTMLImageElement) => {
+  // Check if already has handles
+  if (img.parentElement?.classList.contains('image-with-handles')) {
+    return
+  }
+
+  // Create wrapper
+  const wrapper = document.createElement('div')
+  wrapper.className = 'image-with-handles'
+
+  // Insert wrapper before image
+  img.parentNode?.insertBefore(wrapper, img)
+  wrapper.appendChild(img)
+
+  // Create resize handles
+  const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+  handles.forEach((position) => {
+    const handle = document.createElement('div')
+    handle.className = `image-resize-handle ${position}`
+    handle.addEventListener('mousedown', (e) => startResize(e, img, position))
+    wrapper.appendChild(handle)
+  })
+}
+
+const startResize = (
+  e: MouseEvent,
+  img: HTMLImageElement,
+  position: string
+) => {
+  e.preventDefault()
+  e.stopPropagation()
+
+  const wrapper = img.parentElement!
+  wrapper.classList.add('resizing')
+
+  const startX = e.clientX
+  const startY = e.clientY
+  const startWidth = img.offsetWidth
+  const startHeight = img.offsetHeight
+  const aspectRatio = startWidth / startHeight
+
+  const handleMouseMove = (e: MouseEvent) => {
+    const deltaX = e.clientX - startX
+    const deltaY = e.clientY - startY
+
+    let newWidth = startWidth
+    let newHeight = startHeight
+
+    // Calculate new dimensions based on handle position
+    switch (position) {
+      case 'bottom-right':
+        newWidth = Math.max(50, startWidth + deltaX)
+        newHeight = Math.max(50, startHeight + deltaY)
+        break
+      case 'bottom-left':
+        newWidth = Math.max(50, startWidth - deltaX)
+        newHeight = Math.max(50, startHeight + deltaY)
+        break
+      case 'top-right':
+        newWidth = Math.max(50, startWidth + deltaX)
+        newHeight = Math.max(50, startHeight - deltaY)
+        break
+      case 'top-left':
+        newWidth = Math.max(50, startWidth - deltaX)
+        newHeight = Math.max(50, startHeight - deltaY)
+        break
+    }
+
+    // Maintain aspect ratio
+    if (e.shiftKey) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        newHeight = newWidth / aspectRatio
+      } else {
+        newWidth = newHeight * aspectRatio
+      }
+    }
+
+    // Apply new dimensions
+    img.style.width = `${newWidth}px`
+    img.style.height = `${newHeight}px`
+
+    // Update data attributes for markdown conversion
+    img.setAttribute('data-width', `${Math.round(newWidth)}px`)
+    img.setAttribute('data-height', `${Math.round(newHeight)}px`)
+  }
+
+  const handleMouseUp = () => {
+    wrapper.classList.remove('resizing')
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+
+    // Emit content updated to trigger markdown sync
+    emit('content-updated')
+  }
+
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+
+// Watch for content changes to add resize handles
+watch(
+  () => props.htmlContent,
+  () => {
+    if (props.isWysiwygMode) {
+      nextTick(() => {
+        addResizeHandlesToImages()
+      })
+    }
+  },
+  { flush: 'post' }
+)
+
+watch(
+  () => props.isWysiwygMode,
+  (newValue) => {
+    if (newValue) {
+      nextTick(() => {
+        addResizeHandlesToImages()
+      })
+    }
+  }
+)
+
+onMounted(() => {
+  if (props.isWysiwygMode) {
+    nextTick(() => {
+      addResizeHandlesToImages()
+    })
+  }
+})
 
 defineExpose({
   getScrollInfo,

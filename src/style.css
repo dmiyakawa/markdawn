@@ -291,6 +291,92 @@
   margin-bottom: 0 !important;
 }
 
+/* Responsive Image Styles */
+.markdown-image, .stored-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em 0;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Default responsive behavior for images without specific dimensions */
+.wysiwyg-editor img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 1em 0 !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure images don't exceed container width even with explicit dimensions */
+.wysiwyg-editor .markdown-image,
+.wysiwyg-editor .stored-image {
+  max-width: 100% !important;
+}
+
+/* Image resize handles for WYSIWYG editor */
+.wysiwyg-editor .image-with-handles {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.wysiwyg-editor .image-resize-handle {
+  position: absolute;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.wysiwyg-editor .image-with-handles:hover .image-resize-handle,
+.wysiwyg-editor .image-with-handles.resizing .image-resize-handle {
+  opacity: 1;
+}
+
+.wysiwyg-editor .image-resize-handle.bottom-right {
+  bottom: -6px;
+  right: -6px;
+  cursor: se-resize;
+}
+
+.wysiwyg-editor .image-resize-handle.bottom-left {
+  bottom: -6px;
+  left: -6px;
+  cursor: sw-resize;
+}
+
+.wysiwyg-editor .image-resize-handle.top-right {
+  top: -6px;
+  right: -6px;
+  cursor: ne-resize;
+}
+
+.wysiwyg-editor .image-resize-handle.top-left {
+  top: -6px;
+  left: -6px;
+  cursor: nw-resize;
+}
+
+/* Visual feedback during resize */
+.wysiwyg-editor .image-with-handles.resizing {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.wysiwyg-editor .image-with-handles.resizing img {
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Prism.js syntax highlighting theme - One Light */
 /* Based on Atom's One Light Syntax Theme */
 

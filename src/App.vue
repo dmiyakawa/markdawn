@@ -271,6 +271,7 @@
           @wysiwyg-input="handleWysiwygInput"
           @wysiwyg-blur="syncWysiwygContent"
           @wysiwyg-paste="handleWysiwygPaste"
+          @content-updated="syncWysiwygContent"
         />
 
         <!-- Document Outline Sidebar -->
@@ -371,8 +372,7 @@ const showOutline = ref(false)
 const showImageManager = ref(false)
 const isWysiwygMode = ref(false) // false = Preview mode, true = WYSIWYG mode
 
-// Template refs for drag-and-drop
-const editorContainer = ref<HTMLElement | null>(null)
+// Template refs for drag-and-drop (using existing containerRef from resizable panes)
 const findReplaceRef = ref<InstanceType<typeof FindReplace> | null>(null)
 const documentOutlineRef = ref<InstanceType<typeof DocumentOutline> | null>(
   null
@@ -886,36 +886,7 @@ const insertImageIntoEditor = (markdown: string) => {
   codeMirrorEditor.value.focus()
 }
 
-// Set up drag-and-drop
-const { isDragging } = useDragAndDrop(editorContainer, {
-  onFilesDropped: async (files: File[]) => {
-    // Import processImageForStorage for drag-and-drop
-    const { processImageForStorage } = await import('./utils/imageProcessing')
-    const { saveImageToStorage, generateImageMarkdown } = await import(
-      './utils/imageStorage'
-    )
-
-    for (const file of files) {
-      try {
-        const processedImage = await processImageForStorage(file)
-        const saved = saveImageToStorage(processedImage)
-
-        if (saved) {
-          const markdown = generateImageMarkdown(processedImage)
-          insertImageIntoEditor(markdown)
-        }
-      } catch (error) {
-        console.error('Failed to process dropped image:', error)
-        saveStatus.value = `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
-        setTimeout(() => {
-          saveStatus.value = ''
-        }, 5000)
-      }
-    }
-  },
-  acceptedTypes: ['image/*'],
-  maxFiles: 10,
-})
+// First set up resizable panes to get containerRef
 
 // Set up resizable panes
 const {
@@ -925,6 +896,45 @@ const {
   resizeHandleRef,
   startResize,
 } = useResizablePanes()
+
+// Set up drag and drop using the containerRef from resizable panes
+const { isDragging } = useDragAndDrop(containerRef, {
+  onFilesDropped: async (files) => {
+    console.log('Files dropped:', files.length)
+
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        try {
+          // Import image processing utilities dynamically
+          const { processImageForStorage } = await import(
+            './utils/imageProcessing'
+          )
+          const { saveImageToStorage, generateImageMarkdown } = await import(
+            './utils/imageStorage'
+          )
+
+          // Process and save the image
+          const processedImage = await processImageForStorage(file)
+          const saved = saveImageToStorage(processedImage)
+
+          if (saved) {
+            // Generate markdown for the image
+            const imageMarkdown = generateImageMarkdown(processedImage)
+            insertImageIntoEditor(imageMarkdown)
+          }
+        } catch (error) {
+          console.error('Failed to process dropped image:', error)
+          saveStatus.value = `Image processing error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          setTimeout(() => {
+            saveStatus.value = ''
+          }, 5000)
+        }
+      }
+    }
+  },
+  acceptedTypes: ['image/*'],
+  maxFiles: 10,
+})
 
 // Find/Replace functionality
 interface SearchOptions {

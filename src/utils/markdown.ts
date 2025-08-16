@@ -2,6 +2,92 @@ import { marked } from 'marked'
 import { getStoredImage, getStoredImages } from './imageStorage'
 
 /**
+ * Parse image attributes from markdown syntax
+ * Supports syntax like: ![alt](image.jpg){width=600px height=400px}
+ */
+function parseImageAttributes(attributeString: string): Record<string, string> {
+  const attributes: Record<string, string> = {}
+
+  if (!attributeString) {
+    return attributes
+  }
+
+  // Parse key=value pairs within curly braces, including hyphenated keys like max-width
+  const attributeRegex = /([\w-]+)=([^}\s]+)/g
+  let match
+
+  while ((match = attributeRegex.exec(attributeString)) !== null) {
+    const [, key, value] = match
+    attributes[key] = value
+  }
+
+  return attributes
+}
+
+/**
+ * Generate CSS style string from image attributes
+ */
+function generateImageStyle(attributes: Record<string, string>): string {
+  const styles: string[] = []
+
+  // Handle width
+  if (attributes.width) {
+    const width =
+      attributes.width.includes('px') ||
+      attributes.width.includes('%') ||
+      attributes.width.includes('em') ||
+      attributes.width.includes('rem') ||
+      attributes.width === 'auto'
+        ? attributes.width
+        : `${attributes.width}px`
+    styles.push(`width: ${width}`)
+  }
+
+  // Handle height
+  if (attributes.height) {
+    const height =
+      attributes.height.includes('px') ||
+      attributes.height.includes('%') ||
+      attributes.height.includes('em') ||
+      attributes.height.includes('rem') ||
+      attributes.height === 'auto'
+        ? attributes.height
+        : `${attributes.height}px`
+    styles.push(`height: ${height}`)
+  }
+
+  // Handle max-width
+  if (attributes['max-width']) {
+    const maxWidth =
+      attributes['max-width'].includes('px') ||
+      attributes['max-width'].includes('%') ||
+      attributes['max-width'].includes('em') ||
+      attributes['max-width'].includes('rem')
+        ? attributes['max-width']
+        : `${attributes['max-width']}px`
+    styles.push(`max-width: ${maxWidth}`)
+  }
+
+  // Default responsive behavior - only add if no explicit max-width and width is specified
+  // Don't add for percentage widths as they're already responsive
+  if (
+    attributes.width &&
+    !attributes['max-width'] &&
+    attributes.width !== 'auto' &&
+    !attributes.width.includes('%')
+  ) {
+    styles.push('max-width: 100%')
+  }
+
+  // Maintain aspect ratio - only add height: auto if height isn't explicitly set and width is set
+  if (attributes.width && !attributes.height) {
+    styles.push('height: auto')
+  }
+
+  return styles.length > 0 ? styles.join('; ') : ''
+}
+
+/**
  * Map file extensions to language identifiers for syntax highlighting
  */
 function getLanguageFromExtension(extension: string): string {
@@ -131,9 +217,9 @@ function generateCopyButton(code: string, filename?: string): string {
 }
 
 /**
- * Custom renderer for enhanced code blocks with filename support
+ * Custom renderer for enhanced code blocks and images with dimension support
  */
-function createCodeRenderer() {
+function createCustomRenderer() {
   const renderer = new marked.Renderer()
 
   // Override code block rendering (modern marked.js API)
@@ -163,17 +249,57 @@ function createCodeRenderer() {
     return html
   }
 
+  // Override image rendering to support dimensions
+  renderer.image = function ({ href, title, text }) {
+    // Check for dimension attributes in the URL or title
+    // Support syntax: ![alt](image.jpg "title"){width=600px height=400px}
+    const urlMatch = href.match(/^(.+?)\{([^}]*)\}$/)
+    const titleMatch = title?.match(/^(.+?)\{([^}]*)\}$/)
+
+    let actualHref = href
+    let actualTitle = title
+    let attributeString = ''
+
+    if (urlMatch) {
+      actualHref = urlMatch[1]
+      attributeString = urlMatch[2]
+    } else if (titleMatch) {
+      actualTitle = titleMatch[1]
+      attributeString = titleMatch[2]
+    }
+
+    // Parse attributes and generate style
+    const attributes = parseImageAttributes(attributeString)
+    const style = generateImageStyle(attributes)
+    const styleAttr = style ? ` style="${style}"` : ''
+
+    // Add dimension attributes as data attributes for conversion back to markdown
+    const widthAttr = attributes.width
+      ? ` data-width="${attributes.width}"`
+      : ''
+    const heightAttr = attributes.height
+      ? ` data-height="${attributes.height}"`
+      : ''
+    const maxWidthAttr = attributes['max-width']
+      ? ` data-max-width="${attributes['max-width']}"`
+      : ''
+
+    // Build image HTML
+    const titleAttr = actualTitle ? ` title="${actualTitle}"` : ''
+    return `<img src="${actualHref}" alt="${text}"${titleAttr} class="markdown-image"${styleAttr}${widthAttr}${heightAttr}${maxWidthAttr} />`
+  }
+
   return renderer
 }
 
 /**
- * Configure marked with safe defaults and enhanced code block support
+ * Configure marked with safe defaults and enhanced features support
  */
 function configureMarked() {
   marked.setOptions({
     breaks: true, // Support line breaks
     gfm: true, // GitHub Flavored Markdown
-    renderer: createCodeRenderer(), // Use custom renderer for enhanced code blocks
+    renderer: createCustomRenderer(), // Use custom renderer for enhanced code blocks and images
   })
 }
 
@@ -181,16 +307,17 @@ function configureMarked() {
 const imageDataToIdMap = new Map<string, string>()
 
 /**
- * Process stored image references in markdown
+ * Process stored image references in markdown with dimension support
  * Converts stored:image-id references to data URLs and tracks the mapping
+ * Supports syntax: ![alt](stored:image-id){width=600px height=400px}
  */
 function processStoredImages(markdown: string): string {
   // Clear the map for fresh tracking
   imageDataToIdMap.clear()
 
   return markdown.replace(
-    /!\[(.*?)\]\(stored:([^)]+)\)/g,
-    (match, altText, imageId) => {
+    /!\[(.*?)\]\(stored:([^)]+)\)(?:\{([^}]*)\})?/g,
+    (match, altText, imageId, attributeString) => {
       const storedImage = getStoredImage(imageId)
       if (storedImage) {
         // Track the mapping from data URL to stored ID
@@ -198,8 +325,25 @@ function processStoredImages(markdown: string): string {
         console.log(
           `Tracking image: ${imageId} -> ${storedImage.data.substring(0, 50)}...`
         )
+
+        // Parse attributes and generate style
+        const attributes = parseImageAttributes(attributeString || '')
+        const style = generateImageStyle(attributes)
+        const styleAttr = style ? ` style="${style}"` : ''
+
+        // Add dimension attributes as data attributes for conversion back to markdown
+        const widthAttr = attributes.width
+          ? ` data-width="${attributes.width}"`
+          : ''
+        const heightAttr = attributes.height
+          ? ` data-height="${attributes.height}"`
+          : ''
+        const maxWidthAttr = attributes['max-width']
+          ? ` data-max-width="${attributes['max-width']}"`
+          : ''
+
         // Add both data-stored-id and a class for easier identification
-        return `<img src="${storedImage.data}" alt="${altText}" data-stored-id="${imageId}" class="stored-image" />`
+        return `<img src="${storedImage.data}" alt="${altText}" data-stored-id="${imageId}" class="stored-image"${styleAttr}${widthAttr}${heightAttr}${maxWidthAttr} />`
       }
       // Return original markdown if image not found
       return `![${altText}](image-not-found:${imageId})`
@@ -221,7 +365,37 @@ export function convertMarkdownToHtml(markdown: string): string {
 
   try {
     // Process stored image references first
-    const processedMarkdown = processStoredImages(markdown)
+    let processedMarkdown = processStoredImages(markdown)
+
+    // Process regular images with dimension syntax: ![alt](image.jpg){width=600px}
+    processedMarkdown = processedMarkdown.replace(
+      /!\[(.*?)\]\(([^)]+?)\)\{([^}]*)\}/g,
+      (match, altText, imageUrl, attributeString) => {
+        // If this is a stored image, it was already processed above
+        if (imageUrl.startsWith('stored:')) {
+          return match
+        }
+
+        // Parse attributes and generate style
+        const attributes = parseImageAttributes(attributeString)
+        const style = generateImageStyle(attributes)
+        const styleAttr = style ? ` style="${style}"` : ''
+
+        // Add dimension attributes as data attributes for conversion back to markdown
+        const widthAttr = attributes.width
+          ? ` data-width="${attributes.width}"`
+          : ''
+        const heightAttr = attributes.height
+          ? ` data-height="${attributes.height}"`
+          : ''
+        const maxWidthAttr = attributes['max-width']
+          ? ` data-max-width="${attributes['max-width']}"`
+          : ''
+
+        return `<img src="${imageUrl}" alt="${altText}" class="markdown-image"${styleAttr}${widthAttr}${heightAttr}${maxWidthAttr} />`
+      }
+    )
+
     return marked.parse(processedMarkdown) as string
   } catch (error) {
     console.error('Markdown parsing error:', error)
@@ -381,7 +555,24 @@ export function convertHtmlToMarkdown(html: string): string {
         /<img[^>]*data-stored-id="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
         (match, storedId, alt) => {
           console.log(`Found img with data-stored-id: ${storedId}, alt: ${alt}`)
-          return `![${alt}](stored:${storedId})`
+
+          // Extract dimension attributes
+          const widthMatch = match.match(/data-width="([^"]*)"/)
+          const heightMatch = match.match(/data-height="([^"]*)"/)
+          const maxWidthMatch = match.match(/data-max-width="([^"]*)"/)
+
+          let attributeString = ''
+          const attributes = []
+
+          if (widthMatch) attributes.push(`width=${widthMatch[1]}`)
+          if (heightMatch) attributes.push(`height=${heightMatch[1]}`)
+          if (maxWidthMatch) attributes.push(`max-width=${maxWidthMatch[1]}`)
+
+          if (attributes.length > 0) {
+            attributeString = `{${attributes.join(' ')}}`
+          }
+
+          return `![${alt}](stored:${storedId})${attributeString}`
         }
       )
       // Handle stored images with class attribute (backup approach)
@@ -397,12 +588,29 @@ export function convertHtmlToMarkdown(html: string): string {
             // Fallback: search through all stored images
             storedId = findStoredImageByDataUrl(src) || undefined
           }
+
+          // Extract dimension attributes
+          const widthMatch = match.match(/data-width="([^"]*)"/)
+          const heightMatch = match.match(/data-height="([^"]*)"/)
+          const maxWidthMatch = match.match(/data-max-width="([^"]*)"/)
+
+          let attributeString = ''
+          const attributes = []
+
+          if (widthMatch) attributes.push(`width=${widthMatch[1]}`)
+          if (heightMatch) attributes.push(`height=${heightMatch[1]}`)
+          if (maxWidthMatch) attributes.push(`max-width=${maxWidthMatch[1]}`)
+
+          if (attributes.length > 0) {
+            attributeString = `{${attributes.join(' ')}}`
+          }
+
           if (storedId) {
             console.log(`Found stored ID: ${storedId}`)
-            return `![${alt}](stored:${storedId})`
+            return `![${alt}](stored:${storedId})${attributeString}`
           }
           console.log(`No stored ID found for stored-image class`)
-          return `![${alt}](${src})`
+          return `![${alt}](${src})${attributeString}`
         }
       )
       // Handle any data URL images (try to match with stored images)
@@ -418,19 +626,54 @@ export function convertHtmlToMarkdown(html: string): string {
             // Fallback: search through all stored images
             storedId = findStoredImageByDataUrl(src) || undefined
           }
+
+          // Extract dimension attributes
+          const widthMatch = match.match(/data-width="([^"]*)"/)
+          const heightMatch = match.match(/data-height="([^"]*)"/)
+          const maxWidthMatch = match.match(/data-max-width="([^"]*)"/)
+
+          let attributeString = ''
+          const attributes = []
+
+          if (widthMatch) attributes.push(`width=${widthMatch[1]}`)
+          if (heightMatch) attributes.push(`height=${heightMatch[1]}`)
+          if (maxWidthMatch) attributes.push(`max-width=${maxWidthMatch[1]}`)
+
+          if (attributes.length > 0) {
+            attributeString = `{${attributes.join(' ')}}`
+          }
+
           if (storedId) {
             console.log(`Found stored ID: ${storedId}`)
-            return `![${alt}](stored:${storedId})`
+            return `![${alt}](stored:${storedId})${attributeString}`
           }
           // Regular data URL image (not stored)
           console.log(`No stored ID found, keeping data URL`)
-          return `![${alt}](${src})`
+          return `![${alt}](${src})${attributeString}`
         }
       )
-      // Handle any remaining regular images
+      // Handle any remaining regular images (including markdown-image class)
       .replace(
         /<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
-        '![$2]($1)'
+        (match, src, alt) => {
+          // Extract dimension attributes
+          const widthMatch = match.match(/data-width="([^"]*)"/)
+          const heightMatch = match.match(/data-height="([^"]*)"/)
+          const maxWidthMatch = match.match(/data-max-width="([^"]*)"/)
+
+          let attributeString = ''
+          const attributes = []
+
+          if (widthMatch) attributes.push(`width=${widthMatch[1]}`)
+          if (heightMatch) attributes.push(`height=${heightMatch[1]}`)
+          if (maxWidthMatch) attributes.push(`max-width=${maxWidthMatch[1]}`)
+
+          if (attributes.length > 0) {
+            attributeString = `{${attributes.join(' ')}}`
+          }
+
+          return `![${alt}](${src})${attributeString}`
+        }
       )
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
