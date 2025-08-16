@@ -148,30 +148,6 @@
               >
                 🔍
               </button>
-              <button
-                @click="toggleOutline"
-                :class="[
-                  'px-2 py-1 text-xs rounded',
-                  showOutline
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-                ]"
-                title="Toggle document outline"
-              >
-                📋 Outline
-              </button>
-              <button
-                @click="togglePreview"
-                :class="[
-                  'px-2 py-1 text-xs rounded',
-                  showPreview
-                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    : 'bg-blue-500 text-white',
-                ]"
-                title="Toggle preview pane"
-              >
-                {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
-              </button>
             </div>
           </div>
 
@@ -238,6 +214,10 @@
       :saveStatus="saveStatus"
       :saveStatusClass="saveStatusClass"
       :formatTimestamp="formatTimestamp"
+      :showOutline="showOutline"
+      :showPreview="showPreview"
+      @toggle-outline="toggleOutline"
+      @toggle-preview="togglePreview"
     />
 
     <main class="w-full px-4 sm:px-6 lg:px-8 py-4">

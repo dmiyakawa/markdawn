@@ -101,6 +101,8 @@ describe('TabBar', () => {
         saveStatusClass: { 'text-green-600': true },
         formatTimestamp: (timestamp: string) =>
           new Date(timestamp).toLocaleString(),
+        showOutline: false,
+        showPreview: true,
         ...props,
       },
     })

@@ -285,6 +285,34 @@
         Close
       </button>
     </div>
+
+    <!-- View Controls (Right Edge) -->
+    <div class="ml-2 flex items-center space-x-1">
+      <button
+        @click="emit('toggle-outline')"
+        :class="[
+          'px-2 py-1 text-xs rounded',
+          showOutline
+            ? 'bg-blue-500 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+        ]"
+        title="Toggle document outline"
+      >
+        📋 Outline
+      </button>
+      <button
+        @click="emit('toggle-preview')"
+        :class="[
+          'px-2 py-1 text-xs rounded',
+          showPreview
+            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            : 'bg-blue-500 text-white',
+        ]"
+        title="Toggle preview pane"
+      >
+        {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+      </button>
+    </div>
   </div>
 
   <!-- Click overlay to close context menu -->
@@ -307,6 +335,14 @@ const props = defineProps<{
   saveStatus?: string
   saveStatusClass: Record<string, boolean>
   formatTimestamp: (timestamp: string) => string
+  showOutline: boolean
+  showPreview: boolean
+}>()
+
+// Emits
+const emit = defineEmits<{
+  'toggle-outline': []
+  'toggle-preview': []
 }>()
 
 // Document management

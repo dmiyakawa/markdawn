@@ -64,7 +64,15 @@ vi.mock('./components/TabBar.vue', () => ({
   default: {
     name: 'TabBar',
     template: '<div class="mock-tab-bar" data-testid="tab-bar">Tab Bar</div>',
-    props: ['lastSaved', 'saveStatus', 'saveStatusClass', 'formatTimestamp'],
+    props: [
+      'lastSaved',
+      'saveStatus',
+      'saveStatusClass',
+      'formatTimestamp',
+      'showOutline',
+      'showPreview',
+    ],
+    emits: ['toggle-outline', 'toggle-preview'],
   },
 }))
 
@@ -165,12 +173,12 @@ describe('App.vue', () => {
     expect(buttonTexts).toContain('New')
   })
 
-  it('has preview toggle button', () => {
+  it('has TabBar component with view controls', () => {
     const wrapper = createWrapper()
-    const buttons = wrapper.findAll('button')
-    expect(buttons.some((button) => button.text() === 'Hide Preview')).toBe(
-      true
-    )
+    const tabBar = wrapper.findComponent({ name: 'TabBar' })
+    expect(tabBar.exists()).toBe(true)
+    expect(tabBar.props()).toHaveProperty('showPreview')
+    expect(tabBar.props()).toHaveProperty('showOutline')
   })
 
   it('has default markdown content', () => {
