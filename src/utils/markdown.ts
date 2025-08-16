@@ -495,8 +495,13 @@ export function convertHtmlToMarkdown(html: string): string {
 
   console.log('Converting HTML to Markdown:', html.substring(0, 200) + '...')
 
+  // Remove resize handles and other UI elements before conversion
+  const cleanedHtml = html
+    .replace(/<[^>]*data-image-handle[^>]*>.*?<\/[^>]*>/gi, '') // Remove resize handles
+    .replace(/<[^>]*data-image-handle[^>]*\/>/gi, '') // Remove self-closing resize handles
+
   return (
-    html
+    cleanedHtml
       // Handle enhanced code blocks with filename support
       .replace(
         /<div class="enhanced-code-block">([\s\S]*?)<\/div>/gi,

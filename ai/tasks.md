@@ -131,6 +131,61 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
   - Screen reader testing across different tools
   - Keyboard-only navigation testing
 
+## Critical Bugs (High Priority)
+
+### WYSIWYG Image Resize Breaking Code Blocks
+
+**Problem**: Resizing images in WYSIWYG mode corrupts code blocks, removing code block notation and leaving only filename + "Copy" button + raw code content.
+
+**Status**: CONFIRMED BUG - Persists in actual browser despite multiple fix attempts
+
+**Impact**: High - Breaks core editing functionality when images and code blocks coexist
+
+**Test-Driven Development Approach Required**:
+
+1. **Write failing test first** - Create E2E test that reproduces the exact bug:
+   - Switch to WYSIWYG mode
+   - Add content with both code block and image: 
+     ```markdown
+     # Test Document
+     
+     ```javascript:example.js
+     console.log("Hello World");
+     ```
+     
+     ![Test Image](data:image/jpeg;base64,...)
+     ```
+   - Resize the image using drag handles
+   - Verify code block structure remains intact (should fail initially)
+
+2. **Identify root cause** through failing test:
+   - Track exactly when code block HTML gets corrupted
+   - Monitor DOM mutations during image resize operations
+   - Check HTML-to-markdown conversion at each step
+   - Isolate whether issue is in DOM manipulation, event handling, or conversion
+
+3. **Implement minimal fix** to make test pass:
+   - Fix only what's needed to pass the test
+   - Avoid over-engineering solutions
+   - Focus on the specific interaction pattern
+
+4. **Verify test passes** and no regressions occur
+
+**Technical Investigation Areas**:
+- Contenteditable behavior during DOM manipulation
+- Event propagation between image resize and content sync
+- HTML-to-markdown conversion timing and scope
+- MutationObserver interference with contenteditable
+- CodeMirror synchronization with WYSIWYG changes
+
+**Previous Failed Attempts**:
+- Wrapper div approach (DOM structure interference)
+- Sibling-based handles (still causing corruption)
+- Edit state tracking (insufficient isolation)
+- HTML cleaning before conversion (partial solution)
+
+**Next Steps**: Write comprehensive test suite covering this exact scenario before attempting any more fixes.
+
 ## Unresolved Concerns
 
 ### Technical Decisions Needed

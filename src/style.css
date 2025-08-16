@@ -318,12 +318,6 @@
 }
 
 /* Image resize handles for WYSIWYG editor */
-.wysiwyg-editor .image-with-handles {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-}
-
 .wysiwyg-editor .image-resize-handle {
   position: absolute;
   background: #3b82f6;
@@ -335,44 +329,37 @@
   opacity: 0;
   transition: opacity 0.2s ease;
   z-index: 10;
+  pointer-events: auto;
 }
 
-.wysiwyg-editor .image-with-handles:hover .image-resize-handle,
-.wysiwyg-editor .image-with-handles.resizing .image-resize-handle {
+.wysiwyg-editor img[data-has-handles]:hover + [data-image-handle],
+.wysiwyg-editor img[data-has-handles]:hover ~ [data-image-handle],
+.wysiwyg-editor img.resizing + [data-image-handle],
+.wysiwyg-editor img.resizing ~ [data-image-handle],
+.wysiwyg-editor [data-image-handle]:hover {
   opacity: 1;
 }
 
 .wysiwyg-editor .image-resize-handle.bottom-right {
-  bottom: -6px;
-  right: -6px;
   cursor: se-resize;
 }
 
 .wysiwyg-editor .image-resize-handle.bottom-left {
-  bottom: -6px;
-  left: -6px;
   cursor: sw-resize;
 }
 
 .wysiwyg-editor .image-resize-handle.top-right {
-  top: -6px;
-  right: -6px;
   cursor: ne-resize;
 }
 
 .wysiwyg-editor .image-resize-handle.top-left {
-  top: -6px;
-  left: -6px;
   cursor: nw-resize;
 }
 
 /* Visual feedback during resize */
-.wysiwyg-editor .image-with-handles.resizing {
+.wysiwyg-editor img.resizing {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
-}
-
-.wysiwyg-editor .image-with-handles.resizing img {
   user-select: none;
   pointer-events: none;
 }

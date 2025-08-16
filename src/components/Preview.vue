@@ -47,9 +47,11 @@
             isWysiwygMode ? 'focus:outline-none' : 'cursor-default',
             !isWysiwygMode ? 'bg-gray-50' : '',
           ]"
-          @input="$emit('wysiwyg-input', $event)"
-          @blur="$emit('wysiwyg-blur')"
+          @input="handleInput"
+          @blur="handleBlur"
           @paste="$emit('wysiwyg-paste', $event)"
+          @focus="handleFocus"
+          @keydown="handleKeydown"
           v-html="htmlContent"
         />
       </div>
@@ -126,6 +128,37 @@ const focus = () => {
   }
 }
 
+// Track editing state to avoid DOM conflicts
+const handleInput = (event: Event) => {
+  isUserEditing = true
+  emit('wysiwyg-input', event)
+
+  // Reset editing flag after a delay to allow for DOM updates
+  setTimeout(() => {
+    isUserEditing = false
+  }, 100)
+}
+
+const handleBlur = () => {
+  isUserEditing = false
+  emit('wysiwyg-blur')
+
+  // Add resize handles after editing is complete
+  if (props.isWysiwygMode) {
+    nextTick(() => {
+      addResizeHandlesToImages()
+    })
+  }
+}
+
+const handleFocus = () => {
+  isUserEditing = false
+}
+
+const handleKeydown = () => {
+  isUserEditing = true
+}
+
 // Image resize functionality
 const addResizeHandlesToImages = () => {
   if (!wysiwygEditor.value || !props.isWysiwygMode) return
@@ -134,28 +167,134 @@ const addResizeHandlesToImages = () => {
   images.forEach(addResizeHandlesToImage)
 }
 
+const positionHandle = (
+  handle: HTMLElement,
+  img: HTMLImageElement,
+  position: string
+) => {
+  const rect = img.getBoundingClientRect()
+  const parentRect = img.offsetParent?.getBoundingClientRect() || {
+    left: 0,
+    top: 0,
+  }
+
+  const left = rect.left - parentRect.left + (img.offsetParent?.scrollLeft || 0)
+  const top = rect.top - parentRect.top + (img.offsetParent?.scrollTop || 0)
+
+  switch (position) {
+    case 'top-left':
+      handle.style.left = `${left - 6}px`
+      handle.style.top = `${top - 6}px`
+      break
+    case 'top-right':
+      handle.style.left = `${left + img.offsetWidth - 6}px`
+      handle.style.top = `${top - 6}px`
+      break
+    case 'bottom-left':
+      handle.style.left = `${left - 6}px`
+      handle.style.top = `${top + img.offsetHeight - 6}px`
+      break
+    case 'bottom-right':
+      handle.style.left = `${left + img.offsetWidth - 6}px`
+      handle.style.top = `${top + img.offsetHeight - 6}px`
+      break
+  }
+}
+
+const updateHandlePositions = (img: HTMLImageElement) => {
+  if (!img.hasAttribute('data-has-handles')) return
+
+  const parent = img.parentElement
+  if (!parent) return
+
+  const handles = parent.querySelectorAll(`[data-for-image="${img.src}"]`)
+  handles.forEach((handle) => {
+    const position = handle.className.match(
+      /top-left|top-right|bottom-left|bottom-right/
+    )?.[0]
+    if (position && handle instanceof HTMLElement) {
+      positionHandle(handle, img, position)
+    }
+  })
+}
+
+const removeAllResizeHandles = () => {
+  if (!wysiwygEditor.value) return
+
+  // Remove all handle elements
+  const handles = wysiwygEditor.value.querySelectorAll(
+    '[data-image-handle="true"]'
+  )
+  handles.forEach((handle) => handle.remove())
+
+  // Clean up images
+  const images = wysiwygEditor.value.querySelectorAll('img[data-has-handles]')
+  images.forEach((imgElement) => {
+    const img = imgElement as HTMLImageElement
+    img.removeAttribute('data-has-handles')
+    img.style.position = ''
+    img.style.display = ''
+
+    // Clean up observer
+    const observer = (
+      img as HTMLImageElement & { _handleObserver?: MutationObserver }
+    )._handleObserver
+    if (observer) {
+      observer.disconnect()
+      delete (img as HTMLImageElement & { _handleObserver?: MutationObserver })
+        ._handleObserver
+    }
+  })
+}
+
 const addResizeHandlesToImage = (img: HTMLImageElement) => {
   // Check if already has handles
-  if (img.parentElement?.classList.contains('image-with-handles')) {
+  if (img.hasAttribute('data-has-handles')) {
     return
   }
 
-  // Create wrapper
-  const wrapper = document.createElement('div')
-  wrapper.className = 'image-with-handles'
+  // Skip if image is inside a code block or other non-editable content
+  const codeBlock = img.closest('.enhanced-code-block, pre, code')
+  if (codeBlock) {
+    return
+  }
 
-  // Insert wrapper before image
-  img.parentNode?.insertBefore(wrapper, img)
-  wrapper.appendChild(img)
+  // Mark image as having handles to avoid duplicates
+  img.setAttribute('data-has-handles', 'true')
 
-  // Create resize handles
+  // Make image relatively positioned to allow absolute positioning of handles
+  img.style.position = 'relative'
+  img.style.display = 'inline-block'
+
+  // Create resize handles as siblings (not in a wrapper)
+  const parent = img.parentElement!
   const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+
   handles.forEach((position) => {
     const handle = document.createElement('div')
     handle.className = `image-resize-handle ${position}`
+    handle.setAttribute('data-image-handle', 'true')
+    handle.setAttribute('data-for-image', img.src || '')
+    handle.style.position = 'absolute'
     handle.addEventListener('mousedown', (e) => startResize(e, img, position))
-    wrapper.appendChild(handle)
+
+    // Position handles relative to the image
+    positionHandle(handle, img, position)
+
+    // Insert handle right after the image
+    parent.insertBefore(handle, img.nextSibling)
   })
+
+  // Add event listeners to update handle positions when image moves
+  const observer = new MutationObserver(() => {
+    updateHandlePositions(img)
+  })
+  observer.observe(parent, { childList: true, subtree: true })
+
+  // Store observer reference for cleanup
+  ;(
+    img as HTMLImageElement & { _handleObserver?: MutationObserver }
+  )._handleObserver = observer
 }
 
 const startResize = (
@@ -166,8 +305,8 @@ const startResize = (
   e.preventDefault()
   e.stopPropagation()
 
-  const wrapper = img.parentElement!
-  wrapper.classList.add('resizing')
+  // Add resizing class to image
+  img.classList.add('resizing')
 
   const startX = e.clientX
   const startY = e.clientY
@@ -218,10 +357,13 @@ const startResize = (
     // Update data attributes for markdown conversion
     img.setAttribute('data-width', `${Math.round(newWidth)}px`)
     img.setAttribute('data-height', `${Math.round(newHeight)}px`)
+
+    // Update handle positions
+    updateHandlePositions(img)
   }
 
   const handleMouseUp = () => {
-    wrapper.classList.remove('resizing')
+    img.classList.remove('resizing')
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
 
@@ -234,10 +376,12 @@ const startResize = (
 }
 
 // Watch for content changes to add resize handles
+// Only when not actively editing to avoid DOM conflicts
+let isUserEditing = false
 watch(
   () => props.htmlContent,
   () => {
-    if (props.isWysiwygMode) {
+    if (props.isWysiwygMode && !isUserEditing) {
       nextTick(() => {
         addResizeHandlesToImages()
       })
@@ -253,6 +397,9 @@ watch(
       nextTick(() => {
         addResizeHandlesToImages()
       })
+    } else {
+      // Remove resize handles when switching out of WYSIWYG mode
+      removeAllResizeHandles()
     }
   }
 )
