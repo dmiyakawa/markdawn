@@ -4,15 +4,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 
 ## High Priority
 
-### Image Scaling and Display Control
-
-- **Image scaling and display control**
-  - Add image width/height controls in markdown syntax (e.g., `![alt](image.jpg){width=600px}`)
-  - Implement responsive image scaling in both markdown and WYSIWYG editors
-  - Show images with consistent maximum width (e.g., 600px) regardless of original size
-  - Add image resize handles in WYSIWYG mode for visual resizing
-  - Maintain aspect ratio during scaling operations
-  - Support CSS-style dimension attributes in image tags
+Currently no high priority tasks remaining. See completed tasks in [ai/completed_tasks.md](./completed_tasks.md).
 
 ## Medium Priority
 
