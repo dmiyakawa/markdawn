@@ -6,7 +6,7 @@
           <!-- Menu Bar Controls -->
           <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
             <!-- File Menu -->
-            <div class="flex items-center space-x-1">
+            <div id="file-menu" class="flex items-center space-x-1">
               <span
                 class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
                 >File</span
@@ -19,6 +19,7 @@
                 class="hidden"
               />
               <button
+                id="new-document-btn"
                 @click="newDocument"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 title="New document"
@@ -26,6 +27,7 @@
                 New
               </button>
               <button
+                id="import-btn"
                 @click="triggerFileImport"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 title="Import markdown file"
@@ -33,6 +35,7 @@
                 Import
               </button>
               <button
+                id="save-btn"
                 @click="saveDocument"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 title="Save to browser storage"
@@ -40,6 +43,7 @@
                 Save
               </button>
               <button
+                id="load-btn"
                 @click="loadDocument"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 title="Load from browser storage"
@@ -49,12 +53,13 @@
             </div>
 
             <!-- Edit Menu -->
-            <div class="flex items-center space-x-1">
+            <div id="edit-menu" class="flex items-center space-x-1">
               <span
                 class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
                 >Edit</span
               >
               <button
+                id="undo-btn"
                 @click="performUndo"
                 :disabled="!canUndo"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -63,6 +68,7 @@
                 ↶ Undo
               </button>
               <button
+                id="redo-btn"
                 @click="performRedo"
                 :disabled="!canRedo"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -71,6 +77,7 @@
                 ↷ Redo
               </button>
               <button
+                id="find-replace-btn"
                 @click="toggleFindReplace"
                 :class="[
                   'px-2 py-1 text-xs rounded',
@@ -85,12 +92,13 @@
             </div>
 
             <!-- Export Menu -->
-            <div class="flex items-center space-x-1">
+            <div id="export-menu" class="flex items-center space-x-1">
               <span
                 class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
                 >Export</span
               >
               <button
+                id="export-md-btn"
                 @click="exportFile"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 title="Export as markdown file"
@@ -98,6 +106,7 @@
                 MD
               </button>
               <button
+                id="export-html-btn"
                 @click="openHTMLExportModal"
                 :disabled="exportingHTML"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -107,6 +116,7 @@
                 <span v-else>⏳</span>
               </button>
               <button
+                id="export-pdf-btn"
                 @click="openPDFExportModal"
                 :disabled="exportingPDF"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -116,6 +126,7 @@
                 <span v-else>⏳</span>
               </button>
               <button
+                id="export-zip-btn"
                 @click="exportAllFilesWithImages"
                 :disabled="exportingZip"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -127,13 +138,14 @@
             </div>
 
             <!-- Insert Menu -->
-            <div class="flex items-center space-x-1">
+            <div id="insert-menu" class="flex items-center space-x-1">
               <span
                 class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
                 >Insert</span
               >
               <ImageUploader :onImageInsert="insertImageIntoEditor" />
               <button
+                id="gallery-btn"
                 @click="toggleImageManager"
                 class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
                 title="Manage stored images"
@@ -141,7 +153,6 @@
                 Gallery
               </button>
             </div>
-
           </div>
 
           <!-- GitHub Link -->

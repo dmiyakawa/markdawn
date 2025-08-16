@@ -25,21 +25,33 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
   - Maintain aspect ratio during scaling operations
   - Support CSS-style dimension attributes in image tags
 
-### Interface Accessibility Improvements
-
-- **Expand semantic ID coverage**
-  - ✅ **Basic IDs Added**: `tab-bar`, `left-pane`, `right-pane`, `markdown-editor`, `wysiwyg-editor`, `find-replace-panel`, `menu-bar`, `editor-container`, `image-uploader`, `tab-container`
-  - Add IDs to menu sections: `file-menu`, `export-menu`, `insert-menu`, `view-menu`
-  - Add IDs to specific buttons for automation/testing: `new-document-btn`, `save-btn`, `export-zip-btn`, etc.
-  - Add IDs to status/info elements for easier access
-  - Document ID naming conventions and usage patterns
-
-### Other Advanced Editor Features
-
-- Document outline/table of contents generation
-- Advanced export formats (standalone HTML, styled PDF)
-
 ## Medium Priority
+
+### Advanced Export Formats
+
+- **Standalone HTML Export**
+  - **Current Implementation**: HTML export opens in print dialog for immediate printing/saving
+  - **Enhancement Goal**: Generate self-contained HTML files that include all embedded content
+  - **Features to Implement**:
+    - Embed stored images directly as base64 data URLs within the HTML file
+    - Include all CSS styles inline (no external dependencies)
+    - Create single-file HTML documents that work offline without any external resources
+    - Support custom styling themes and typography options
+    - Generate HTML files suitable for sharing, archiving, or hosting independently
+  - **Difference from Current**: Current HTML export is optimized for printing; standalone HTML would be optimized for web viewing and distribution
+
+- **Styled PDF Export**
+  - **Current Implementation**: PDF export opens browser print dialog with basic formatting
+  - **Enhancement Goal**: Generate professionally formatted PDF files with advanced styling
+  - **Features to Implement**:
+    - Custom page layouts (A4, Letter, etc.) with proper margins and headers/footers
+    - Advanced typography with font selection and professional spacing
+    - Table of contents generation with clickable navigation links
+    - Page numbering and document metadata (title, author, creation date)
+    - Print-optimized image sizing and quality settings
+    - Professional document styling themes (academic, business, technical, etc.)
+    - Direct PDF file generation (not browser print dialog dependent)
+  - **Difference from Current**: Current PDF export relies on browser print capabilities; styled PDF would use dedicated PDF generation libraries for professional output
 
 ### Advanced Tab Management Features
 

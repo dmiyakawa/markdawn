@@ -5,6 +5,7 @@
   >
     <!-- Scroll Left Button -->
     <button
+      id="scroll-left-btn"
       v-show="showScrollControls && canScrollLeft"
       @click="scrollLeft"
       class="p-1 rounded hover:bg-gray-200 transition-colors duration-200 mr-1"
@@ -127,6 +128,7 @@
 
       <!-- New Tab Button - positioned after tabs -->
       <button
+        id="new-tab-btn"
         class="ml-1 p-2 rounded hover:bg-gray-200 transition-colors duration-200 flex-shrink-0"
         @click="() => createNewDocument()"
         title="New document"
@@ -141,11 +143,19 @@
       </button>
 
       <!-- Save Status - positioned after new button -->
-      <div class="ml-4 flex items-center space-x-3 text-xs flex-shrink-0">
-        <span v-if="lastSaved" class="text-gray-500" title="Last saved time">
+      <div
+        id="status-info"
+        class="ml-4 flex items-center space-x-3 text-xs flex-shrink-0"
+      >
+        <span
+          id="last-saved-info"
+          v-if="lastSaved"
+          class="text-gray-500"
+          title="Last saved time"
+        >
           Saved: {{ formatTimestamp(lastSaved) }}
         </span>
-        <span v-if="saveStatus" :class="saveStatusClass">
+        <span id="save-status" v-if="saveStatus" :class="saveStatusClass">
           {{ saveStatus }}
         </span>
       </div>
@@ -153,6 +163,7 @@
 
     <!-- Scroll Right Button -->
     <button
+      id="scroll-right-btn"
       v-show="showScrollControls && canScrollRight"
       @click="scrollRight"
       class="p-1 rounded hover:bg-gray-200 transition-colors duration-200 ml-1"
