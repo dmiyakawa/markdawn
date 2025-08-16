@@ -2,7 +2,7 @@
 
 See [ai/completed_tasks.md](./completed_tasks.md) for completed features and implementations.
 
-## High Priority - Next Session
+## High Priority
 
 ### Enhanced Code Block Support
 
@@ -156,6 +156,12 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 - File upload simulation in E2E tests (actual file drop testing)
 - Advanced image processing testing scenarios
 - Cross-browser visual regression testing maintenance
+
+### Browser Compatibility
+
+- Target browser versions to support
+- Polyfill requirements assessment
+- Mobile device optimization and testing
 
 ## Disabled Tests Requiring Investigation
 
@@ -315,9 +321,3 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 3. Focus on content replacement timing and method reliability
 
 **Priority**: Medium - Find/replace functionality is important but test stability more critical than coverage
-
-### Browser Compatibility
-
-- Target browser versions to support
-- Polyfill requirements assessment
-- Mobile device optimization and testing
