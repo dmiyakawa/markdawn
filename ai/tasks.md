@@ -4,17 +4,6 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 
 ## High Priority
 
-### Enhanced Code Block Support
-
-- **Language-specific syntax highlighting with filename support**
-  - Extend markdown processing to support syntax like `\`\`\`python:example.py`
-  - Parse language and filename from code block headers (format: `language:filename`)
-  - Display filename above code blocks in both preview and WYSIWYG modes
-  - Integrate with CodeMirror's language support for additional syntax highlighting
-  - Support common languages, especially JavaScript, TypeScript, and Python.
-  - Add copy-to-clipboard functionality for code blocks with filename context
-  - (No need to maintain backward compatibility with existing `\`\`\`language` syntax)
-
 ### Image Scaling and Display Control
 
 - **Image scaling and display control**
