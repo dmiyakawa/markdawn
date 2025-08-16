@@ -70,6 +70,18 @@
               >
                 ↷ Redo
               </button>
+              <button
+                @click="toggleFindReplace"
+                :class="[
+                  'px-2 py-1 text-xs rounded',
+                  showFindReplace
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                ]"
+                title="Toggle Find/Replace (Ctrl+H)"
+              >
+                Find/Replace
+              </button>
             </div>
 
             <!-- Export Menu -->
@@ -130,25 +142,6 @@
               </button>
             </div>
 
-            <!-- View Menu -->
-            <div class="flex items-center space-x-1">
-              <span
-                class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
-                >View</span
-              >
-              <button
-                @click="toggleFindReplace"
-                :class="[
-                  'px-2 py-1 text-xs rounded',
-                  showFindReplace
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-                ]"
-                title="Toggle Find/Replace (Ctrl+H)"
-              >
-                🔍
-              </button>
-            </div>
           </div>
 
           <!-- GitHub Link -->
