@@ -2,12 +2,175 @@ import { marked } from 'marked'
 import { getStoredImage, getStoredImages } from './imageStorage'
 
 /**
- * Configure marked with safe defaults and syntax highlighting support
+ * Map file extensions to language identifiers for syntax highlighting
+ */
+function getLanguageFromExtension(extension: string): string {
+  const extensionMap: Record<string, string> = {
+    // JavaScript/TypeScript
+    'js': 'javascript',
+    'jsx': 'javascript', 
+    'ts': 'typescript',
+    'tsx': 'typescript',
+    'mjs': 'javascript',
+    'cjs': 'javascript',
+    
+    // Python
+    'py': 'python',
+    'pyw': 'python',
+    'pyi': 'python',
+    
+    // Web technologies
+    'html': 'html',
+    'htm': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'sass': 'sass',
+    'less': 'less',
+    
+    // Markup and config
+    'json': 'json',
+    'xml': 'xml',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'toml': 'toml',
+    'md': 'markdown',
+    'markdown': 'markdown',
+    
+    // Systems programming
+    'c': 'c',
+    'cpp': 'cpp',
+    'cc': 'cpp',
+    'cxx': 'cpp',
+    'h': 'c',
+    'hpp': 'cpp',
+    'rust': 'rust',
+    'rs': 'rust',
+    'go': 'go',
+    
+    // JVM languages
+    'java': 'java',
+    'kt': 'kotlin',
+    'scala': 'scala',
+    
+    // .NET languages
+    'cs': 'csharp',
+    'vb': 'vbnet',
+    'fs': 'fsharp',
+    
+    // Shell/scripting
+    'sh': 'bash',
+    'bash': 'bash',
+    'zsh': 'bash',
+    'fish': 'bash',
+    'ps1': 'powershell',
+    'bat': 'batch',
+    'cmd': 'batch',
+    
+    // Other languages
+    'php': 'php',
+    'rb': 'ruby',
+    'pl': 'perl',
+    'r': 'r',
+    'sql': 'sql',
+    'lua': 'lua',
+    'vim': 'vim',
+    
+    // Config and data
+    'ini': 'ini',
+    'cfg': 'ini',
+    'conf': 'ini',
+    'dockerfile': 'dockerfile',
+    'Dockerfile': 'dockerfile',
+  }
+  
+  return extensionMap[extension] || extension
+}
+
+/**
+ * Parse language and filename from code block info string
+ * Supports format: language:filename (e.g., python:example.py)
+ */
+function parseCodeBlockInfo(infoString: string): { language: string; filename?: string } {
+  if (!infoString) {
+    return { language: '' }
+  }
+
+  const parts = infoString.split(':')
+  if (parts.length >= 2) {
+    return {
+      language: parts[0].trim(),
+      filename: parts[1].trim()
+    }
+  }
+
+  return { language: infoString.trim() }
+}
+
+/**
+ * Generate copy-to-clipboard functionality HTML
+ */
+function generateCopyButton(code: string, filename?: string): string {
+  // Ensure code is a string and handle edge cases
+  const codeStr = String(code || '')
+  // Escape for JavaScript string literal - need to escape quotes and newlines properly
+  // Since we're using double quotes for the JS string, we need to escape double quotes
+  const escapedCode = codeStr
+    .replace(/\\/g, '\\\\')  // Escape backslashes first
+    .replace(/"/g, '\\"')    // Escape double quotes (primary concern)
+    .replace(/\n/g, '\\n')   // Escape newlines
+    .replace(/\r/g, '\\r')   // Escape carriage returns
+    .replace(/\t/g, '\\t')   // Escape tabs
+  
+  const buttonText = 'Copy'
+  const titleText = filename ? `Copy ${filename}` : 'Copy code'
+  
+  return `<button class="code-copy-btn" onclick='navigator.clipboard.writeText("${escapedCode}").then(() => { this.textContent = "Copied!"; setTimeout(() => this.textContent = "${buttonText}", 2000); }).catch(() => { this.textContent = "Failed"; setTimeout(() => this.textContent = "${buttonText}", 2000); })' title="${titleText}">${buttonText}</button>`
+}
+
+/**
+ * Custom renderer for enhanced code blocks with filename support
+ */
+function createCodeRenderer() {
+  const renderer = new marked.Renderer()
+  
+  // Override code block rendering (modern marked.js API)
+  renderer.code = function({text, lang, escaped}) {
+    // Ensure parameters are strings
+    const codeStr = String(text || '')
+    const infoStr = String(lang || '')
+    
+    const { language, filename } = parseCodeBlockInfo(infoStr)
+    const copyButton = generateCopyButton(codeStr, filename)
+    
+    // Build the code block HTML with enhanced structure
+    let html = '<div class="enhanced-code-block">'
+    
+    // Add filename header if present
+    if (filename) {
+      html += `<div class="code-header"><span class="code-filename">${filename}</span>${copyButton}</div>`
+    } else {
+      html += `<div class="code-header"><span class="code-language">${language || 'text'}</span>${copyButton}</div>`
+    }
+    
+    // Add the code block with language class for potential syntax highlighting
+    // Use the code directly since marked already handles escaping
+    html += `<pre class="code-content${language ? ` language-${language}` : ''}"><code>${codeStr}</code></pre>`
+    html += '</div>'
+    
+    return html
+  }
+  
+  return renderer
+}
+
+/**
+ * Configure marked with safe defaults and enhanced code block support
  */
 function configureMarked() {
   marked.setOptions({
     breaks: true, // Support line breaks
     gfm: true, // GitHub Flavored Markdown
+    renderer: createCodeRenderer() // Use custom renderer for enhanced code blocks
   })
 }
 
@@ -157,6 +320,41 @@ export function convertHtmlToMarkdown(html: string): string {
 
   return (
     html
+      // Handle enhanced code blocks with filename support
+      .replace(
+        /<div class="enhanced-code-block">([\s\S]*?)<\/div>/gi,
+        (match, content) => {
+          // Extract filename from code header
+          const filenameMatch = content.match(/<span class="code-filename">([^<]+)<\/span>/)
+          const languageMatch = content.match(/<span class="code-language">([^<]+)<\/span>/)
+          
+          // Extract code content
+          const codeMatch = content.match(/<pre[^>]*class="[^"]*code-content[^"]*"[^>]*><code>([\s\S]*?)<\/code><\/pre>/)
+          
+          if (codeMatch) {
+            const code = codeMatch[1]
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+            
+            if (filenameMatch) {
+              // Try to extract language from filename extension
+              const filename = filenameMatch[1]
+              const extension = filename.split('.').pop()?.toLowerCase()
+              const language = getLanguageFromExtension(extension || '')
+              return `\n\`\`\`${language}:${filename}\n${code}\n\`\`\`\n\n`
+            } else if (languageMatch) {
+              const language = languageMatch[1].toLowerCase()
+              return `\n\`\`\`${language}\n${code}\n\`\`\`\n\n`
+            } else {
+              return `\n\`\`\`\n${code}\n\`\`\`\n\n`
+            }
+          }
+          return match
+        }
+      )
       .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
       .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
       .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')

@@ -322,6 +322,28 @@ import {
   type ExportOptions,
 } from './utils/advancedExport'
 
+// Import Prism.js for syntax highlighting
+import Prism from 'prismjs'
+// Import common language definitions
+import 'prismjs/components/prism-javascript'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-python'
+import 'prismjs/components/prism-css'
+import 'prismjs/components/prism-scss'
+import 'prismjs/components/prism-json'
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-markdown'
+import 'prismjs/components/prism-java'
+import 'prismjs/components/prism-c'
+import 'prismjs/components/prism-cpp'
+import 'prismjs/components/prism-rust'
+import 'prismjs/components/prism-go'
+// See https://lotus-base.com/blog/31/
+import 'prismjs/components/prism-markup-templating'
+import 'prismjs/components/prism-php'
+import 'prismjs/components/prism-ruby'
+import 'prismjs/components/prism-sql'
+
 // Document management
 const {
   activeDocument,
@@ -399,6 +421,19 @@ const saveStatusClass = computed(() => ({
 
 // HTML content for preview
 const htmlContent = computed(() => convertMarkdownToHtml(markdownContent.value))
+
+// Watch for HTML content changes and apply syntax highlighting
+watch(
+  htmlContent,
+  () => {
+    // Use nextTick to ensure DOM has been updated before highlighting
+    nextTick(() => {
+      // Highlight all code blocks in the preview pane
+      Prism.highlightAll()
+    })
+  },
+  { flush: 'post' }
+)
 
 const togglePreview = () => {
   showPreview.value = !showPreview.value

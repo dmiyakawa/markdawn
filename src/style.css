@@ -118,6 +118,100 @@
   color: #111827 !important;
 }
 
+/* Enhanced code block styles */
+.enhanced-code-block {
+  margin: 1.5em 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f9fafb;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.code-filename {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-weight: 600;
+  color: #374151;
+  padding: 0.25rem 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.code-language {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.code-copy-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.code-copy-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.code-copy-btn:active {
+  background-color: #e5e7eb;
+}
+
+.enhanced-code-block .code-content {
+  margin: 0;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 0;
+  border: none;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.enhanced-code-block .code-content code {
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: inherit !important;
+  color: #111827 !important;
+}
+
+/* WYSIWYG specific styles for enhanced code blocks */
+.wysiwyg-editor .enhanced-code-block {
+  margin: 1.5em 0 !important;
+}
+
+.wysiwyg-editor .code-header {
+  padding: 0.5rem 0.75rem !important;
+  background-color: #f3f4f6 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.wysiwyg-editor .code-content {
+  padding: 1rem !important;
+  background-color: #ffffff !important;
+}
+
 .wysiwyg-editor blockquote {
   font-style: italic !important;
   border-left: 0.25rem solid #e5e7eb !important;
@@ -189,4 +283,125 @@
 
 .wysiwyg-editor > *:last-child {
   margin-bottom: 0 !important;
+}
+
+/* Prism.js syntax highlighting theme - One Light */
+/* Based on Atom's One Light Syntax Theme */
+
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #383a42;
+  background: none;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.875rem;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Selection */
+code[class*="language-"]::-moz-selection,
+code[class*="language-"] ::-moz-selection,
+pre[class*="language-"]::-moz-selection,
+pre[class*="language-"] ::-moz-selection {
+  background: #c1c6cd;
+}
+
+code[class*="language-"]::selection,
+code[class*="language-"] ::selection,
+pre[class*="language-"]::selection,
+pre[class*="language-"] ::selection {
+  background: #c1c6cd;
+}
+
+/* Syntax highlighting tokens */
+.token.comment,
+.token.prolog,
+.token.cdata {
+  color: #a0a1a7;
+  font-style: italic;
+}
+
+.token.doctype,
+.token.punctuation,
+.token.entity {
+  color: #383a42;
+}
+
+.token.attr-name,
+.token.class-name,
+.token.boolean,
+.token.constant,
+.token.number,
+.token.atrule {
+  color: #986801;
+}
+
+.token.keyword {
+  color: #a626a4;
+}
+
+.token.property,
+.token.tag,
+.token.symbol,
+.token.deleted,
+.token.important {
+  color: #e45649;
+}
+
+.token.selector,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted,
+.token.regex,
+.token.attr-value {
+  color: #50a14f;
+}
+
+.token.variable,
+.token.operator,
+.token.function {
+  color: #4078f2;
+}
+
+.token.url {
+  color: #0184bc;
+}
+
+/* Language-specific overrides */
+.language-css .token.selector {
+  color: #e45649;
+}
+
+.language-css .token.property {
+  color: #383a42;
+}
+
+.language-javascript .token.operator {
+  color: #a626a4;
+}
+
+.language-python .token.decorator,
+.language-python .token.builtin {
+  color: #4078f2;
+}
+
+/* General */
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
 }
