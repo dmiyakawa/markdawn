@@ -79,31 +79,51 @@ describe('imageProcessing', () => {
       expect(isValidImageFile(file1)).toBe(false)
 
       // Test with undefined type (though File constructor requires a type)
-      const file2 = new File([''], 'test.jpg', { type: undefined as any })
+      const file2 = new File([''], 'test.jpg', {
+        type: undefined as unknown as string,
+      })
       expect(isValidImageFile(file2)).toBe(false)
     })
 
     it('validates specific supported types', () => {
       // Test all four supported types explicitly
-      expect(isValidImageFile(new File([''], 'test.jpg', { type: 'image/jpeg' }))).toBe(true)
-      expect(isValidImageFile(new File([''], 'test.png', { type: 'image/png' }))).toBe(true)
-      expect(isValidImageFile(new File([''], 'test.webp', { type: 'image/webp' }))).toBe(true)
-      expect(isValidImageFile(new File([''], 'test.gif', { type: 'image/gif' }))).toBe(true)
+      expect(
+        isValidImageFile(new File([''], 'test.jpg', { type: 'image/jpeg' }))
+      ).toBe(true)
+      expect(
+        isValidImageFile(new File([''], 'test.png', { type: 'image/png' }))
+      ).toBe(true)
+      expect(
+        isValidImageFile(new File([''], 'test.webp', { type: 'image/webp' }))
+      ).toBe(true)
+      expect(
+        isValidImageFile(new File([''], 'test.gif', { type: 'image/gif' }))
+      ).toBe(true)
     })
 
     it('validates against array of supported types', () => {
       // This tests the internal array lookup logic
-      const supportedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-      
-      supportedTypes.forEach(type => {
+      const supportedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+      ]
+
+      supportedTypes.forEach((type) => {
         const file = new File([''], 'test', { type })
         expect(isValidImageFile(file)).toBe(true)
       })
 
       // Test types not in the array
-      const unsupportedTypes = ['image/bmp', 'image/tiff', 'image/svg+xml', 'text/plain']
-      
-      unsupportedTypes.forEach(type => {
+      const unsupportedTypes = [
+        'image/bmp',
+        'image/tiff',
+        'image/svg+xml',
+        'text/plain',
+      ]
+
+      unsupportedTypes.forEach((type) => {
         const file = new File([''], 'test', { type })
         expect(isValidImageFile(file)).toBe(false)
       })
