@@ -4,26 +4,20 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 
 ## High Priority - Next Session
 
-### Testing Expansion
-
-- Enhanced E2E test scenarios (file upload simulation, drag-and-drop testing)
-- Performance testing optimization for large documents
-- Accessibility testing and ARIA compliance improvements
-
 ### Enhanced Code Block Support
 
 - **Language-specific syntax highlighting with filename support**
-  - Extend markdown processing to support syntax like `\`\`\`ruby:example.rb`
+  - Extend markdown processing to support syntax like `\`\`\`python:example.py`
   - Parse language and filename from code block headers (format: `language:filename`)
   - Display filename above code blocks in both preview and WYSIWYG modes
   - Integrate with CodeMirror's language support for additional syntax highlighting
-  - Support common languages: JavaScript, TypeScript, Python, Ruby, Go, Java, C++, etc.
+  - Support common languages, especially JavaScript, TypeScript, and Python.
   - Add copy-to-clipboard functionality for code blocks with filename context
-  - Maintain backward compatibility with existing `\`\`\`language` syntax
+  - (No need to maintain backward compatibility with existing `\`\`\`language` syntax)
 
 ### Image Scaling and Display Control
 
-- **Image scaling and display control** (High Priority)
+- **Image scaling and display control**
   - Add image width/height controls in markdown syntax (e.g., `![alt](image.jpg){width=600px}`)
   - Implement responsive image scaling in both markdown and WYSIWYG editors
   - Show images with consistent maximum width (e.g., 600px) regardless of original size
@@ -39,7 +33,6 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
   - Add IDs to specific buttons for automation/testing: `new-document-btn`, `save-btn`, `export-zip-btn`, etc.
   - Add IDs to status/info elements for easier access
   - Document ID naming conventions and usage patterns
-  - Consider ARIA labels and accessibility attributes
 
 ### Other Advanced Editor Features
 
@@ -100,6 +93,43 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 - Virtual scrolling for large documents
 - Web Workers for heavy markdown processing
 
+### Testing Expansion
+
+- Enhanced E2E test scenarios (file upload simulation, drag-and-drop testing)
+- Performance testing optimization for large documents
+
+### ARIA and Accessibility Considerations
+
+- **ARIA Labels and Attributes**
+  - Add proper ARIA labels for screen reader compatibility
+  - Implement ARIA roles for custom components (tab panels, editor regions)
+  - Add ARIA descriptions for complex interactive elements
+  - Ensure keyboard navigation follows ARIA best practices
+
+- **Screen Reader Support**
+  - Add live regions for status updates and notifications
+  - Implement proper heading hierarchy for screen readers
+  - Add skip links for main content areas
+  - Ensure all interactive elements are keyboard accessible
+
+- **Focus Management**
+  - Implement proper focus indicators for all interactive elements
+  - Add focus trapping for modal dialogs and panels
+  - Ensure logical focus order throughout the interface
+  - Handle focus restoration after modal/panel closures
+
+- **Color and Contrast**
+  - Verify color contrast ratios meet WCAG guidelines
+  - Ensure information is not conveyed by color alone
+  - Add high contrast mode support
+  - Test with various color vision deficiencies
+
+- **Testing and Validation**
+  - Accessibility testing and ARIA compliance improvements
+  - Automated accessibility testing integration
+  - Screen reader testing across different tools
+  - Keyboard-only navigation testing
+
 ## Unresolved Concerns
 
 ### Technical Decisions Needed
@@ -123,15 +153,17 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 
 **Location**: `tests/e2e/performance.spec.ts:17` - "should handle large markdown documents efficiently"
 
-**Status**: Currently disabled with `test.skip()` 
+**Status**: Currently disabled with `test.skip()`
 
 **Issue Description**:
+
 - Test generates large markdown content (20+ sections, ~4000+ characters)
 - Playwright's `fill()` method appears to have character limits with CodeMirror
 - Only the end sections (15-20) appear in editor, beginning content is missing
 - Both small (20 sections) and large (50 sections) content sizes fail
 
 **Investigation Attempts**:
+
 1. **JavaScript Direct Access**: Tried accessing CodeMirror view directly via `document.querySelector` and `view.dispatch()` - unsuccessful
 2. **Content Size Reduction**: Reduced from 50 sections to 20 sections - still fails
 3. **Test Expectation Changes**: Modified to check for end sections instead of title - still truncated
@@ -140,6 +172,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 **Root Cause**: Playwright's `fill()` method has limitations when setting large amounts of text in CodeMirror editors
 
 **Potential Solutions to Investigate**:
+
 1. Use incremental content insertion (split large content into smaller chunks)
 2. Investigate CodeMirror-specific test utilities or direct API access
 3. Mock large document scenarios differently (perhaps test with real file loading)
@@ -147,6 +180,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 5. Research CodeMirror testing best practices and official test approaches
 
 **Re-enabling Instructions**:
+
 1. Remove `test.skip()` from line 17 in `tests/e2e/performance.spec.ts`
 2. Test will immediately reproduce the issue for debugging
 3. Current test generates content and expects to find title "# Large Document Test" but only finds end sections
@@ -162,6 +196,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 **Status**: Currently disabled with `test.skip()`
 
 **Issue Description**:
+
 - Test sets content with "# Test Doc" and image references
 - Saves content to browser storage
 - Creates new document (shows "# Document 2")
@@ -169,11 +204,13 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 - Expected to see original "# Test Doc" but still sees "# Document 2"
 
 **Root Cause**: Save/Load functionality integration issue
+
 - Either save operation is not persisting correctly to localStorage
 - Or load operation is not retrieving/applying the saved content correctly
 - Or load operation is loading the wrong document from storage
 
 **Investigation Needed**:
+
 1. Test save functionality independently (check localStorage contents)
 2. Test load functionality independently (verify content retrieval)
 3. Check document management system for save/load workflow
@@ -181,6 +218,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 5. Check if multiple documents are being saved and loaded correctly
 
 **Re-enabling Instructions**:
+
 1. Remove `test.skip()` from line 159 in `tests/e2e/image-upload.spec.ts`
 2. Test will immediately reproduce the save/load issue
 3. Content "# Test Doc" is saved but "# Document 2" persists after load
@@ -191,25 +229,29 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 
 **Problem**: E2E performance tests showing flakiness and race conditions, particularly on Mobile Chrome
 
-**Locations**: 
+**Locations**:
+
 - `tests/e2e/performance.spec.ts:91` - "should update preview efficiently during typing"
 - `tests/e2e/performance.spec.ts:113` - "should handle rapid content changes without lag"
 
 **Status**: Currently disabled with `test.skip()`
 
 **Issue Description**:
+
 - Tests fail intermittently, especially on Mobile Chrome
 - Content gets jumbled/mixed up in preview (e.g., "ogy dlazer ovmps jufoxwn ro b# Welcome to Markdown Editor")
 - Race conditions between editor content setting and preview synchronization
 - `fill()` method combined with `keyboard.type()` causes content conflicts
 
 **Root Cause**: Test flakiness due to:
+
 - Timing issues between editor and preview synchronization
 - Mobile Chrome browser handling of rapid content changes
 - Insufficient wait times for content stabilization
 - Race conditions in content setting methods
 
 **Investigation Needed**:
+
 1. Implement more robust waiting strategies for preview updates
 2. Add content stabilization checks before assertions
 3. Consider using different content setting approaches for performance tests
@@ -217,6 +259,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 5. Investigate Mobile Chrome specific timing issues
 
 **Re-enabling Instructions**:
+
 1. Remove `test.skip()` from lines 91 and 113 in `tests/e2e/performance.spec.ts`
 2. Tests will reproduce the flakiness issue for debugging
 3. Focus on Mobile Chrome browser for consistent reproduction
@@ -232,18 +275,21 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 **Status**: Currently disabled with `test.skip()`
 
 **Issue Description**:
+
 - Test attempts to set content "Hello world! This is a world of tests."
 - Content gets scrambled/mixed with welcome content during setting process
 - Multiple `Control+a` selections and `fill()` operations cause race conditions
 - Results in content like "sts. teofld wors as iThi! rldwo# Welcome to Markdown Editor..."
 
 **Root Cause**: CodeMirror content setting race conditions
+
 - `Control+a` keyboard selections not completing before `fill()` operation
 - CodeMirror's custom keybindings interfering with standard selection behavior
 - Content mixing between original welcome text and test content
 - Timing issues between keyboard events and editor state updates
 
 **Investigation Needed**:
+
 1. Develop more reliable content clearing approach for CodeMirror
 2. Find alternative to `Control+a` + `fill()` pattern for content replacement
 3. Add proper wait conditions for editor state stabilization
@@ -251,6 +297,7 @@ See [ai/completed_tasks.md](./completed_tasks.md) for completed features and imp
 5. Test alternative content setting methods (direct dispatching vs keyboard events)
 
 **Re-enabling Instructions**:
+
 1. Remove `test.skip()` from line 116 in `tests/e2e/find-replace.spec.ts`
 2. Test will immediately reproduce the content scrambling issue
 3. Focus on content replacement timing and method reliability
