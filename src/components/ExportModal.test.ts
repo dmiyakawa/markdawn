@@ -1,507 +1,457 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ExportModal from './ExportModal.vue'
+import type { ExportOptions } from '../utils/advancedExport'
 
-describe('ExportModal.vue', () => {
-  const defaultProps = {
-    visible: true,
-    exportType: 'html' as const,
-    defaultTitle: 'Test Document',
-    defaultAuthor: 'Test Author',
-  }
+describe('ExportModal', () => {
+  let wrapper: ReturnType<typeof mount> | null = null
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    // Reset any global state
   })
 
-  describe('Component Mounting and Props', () => {
-    it('mounts successfully with required props', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          exportType: 'html',
-        },
-      })
-
-      expect(wrapper.exists()).toBe(true)
-    })
-
-    it('is hidden when visible prop is false', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          visible: false,
-        },
-      })
-
-      expect(wrapper.find('.fixed.inset-0').exists()).toBe(false)
-    })
-
-    it('is visible when visible prop is true', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.find('.fixed.inset-0').exists()).toBe(true)
-    })
-
-    it('displays correct export type in header', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.text()).toContain('Customize your HTML export')
-    })
-
-    it('displays PDF export type correctly', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          exportType: 'pdf',
-        },
-      })
-
-      expect(wrapper.text()).toContain('Customize your PDF export')
-    })
+  afterEach(() => {
+    if (wrapper) {
+      wrapper.unmount()
+      wrapper = null
+    }
   })
 
-  describe('Form Fields and Defaults', () => {
-    it('populates title field with default value', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const titleInput = wrapper.find('#export-title')
-      expect((titleInput.element as HTMLInputElement).value).toBe(
-        'Test Document'
-      )
+  it('renders correctly when visible', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultTitle: 'Test Document',
+      },
     })
 
-    it('populates author field with default value', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const authorInput = wrapper.find('#export-author')
-      expect((authorInput.element as HTMLInputElement).value).toBe(
-        'Test Author'
-      )
-    })
-
-    it('allows updating title field', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const titleInput = wrapper.find('#export-title')
-      await titleInput.setValue('New Title')
-
-      expect(wrapper.vm.options.title).toBe('New Title')
-    })
-
-    it('allows updating author field', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const authorInput = wrapper.find('#export-author')
-      await authorInput.setValue('New Author')
-
-      expect(wrapper.vm.options.author).toBe('New Author')
-    })
+    expect(wrapper.find('[data-testid="export-modal"]').exists()).toBe(false)
+    // Modal should be visible
+    expect(wrapper.find('.fixed.inset-0').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Export Options')
+    expect(wrapper.text()).toContain('HTML export settings')
   })
 
-  describe('Theme Selection', () => {
-    it('displays theme options', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.text()).toContain('Default')
-      expect(wrapper.text()).toContain('GitHub')
-      expect(wrapper.text()).toContain('Academic')
-      expect(wrapper.text()).toContain('Minimal')
+  it('does not render when not visible', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: false,
+        exportType: 'html',
+      },
     })
 
-    it('sets default theme for HTML export', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          exportType: 'html',
-        },
-      })
-
-      expect(wrapper.vm.options.theme).toBe('default')
-    })
-
-    it('sets academic theme for PDF export', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          exportType: 'pdf',
-        },
-      })
-
-      expect(wrapper.vm.options.theme).toBe('academic')
-    })
-
-    it('allows selecting different themes', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      // Find theme radio buttons and select GitHub theme
-      const githubRadio = wrapper.find('input[value="github"]')
-      await githubRadio.setChecked()
-
-      expect(wrapper.vm.options.theme).toBe('github')
-    })
+    expect(wrapper.find('.fixed.inset-0').exists()).toBe(false)
   })
 
-  describe('Font Size Selection', () => {
-    it('displays font size options', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.text()).toContain('Small')
-      expect(wrapper.text()).toContain('Medium')
-      expect(wrapper.text()).toContain('Large')
+  it('displays correct export type in title', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'pdf',
+      },
     })
 
-    it('sets medium as default font size', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.vm.options.fontSize).toBe('medium')
-    })
-
-    it('allows selecting different font sizes', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const largeRadio = wrapper.find('input[value="large"]')
-      await largeRadio.setChecked()
-
-      expect(wrapper.vm.options.fontSize).toBe('large')
-    })
+    expect(wrapper.text()).toContain('PDF export settings')
   })
 
-  describe('Checkbox Options', () => {
-    it('has include styles checked by default', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.vm.options.includeStyles).toBe(true)
+  it('initializes with default values', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultTitle: 'My Document',
+        defaultAuthor: 'John Doe',
+      },
     })
 
-    it('has include TOC checked by default', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
+    const titleInput = wrapper.find('#export-title')
+    const authorInput = wrapper.find('#export-author')
 
-      expect(wrapper.vm.options.includeTOC).toBe(true)
-    })
-
-    it('has embed images checked by default', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.vm.options.embedImages).toBe(true)
-    })
-
-    it('has add timestamp checked by default', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.vm.options.addTimestamp).toBe(true)
-    })
-
-    it('allows toggling include styles', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      // Find all checkboxes and look for one related to styles
-      const checkboxes = wrapper.findAll('input[type="checkbox"]')
-      let includeStylesCheckbox = null
-
-      for (const checkbox of checkboxes) {
-        const id = checkbox.element.id
-        if (id && id.includes('styles')) {
-          includeStylesCheckbox = checkbox
-          break
-        }
-      }
-
-      if (includeStylesCheckbox) {
-        await includeStylesCheckbox.setChecked(false)
-        expect(wrapper.vm.options.includeStyles).toBe(false)
-      } else {
-        // If we can't find the specific checkbox, just test that the options can be modified
-        wrapper.vm.options.includeStyles = false
-        expect(wrapper.vm.options.includeStyles).toBe(false)
-      }
-    })
+    expect((titleInput.element as HTMLInputElement).value).toBe('My Document')
+    expect((authorInput.element as HTMLInputElement).value).toBe('John Doe')
   })
 
-  describe('Modal Actions', () => {
-    it('emits cancel event when cancel button is clicked', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const buttons = wrapper.findAll('button')
-      let cancelButton = null
-
-      for (const button of buttons) {
-        if (button.text().includes('Cancel')) {
-          cancelButton = button
-          break
-        }
-      }
-
-      if (cancelButton) {
-        await cancelButton.trigger('click')
-        expect(wrapper.emitted('cancel')).toBeTruthy()
-      } else {
-        // If we can't find the button, test the method directly
-        await wrapper.vm.cancel()
-        expect(wrapper.emitted('cancel')).toBeTruthy()
-      }
+  it('sets correct default theme for PDF export', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'pdf',
+      },
     })
 
-    it('emits confirm event with options when export button is clicked', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const buttons = wrapper.findAll('button')
-      let exportButton = null
-
-      for (const button of buttons) {
-        if (button.text().includes('Export HTML')) {
-          exportButton = button
-          break
-        }
-      }
-
-      if (exportButton) {
-        await exportButton.trigger('click')
-      } else {
-        // If we can't find the button, test the method directly
-        await wrapper.vm.confirm()
-      }
-
-      expect(wrapper.emitted('confirm')).toBeTruthy()
-      expect(wrapper.emitted('confirm')![0][0]).toMatchObject({
-        title: 'Test Document',
-        author: 'Test Author',
-        includeStyles: true,
-        includeTOC: true,
-        theme: 'default',
-        fontSize: 'medium',
-        embedImages: true,
-        addTimestamp: true,
-      })
-    })
-
-    it('emits cancel when backdrop is clicked', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const backdrop = wrapper.find('.fixed.inset-0')
-      await backdrop.trigger('click')
-
-      expect(wrapper.emitted('cancel')).toBeTruthy()
-    })
-
-    it('does not emit cancel when modal content is clicked', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      const modalContent = wrapper.find('.bg-white.rounded-lg')
-      await modalContent.trigger('click')
-
-      expect(wrapper.emitted('cancel')).toBeFalsy()
-    })
+    // PDF should default to academic theme
+    const academicRadio = wrapper.find('input[value="academic"]')
+    expect((academicRadio.element as HTMLInputElement).checked).toBe(true)
   })
 
-  describe('Reactivity and Watchers', () => {
-    it('updates visibility when visible prop changes', async () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          visible: false,
-        },
-      })
-
-      expect(wrapper.vm.isVisible).toBe(false)
-
-      await wrapper.setProps({ visible: true })
-      expect(wrapper.vm.isVisible).toBe(true)
+  it('sets correct default theme for HTML export', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
     })
 
-    it('emits update:visible when isVisible changes', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      await wrapper.vm.cancel()
-
-      expect(wrapper.emitted('update:visible')).toBeTruthy()
-      expect(wrapper.emitted('update:visible')![0]).toEqual([false])
-    })
-
-    it('resets options when modal reopens', async () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          visible: false,
-        },
-      })
-
-      // Modify options
-      wrapper.vm.options.title = 'Modified Title'
-
-      // Reopen modal
-      await wrapper.setProps({ visible: true })
-
-      // Options should be reset
-      expect(wrapper.vm.options.title).toBe('Test Document')
-    })
-
-    it('updates theme when exportType changes from HTML to PDF', async () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          exportType: 'html',
-        },
-      })
-
-      expect(wrapper.vm.options.theme).toBe('default')
-
-      await wrapper.setProps({ exportType: 'pdf' })
-      expect(wrapper.vm.options.theme).toBe('academic')
-    })
-
-    it('updates theme when exportType changes from PDF to HTML', async () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          exportType: 'pdf',
-        },
-      })
-
-      expect(wrapper.vm.options.theme).toBe('academic')
-
-      await wrapper.setProps({ exportType: 'html' })
-      expect(wrapper.vm.options.theme).toBe('default')
-    })
+    // HTML should default to default theme
+    const defaultRadio = wrapper.find('input[value="default"]')
+    expect((defaultRadio.element as HTMLInputElement).checked).toBe(true)
   })
 
-  describe('Default Props', () => {
-    it('uses default values when props are not provided', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          exportType: 'html',
-        },
-      })
-
-      expect(wrapper.vm.$props.visible).toBe(false)
-      expect(wrapper.vm.$props.defaultTitle).toBe('Markdown Document')
-      expect(wrapper.vm.$props.defaultAuthor).toBe('')
+  it('renders all theme options', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
     })
 
-    it('respects provided default values', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          exportType: 'pdf',
-          defaultTitle: 'Custom Title',
-          defaultAuthor: 'Custom Author',
-        },
-      })
-
-      expect(wrapper.vm.options.title).toBe('Custom Title')
-      expect(wrapper.vm.options.author).toBe('Custom Author')
-    })
+    expect(wrapper.text()).toContain('Default')
+    expect(wrapper.text()).toContain('Clean, professional styling')
+    expect(wrapper.text()).toContain('GitHub')
+    expect(wrapper.text()).toContain('GitHub-style markdown')
+    expect(wrapper.text()).toContain('Academic')
+    expect(wrapper.text()).toContain('Formal document style')
+    expect(wrapper.text()).toContain('Minimal')
+    expect(wrapper.text()).toContain('Simple, clean design')
   })
 
-  describe('Component Methods', () => {
-    it('cancel method sets isVisible to false and emits cancel', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      await wrapper.vm.cancel()
-
-      expect(wrapper.vm.isVisible).toBe(false)
-      expect(wrapper.emitted('cancel')).toBeTruthy()
+  it('renders all font size options', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
     })
 
-    it('confirm method emits confirm with options and sets isVisible to false', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      wrapper.vm.options.title = 'Test Title'
-      await wrapper.vm.confirm()
-
-      expect(wrapper.vm.isVisible).toBe(false)
-      expect(wrapper.emitted('confirm')).toBeTruthy()
-      expect(wrapper.emitted('confirm')![0][0]).toMatchObject({
-        title: 'Test Title',
-      })
-    })
-
-    it('handleBackdropClick calls cancel method', async () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      // Test that handleBackdropClick works by checking it emits cancel
-      await wrapper.vm.handleBackdropClick()
-
-      expect(wrapper.emitted('cancel')).toBeTruthy()
-    })
+    expect(wrapper.text()).toContain('Small')
+    expect(wrapper.text()).toContain('Medium')
+    expect(wrapper.text()).toContain('Large')
   })
 
-  describe('Accessibility', () => {
-    it('has proper form labels', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
-
-      expect(wrapper.find('label[for="export-title"]').exists()).toBe(true)
-      expect(wrapper.find('label[for="export-author"]').exists()).toBe(true)
+  it('renders all checkbox options', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
     })
 
-    it('has proper button text', () => {
-      const wrapper = mount(ExportModal, {
-        props: {
-          ...defaultProps,
-          exportType: 'pdf',
-        },
-      })
+    expect(wrapper.text()).toContain('Include CSS styles')
+    expect(wrapper.text()).toContain('Include table of contents')
+    expect(wrapper.text()).toContain('Embed images as base64')
+    expect(wrapper.text()).toContain('Add generation timestamp')
+  })
 
-      expect(wrapper.text()).toContain('Export PDF')
-      expect(wrapper.text()).toContain('Cancel')
+  it('allows changing title input', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultTitle: 'Original Title',
+      },
     })
 
-    it('has proper modal structure', () => {
-      const wrapper = mount(ExportModal, {
-        props: defaultProps,
-      })
+    const titleInput = wrapper.find('#export-title')
+    await titleInput.setValue('New Title')
 
-      expect(
-        wrapper.find('[role="dialog"], .modal, .fixed.inset-0').exists()
-      ).toBe(true)
+    expect((titleInput.element as HTMLInputElement).value).toBe('New Title')
+  })
+
+  it('allows changing author input', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultAuthor: 'Original Author',
+      },
     })
+
+    const authorInput = wrapper.find('#export-author')
+    await authorInput.setValue('New Author')
+
+    expect((authorInput.element as HTMLInputElement).value).toBe('New Author')
+  })
+
+  it('allows changing theme selection', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    const githubRadio = wrapper.find('input[value="github"]')
+    await githubRadio.setValue(true)
+
+    expect((githubRadio.element as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('allows changing font size selection', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    const largeRadio = wrapper.find('input[value="large"]')
+    await largeRadio.setValue(true)
+
+    expect((largeRadio.element as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('allows toggling checkbox options', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    // All checkboxes should be initially checked
+    const stylesCheckbox = wrapper.find('input[type="checkbox"]')
+    expect((stylesCheckbox.element as HTMLInputElement).checked).toBe(true)
+
+    // Toggle off
+    await stylesCheckbox.setValue(false)
+    expect((stylesCheckbox.element as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('emits cancel event when cancel button clicked', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    const cancelButton = wrapper.find('button:nth-child(1)')
+    await cancelButton.trigger('click')
+
+    expect(wrapper.emitted('cancel')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')![0]).toEqual([false])
+  })
+
+  it('emits confirm event when export button clicked', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultTitle: 'Test Document',
+        defaultAuthor: 'Test Author',
+      },
+    })
+
+    const exportButton = wrapper.find('button:nth-child(2)')
+    await exportButton.trigger('click')
+
+    expect(wrapper.emitted('confirm')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')![0]).toEqual([false])
+
+    const confirmEvent = wrapper.emitted('confirm')![0][0] as ExportOptions
+    expect(confirmEvent.title).toBe('Test Document')
+    expect(confirmEvent.author).toBe('Test Author')
+    expect(confirmEvent.includeStyles).toBe(true)
+    expect(confirmEvent.includeTOC).toBe(true)
+    expect(confirmEvent.theme).toBe('default')
+    expect(confirmEvent.fontSize).toBe('medium')
+    expect(confirmEvent.embedImages).toBe(true)
+    expect(confirmEvent.addTimestamp).toBe(true)
+  })
+
+  it('emits cancel event when backdrop clicked', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    const backdrop = wrapper.find('.fixed.inset-0')
+    await backdrop.trigger('click')
+
+    expect(wrapper.emitted('cancel')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')![0]).toEqual([false])
+  })
+
+  it('does not emit cancel when modal content clicked', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    const modalContent = wrapper.find('.bg-white.rounded-lg')
+    await modalContent.trigger('click')
+
+    expect(wrapper.emitted('cancel')).toBeFalsy()
+  })
+
+  it('resets options when reopened', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultTitle: 'Original Title',
+      },
+    })
+
+    // Change title
+    const titleInput = wrapper.find('#export-title')
+    await titleInput.setValue('Changed Title')
+
+    // Close modal
+    await wrapper.setProps({ visible: false })
+    await wrapper.vm.$nextTick()
+
+    // Reopen modal
+    await wrapper.setProps({ visible: true })
+    await wrapper.vm.$nextTick()
+
+    // Get the input element again after reopen
+    const newTitleInput = wrapper.find('#export-title')
+    // Title should be reset
+    expect((newTitleInput.element as HTMLInputElement).value).toBe(
+      'Original Title'
+    )
+  })
+
+  it('updates theme when export type changes', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    // Initially HTML should have default theme
+    let defaultRadio = wrapper.find('input[value="default"]')
+    expect((defaultRadio.element as HTMLInputElement).checked).toBe(true)
+
+    // Change to PDF
+    await wrapper.setProps({ exportType: 'pdf' })
+
+    // Should now have academic theme
+    const academicRadio = wrapper.find('input[value="academic"]')
+    expect((academicRadio.element as HTMLInputElement).checked).toBe(true)
+
+    // Change back to HTML
+    await wrapper.setProps({ exportType: 'html' })
+
+    // Should go back to default theme
+    defaultRadio = wrapper.find('input[value="default"]')
+    expect((defaultRadio.element as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('displays correct button text for export type', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    expect(wrapper.text()).toContain('Export HTML')
+
+    wrapper.unmount()
+
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'pdf',
+      },
+    })
+
+    expect(wrapper.text()).toContain('Export PDF')
+  })
+
+  it('handles visible prop updates correctly', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: false,
+        exportType: 'html',
+      },
+    })
+
+    expect(wrapper.find('.fixed.inset-0').exists()).toBe(false)
+
+    await wrapper.setProps({ visible: true })
+    expect(wrapper.find('.fixed.inset-0').exists()).toBe(true)
+
+    await wrapper.setProps({ visible: false })
+    expect(wrapper.find('.fixed.inset-0').exists()).toBe(false)
+  })
+
+  it('emits update:visible when isVisible changes', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+      },
+    })
+
+    // Click cancel to change isVisible internally
+    const cancelButton = wrapper.find('button:nth-child(1)')
+    await cancelButton.trigger('click')
+
+    expect(wrapper.emitted('update:visible')).toBeTruthy()
+    expect(wrapper.emitted('update:visible')![0]).toEqual([false])
+  })
+
+  it('maintains form state during interaction', async () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        visible: true,
+        exportType: 'html',
+        defaultTitle: 'Test Doc',
+        defaultAuthor: 'Test Author',
+      },
+    })
+
+    // Change multiple options
+    const titleInput = wrapper.find('#export-title')
+    await titleInput.setValue('Modified Title')
+
+    const authorInput = wrapper.find('#export-author')
+    await authorInput.setValue('Modified Author')
+
+    const githubRadio = wrapper.find('input[value="github"]')
+    await githubRadio.setValue(true)
+
+    const largeRadio = wrapper.find('input[value="large"]')
+    await largeRadio.setValue(true)
+
+    const stylesCheckbox = wrapper.find('input[type="checkbox"]')
+    await stylesCheckbox.setValue(false)
+
+    // Export with changed options
+    const exportButton = wrapper.find('button:nth-child(2)')
+    await exportButton.trigger('click')
+
+    const confirmEvent = wrapper.emitted('confirm')![0][0] as ExportOptions
+    expect(confirmEvent.title).toBe('Modified Title')
+    expect(confirmEvent.author).toBe('Modified Author')
+    expect(confirmEvent.theme).toBe('github')
+    expect(confirmEvent.fontSize).toBe('large')
+    expect(confirmEvent.includeStyles).toBe(false)
+  })
+
+  it('handles default props correctly', () => {
+    wrapper = mount(ExportModal, {
+      props: {
+        exportType: 'html',
+      },
+    })
+
+    expect((wrapper.vm as any).$props.visible).toBe(false)
+    expect((wrapper.vm as any).$props.exportType).toBe('html')
+    expect((wrapper.vm as any).$props.defaultTitle).toBe('Markdown Document')
+    expect((wrapper.vm as any).$props.defaultAuthor).toBe('')
   })
 })

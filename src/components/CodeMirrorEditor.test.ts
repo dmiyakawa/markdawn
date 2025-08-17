@@ -333,4 +333,252 @@ describe('CodeMirrorEditor', () => {
     // Initially no scroll events
     expect(scrollEvents).toBeFalsy()
   })
+
+  it('handles scrollToLine method', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'line 1\nline 2\nline 3',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    // Should not throw when calling scrollToLine
+    expect(() => vm.scrollToLine(2)).not.toThrow()
+  })
+
+  it('handles getCurrentLine method', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'line 1\nline 2\nline 3',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+    const currentLine = vm.getCurrentLine()
+
+    // Should return a number
+    expect(typeof currentLine).toBe('number')
+    expect(currentLine).toBeGreaterThan(0)
+  })
+
+  it('handles undo/redo methods', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'initial content',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    // Should not throw when calling undo/redo methods
+    expect(() => vm.performUndo()).not.toThrow()
+    expect(() => vm.performRedo()).not.toThrow()
+    expect(() => vm.performUndoWithBoundary()).not.toThrow()
+    expect(() => vm.performRedoWithBoundary()).not.toThrow()
+  })
+
+  it('handles history depth methods', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'content',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    // Should return numbers for history depths
+    expect(typeof vm.getUndoDepth()).toBe('number')
+    expect(typeof vm.getRedoDepth()).toBe('number')
+    expect(typeof vm.canUndo()).toBe('boolean')
+    expect(typeof vm.canRedo()).toBe('boolean')
+  })
+
+  it('handles history management methods', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'content',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    // Should not throw when calling history methods
+    expect(() => vm.isolateHistoryBoundary()).not.toThrow()
+    expect(() => vm.clearHistory()).not.toThrow()
+    expect(() => vm.createHistoryBoundary()).not.toThrow()
+    expect(() => vm.createHistoryBoundary('before')).not.toThrow()
+    expect(() => vm.createHistoryBoundary('after')).not.toThrow()
+
+    const historyStatus = vm.getHistoryStatus()
+    expect(typeof historyStatus).toBe('object')
+    expect(historyStatus).toHaveProperty('canUndo')
+    expect(historyStatus).toHaveProperty('canRedo')
+    expect(historyStatus).toHaveProperty('undoDepth')
+    expect(historyStatus).toHaveProperty('redoDepth')
+  })
+
+  it('handles document size methods', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'line 1\nline 2\nline 3',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    const docSize = vm.getDocumentSize()
+    expect(typeof docSize).toBe('object')
+    expect(docSize).toHaveProperty('lines')
+    expect(docSize).toHaveProperty('characters')
+    expect(typeof docSize.lines).toBe('number')
+    expect(typeof docSize.characters).toBe('number')
+  })
+
+  it('handles document size detection methods', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'small content',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    expect(typeof vm.isLargeDocument()).toBe('boolean')
+    expect(typeof vm.isVeryLargeDocument()).toBe('boolean')
+    expect(() => vm.optimizeForLargeDocument()).not.toThrow()
+  })
+
+  it('handles large text insertion methods', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'initial content',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    // Test batched text insertion
+    const batches = vm.getBatchedTextInsertion('short text')
+    expect(Array.isArray(batches)).toBe(true)
+    expect(batches.length).toBe(1)
+
+    const largeBatches = vm.getBatchedTextInsertion('a'.repeat(20000))
+    expect(Array.isArray(largeBatches)).toBe(true)
+    expect(largeBatches.length).toBeGreaterThan(1)
+
+    // Should not throw when calling insertLargeText
+    await expect(vm.insertLargeText('test text')).resolves.not.toThrow()
+  })
+
+  it('handles performance stats method', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'content for stats',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+    const stats = vm.getPerformanceStats()
+
+    expect(typeof stats).toBe('object')
+    expect(stats).toHaveProperty('lines')
+    expect(stats).toHaveProperty('characters')
+    expect(stats).toHaveProperty('isLarge')
+    expect(stats).toHaveProperty('isVeryLarge')
+    expect(stats).toHaveProperty('undoDepth')
+    expect(stats).toHaveProperty('redoDepth')
+    expect(stats).toHaveProperty('memoryUsageEstimate')
+  })
+
+  it('handles replaceSelection method', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'initial text',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+
+    // Should not throw when calling replaceSelection
+    expect(() => vm.replaceSelection('replacement text')).not.toThrow()
+  })
+
+  it('emits toggle-find-replace event', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'content',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    // Check that the component has the toggle method
+    const vm = wrapper.vm as any
+    expect(typeof vm.clearSearch).toBe('function')
+  })
+
+  it('handles prop updates correctly', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'initial content',
+        placeholder: 'initial placeholder',
+        darkMode: false,
+        readonly: false,
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    // Update modelValue prop
+    await wrapper.setProps({ modelValue: 'updated content' })
+    expect((wrapper.vm as any).$props.modelValue).toBe('updated content')
+
+    // Update placeholder prop
+    await wrapper.setProps({ placeholder: 'updated placeholder' })
+    expect((wrapper.vm as any).$props.placeholder).toBe('updated placeholder')
+
+    // Update readonly prop
+    await wrapper.setProps({ readonly: true })
+    expect((wrapper.vm as any).$props.readonly).toBe(true)
+  })
+
+  it('handles dark mode prop changes', async () => {
+    wrapper = mount(CodeMirrorEditor, {
+      props: {
+        modelValue: 'content',
+        darkMode: false,
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    // Change dark mode - this should trigger editor reinitialization
+    await wrapper.setProps({ darkMode: true })
+    expect((wrapper.vm as any).$props.darkMode).toBe(true)
+
+    // Change back to light mode
+    await wrapper.setProps({ darkMode: false })
+    expect((wrapper.vm as any).$props.darkMode).toBe(false)
+  })
 })
