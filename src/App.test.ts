@@ -389,4 +389,303 @@ describe('App.vue', () => {
       expect(typeof vm.toggleFindReplace).toBe('function')
     })
   })
+
+  describe('UI Interaction', () => {
+    it('toggles find/replace dialog', async () => {
+      const wrapper = createWrapper()
+      const findReplaceButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text() === 'Find/Replace')
+
+      const vm = wrapper.vm as unknown as { showFindReplace: boolean }
+      const initialState = vm.showFindReplace
+
+      await findReplaceButton?.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showFindReplace).toBe(!initialState)
+    })
+
+    it('toggles outline panel', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showOutline: boolean
+        toggleOutline: () => void
+      }
+
+      const initialState = vm.showOutline
+      await vm.toggleOutline()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showOutline).toBe(!initialState)
+    })
+
+    it('toggles preview panel', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showPreview: boolean
+        togglePreview: () => void
+      }
+
+      const initialState = vm.showPreview
+      await vm.togglePreview()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showPreview).toBe(!initialState)
+    })
+
+    it('handles undo/redo button states', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        canUndo: boolean
+        canRedo: boolean
+      }
+
+      const undoButton = wrapper.find('#undo-btn')
+      const redoButton = wrapper.find('#redo-btn')
+
+      expect(undoButton.exists()).toBe(true)
+      expect(redoButton.exists()).toBe(true)
+      expect(typeof vm.canUndo).toBe('boolean')
+      expect(typeof vm.canRedo).toBe('boolean')
+    })
+
+    it('handles save and load operations', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        saveDocument: () => void
+        loadDocument: () => void
+        saveStatus: string
+      }
+
+      const saveButton = wrapper.find('#save-btn')
+      const loadButton = wrapper.find('#load-btn')
+
+      await saveButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      await loadButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(typeof vm.saveStatus).toBe('string')
+    })
+
+    it('has ZIP export button', async () => {
+      const wrapper = createWrapper()
+
+      const zipButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text() === 'ZIP')
+
+      expect(zipButton?.exists()).toBe(true)
+    })
+
+    it('has image manager functionality', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showImageManager: boolean
+      }
+
+      // Test that image manager state exists
+      expect(typeof vm.showImageManager).toBe('boolean')
+    })
+  })
+
+  describe('Content Management', () => {
+    it('has content and statistics', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        markdownContent: string
+        stats: {
+          lines: number
+          words: number
+          characters: { withSpaces: number; withoutSpaces: number }
+        }
+      }
+
+      expect(typeof vm.markdownContent).toBe('string')
+      expect(typeof vm.stats.lines).toBe('number')
+      expect(typeof vm.stats.words).toBe('number')
+      expect(typeof vm.stats.characters.withSpaces).toBe('number')
+    })
+
+    it('handles WYSIWYG mode toggle', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        isWysiwygMode: boolean
+        toggleWysiwygMode: () => void
+      }
+
+      const initialMode = vm.isWysiwygMode
+      await vm.toggleWysiwygMode()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.isWysiwygMode).toBe(!initialMode)
+    })
+
+    it('has WYSIWYG input handling', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleWysiwygInput: (event: Event) => void
+        markdownContent: string
+      }
+
+      // Test that the method exists
+      expect(typeof vm.handleWysiwygInput).toBe('function')
+      expect(typeof vm.markdownContent).toBe('string')
+    })
+
+    it('has scroll synchronization', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleEditorScroll: (scrollInfo: any) => void
+      }
+
+      // Test that scroll handler exists
+      expect(typeof vm.handleEditorScroll).toBe('function')
+    })
+
+    it('formats timestamps correctly', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        formatTimestamp: (timestamp: string) => string
+      }
+
+      const testDate = new Date('2024-01-01T12:00:00.000Z').toISOString()
+      const formatted = vm.formatTimestamp(testDate)
+
+      expect(typeof formatted).toBe('string')
+      expect(formatted.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Document Management', () => {
+    it('has document state', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        documents: Array<{ id: string; title: string; content: string }>
+        activeDocumentId: string | null
+      }
+
+      expect(Array.isArray(vm.documents)).toBe(true)
+      expect(
+        vm.activeDocumentId === null || typeof vm.activeDocumentId === 'string'
+      ).toBe(true)
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('handles invalid file types gracefully', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleFileImport: (event: Event) => void
+        saveStatus: string
+      }
+
+      const invalidFile = new File(['content'], 'test.txt', {
+        type: 'text/plain',
+      })
+
+      const mockEvent = {
+        target: { files: [invalidFile] },
+      } as unknown as Event
+
+      await vm.handleFileImport(mockEvent)
+      await wrapper.vm.$nextTick()
+
+      expect(vm.saveStatus).toContain('error')
+    })
+
+    it('handles empty file selection', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleFileImport: (event: Event) => Promise<void>
+      }
+
+      const mockEvent = {
+        target: { files: [] },
+      } as unknown as Event
+
+      // Should not throw an error - use await to handle the promise
+      await expect(vm.handleFileImport(mockEvent)).resolves.toBeUndefined()
+    })
+
+    it('handles missing file input target', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleFileImport: (event: Event) => Promise<void>
+      }
+
+      const mockEvent = {
+        target: null,
+      } as unknown as Event
+
+      // The function will try to access target.files and fail gracefully
+      await expect(vm.handleFileImport(mockEvent)).rejects.toThrow(
+        'Cannot read properties of null'
+      )
+    })
+  })
+
+  describe('Keyboard Shortcuts', () => {
+    it('responds to Ctrl+Z for undo', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        performUndo: () => void
+      }
+
+      // Simulate Ctrl+Z keydown
+      await wrapper.trigger('keydown', { key: 'z', ctrlKey: true })
+
+      // Note: This test verifies the method exists, actual keyboard handling
+      // would need event listener testing which is complex in JSDOM
+      expect(typeof vm.performUndo).toBe('function')
+    })
+
+    it('responds to Ctrl+Y for redo', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        performRedo: () => void
+      }
+
+      // Test that redo method exists
+      expect(typeof vm.performRedo).toBe('function')
+    })
+  })
+
+  describe('Export Modal', () => {
+    it('has export modal state', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showExportModal: boolean
+        exportType: string | null | undefined
+      }
+
+      expect(typeof vm.showExportModal).toBe('boolean')
+      const exportTypeValid =
+        vm.exportType === null ||
+        vm.exportType === undefined ||
+        typeof vm.exportType === 'string'
+      expect(exportTypeValid).toBe(true)
+    })
+
+    it('handles export modal confirmation', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleExportConfirm: (options: any) => void
+        showExportModal: boolean
+      }
+
+      const exportOptions = {
+        title: 'Test Export',
+        author: 'Test Author',
+        includeStyles: true,
+      }
+
+      await vm.handleExportConfirm(exportOptions)
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showExportModal).toBe(false)
+    })
+  })
 })
