@@ -153,6 +153,31 @@
                 Gallery
               </button>
             </div>
+
+            <!-- Settings Menu -->
+            <div id="settings-menu" class="flex items-center space-x-1">
+              <span
+                class="text-xs font-medium text-gray-600 mr-1 sm:mr-2 hidden sm:inline"
+                >Settings</span
+              >
+              <button
+                id="auto-save-toggle-btn"
+                @click="toggleAutoSave"
+                :class="[
+                  'px-2 py-1 text-xs rounded',
+                  autoSaveEnabled
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                ]"
+                :title="
+                  autoSaveEnabled
+                    ? 'Disable auto-save (saves every 30s)'
+                    : 'Enable auto-save (saves every 30s)'
+                "
+              >
+                {{ autoSaveEnabled ? '💾 Auto-Save: ON' : '💾 Auto-Save: OFF' }}
+              </button>
+            </div>
           </div>
 
           <!-- GitHub Link -->
@@ -406,6 +431,10 @@ const canRedo = ref(false)
 // Global keyboard handler
 let globalKeydownHandler: ((event: KeyboardEvent) => void) | null = null
 
+// Auto-save settings
+const autoSaveEnabled = ref(true)
+let autoSaveInterval: number | null = null
+
 // Statistics
 const stats = computed(() => ({
   words: getWordCount(markdownContent.value),
@@ -471,6 +500,22 @@ const toggleWysiwygMode = () => {
     nextTick(() => {
       updateWysiwygContent()
     })
+  }
+}
+
+const toggleAutoSave = () => {
+  autoSaveEnabled.value = !autoSaveEnabled.value
+
+  // Save preference to localStorage
+  localStorage.setItem(
+    'markdawn-autosave-enabled',
+    autoSaveEnabled.value.toString()
+  )
+
+  if (autoSaveEnabled.value) {
+    enableAutoSave()
+  } else {
+    disableAutoSave()
   }
 }
 
@@ -840,14 +885,26 @@ const formatTimestamp = (timestamp: string | null): string => {
   }
 }
 
-// Auto-save functionality (optional)
+// Auto-save functionality
 const enableAutoSave = () => {
-  setInterval(() => {
+  // Clear existing interval if any
+  disableAutoSave()
+
+  if (!autoSaveEnabled.value) return
+
+  autoSaveInterval = setInterval(() => {
     if (markdownContent.value.trim()) {
       saveToLocalStorage(markdownContent.value)
       lastSaved.value = new Date().toISOString()
     }
   }, 30000) // Auto-save every 30 seconds
+}
+
+const disableAutoSave = () => {
+  if (autoSaveInterval) {
+    clearInterval(autoSaveInterval)
+    autoSaveInterval = null
+  }
 }
 
 // Image insertion method
@@ -1162,7 +1219,15 @@ onMounted(async () => {
     lastSaved.value = getSaveTimestamp() || undefined
   }
 
-  // Enable auto-save
+  // Load auto-save preference from localStorage
+  const savedAutoSavePreference = localStorage.getItem(
+    'markdawn-autosave-enabled'
+  )
+  if (savedAutoSavePreference !== null) {
+    autoSaveEnabled.value = savedAutoSavePreference === 'true'
+  }
+
+  // Enable auto-save if enabled
   enableAutoSave()
 
   // Initialize WYSIWYG content
@@ -1245,6 +1310,9 @@ onBeforeUnmount(() => {
   if (globalKeydownHandler) {
     document.removeEventListener('keydown', globalKeydownHandler)
   }
+
+  // Clean up auto-save interval
+  disableAutoSave()
 })
 
 // Watch for markdown content changes (but not when updating from WYSIWYG)
