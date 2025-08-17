@@ -50,6 +50,12 @@ Currently no high priority tasks remaining. See completed tasks in [ai/completed
 
 ### Remaining Deployment Options
 
+- **Google Cloud Run Deployment** (Future Enhancement)
+  - GitHub Actions CI/CD pipeline integration
+  - Cloud Build configuration for automated builds
+  - Auto-scaling configuration with custom domain support
+  - Artifact Registry for container storage
+  - Production deployment scripts and documentation
 - **Static hosting alternatives**
   - Netlify configuration for static deployment
   - Vercel configuration with build optimizations

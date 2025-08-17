@@ -7,24 +7,10 @@ on:
       - '.claude/**'
       - '.devcontainer/**'
       - '.github/**'
-      - '!.github/workflows/deploy-cloud-run.yml'
+      - '!.github/workflows/ci.yml'
       - 'ai/**'
       - 'deployment/**'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
-      region:
-        description: 'Google Cloud region'
-        required: true
-        default: 'us-central1'
-        type: string
 
 jobs:
   build-and-test:
@@ -50,10 +36,3 @@ jobs:
 
       - name: Build application
         run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 1

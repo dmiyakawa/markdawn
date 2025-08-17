@@ -21,7 +21,6 @@
 ### Deployment Strategy
 - **Local Development**: WSL/Linux environment on development machines
 - **IaaS Deployment**: Internet-accessible Linux servers with Apache2 web server
-- **PaaS Deployment**: Google Cloud Platform services for cloud hosting
 - **Static Hosting**: No server-side processing required, compatible with static hosting solutions
 
 ### Quality Requirements

@@ -12,7 +12,7 @@ Key characteristics:
 - **Advanced tab management**: Multiple documents, pinning, drag-and-drop reordering, keyboard navigation
 - **Comprehensive image system**: Upload, storage, cursor-based insertion, drag-and-drop support
 - **Complete file operations**: Import, export, save, load, auto-save, ZIP export for all documents
-- **Production-ready deployment**: Ubuntu Apache, Docker, and Google Cloud Run configurations
+- **Production-ready deployment**: Ubuntu Apache and Docker configurations
 - **Robust testing**: 105/115 tests passing, E2E testing with Playwright
 
 ## Technology Stack
@@ -81,11 +81,6 @@ This project follows a structured AI development process with documentation stor
 - **Features**: Nginx, security optimizations, health checks
 - **Usage**: `docker-compose up -d markdown-editor`
 
-### 3. Google Cloud Run
-- **Location**: `deployment/google-cloud-run/`
-- **Status**: ✅ Complete with GitHub Actions CI/CD
-- **Features**: Auto-scaling, custom domains, artifact registry
-- **Usage**: `./deploy.sh project-id region domain.com`
 
 ## Development Commands
 
@@ -111,4 +106,4 @@ npm run format           # Format code with Prettier
 - **Current Status**: All core features complete, deployment-ready
 - **Next Priority**: Component architecture refactoring and image management interface
 - **Test Status**: 105/115 passing (91% success rate)
-- **Deployment**: Ubuntu Apache (primary), Docker, and Google Cloud Run options available
+- **Deployment**: Ubuntu Apache (primary) and Docker options available
