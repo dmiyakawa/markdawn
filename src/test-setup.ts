@@ -3,8 +3,7 @@
  * Mocks browser APIs that are not available in the test environment
  */
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-
-declare const global: any
+/// <reference path="./test-types.d.ts" />
 
 // Suppress console errors during tests for intentional error testing
 const originalConsoleError = console.error
@@ -39,10 +38,17 @@ global.ResizeObserver = class ResizeObserver {
 
 // Mock IntersectionObserver if needed in the future
 global.IntersectionObserver = class IntersectionObserver {
+  root: Element | null = null
+  rootMargin: string = '0px'
+  thresholds: readonly number[] = [0]
+
   constructor() {}
   observe() {}
   unobserve() {}
   disconnect() {}
+  takeRecords(): IntersectionObserverEntry[] {
+    return []
+  }
 }
 
 // Mock window.matchMedia for responsive tests
@@ -66,14 +72,65 @@ global.URL.revokeObjectURL = () => {}
 
 // Mock DOM methods that CodeMirror needs
 global.Range = class Range {
+  static readonly START_TO_START = 0
+  static readonly START_TO_END = 1
+  static readonly END_TO_END = 2
+  static readonly END_TO_START = 3
+
+  readonly START_TO_START = 0
+  readonly START_TO_END = 1
+  readonly END_TO_END = 2
+  readonly END_TO_START = 3
+
+  collapsed = false
+  commonAncestorContainer: Node = document.createElement('div')
+  endContainer: Node = document.createElement('div')
+  endOffset = 0
+  startContainer: Node = document.createElement('div')
+  startOffset = 0
+
   constructor() {}
+
+  cloneContents(): DocumentFragment {
+    return document.createDocumentFragment()
+  }
+
+  cloneRange(): Range {
+    return new Range()
+  }
+
+  collapse(_toStart?: boolean) {}
+
+  compareBoundaryPoints(_how: number, _sourceRange: any): number {
+    return 0
+  }
+
+  comparePoint(_node: Node, _offset: number): number {
+    return 0
+  }
+
+  createContextualFragment(_fragment: string): DocumentFragment {
+    return document.createDocumentFragment()
+  }
+
+  deleteContents() {}
+
+  detach() {}
+
+  extractContents(): DocumentFragment {
+    return document.createDocumentFragment()
+  }
+
   getClientRects() {
     return {
       length: 0,
-      item: () => null,
-      [Symbol.iterator]: function* () {},
+      item: (index: number): null => null,
+      [Symbol.iterator]: function* (): Generator<DOMRect, undefined, unknown> {
+        return undefined
+      },
     }
   }
+
   getBoundingClientRect() {
     return {
       x: 0,
@@ -84,11 +141,41 @@ global.Range = class Range {
       left: 0,
       bottom: 0,
       right: 0,
+      toJSON: () => ({}),
     }
   }
-  setStart() {}
-  setEnd() {}
-  collapse() {}
+
+  insertNode(_node: Node) {}
+
+  intersectsNode(_node: Node): boolean {
+    return false
+  }
+
+  isPointInRange(_node: Node, _offset: number): boolean {
+    return false
+  }
+
+  selectNode(_node: Node) {}
+
+  selectNodeContents(_node: Node) {}
+
+  setEnd(_node: Node, _offset: number) {}
+
+  setEndAfter(_node: Node) {}
+
+  setEndBefore(_node: Node) {}
+
+  setStart(_node: Node, _offset: number) {}
+
+  setStartAfter(_node: Node) {}
+
+  setStartBefore(_node: Node) {}
+
+  surroundContents(_newParent: Node) {}
+
+  toString(): string {
+    return ''
+  }
 }
 
 // Mock document.createRange
@@ -154,12 +241,12 @@ global.DataTransfer = class DataTransfer {
     [Symbol.iterator]: function* () {},
   } as DataTransferItemList
 
-  setData(format: string, data: string) {}
-  getData(format: string): string {
+  setData(_format: string, _data: string) {}
+  getData(_format: string): string {
     return ''
   }
-  clearData(format?: string) {}
-  setDragImage(image: Element, x: number, y: number) {}
+  clearData(_format?: string) {}
+  setDragImage(_image: Element, _x: number, _y: number) {}
 } as any
 
 // Define DragEventInit interface for TypeScript

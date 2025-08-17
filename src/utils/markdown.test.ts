@@ -103,4 +103,57 @@ describe('HTML to Markdown Conversion', () => {
     const result = convertHtmlToMarkdown(html)
     expect(result).toBe('text')
   })
+
+  it('handles images with style attributes', () => {
+    const html = '<img src="https://example.com/image.jpg" alt="Test Image" style="width: 300px; height: 200px; max-width: 100%">'
+    const result = convertHtmlToMarkdown(html)
+    // The actual implementation may not parse style attributes, so test basic conversion
+    expect(result).toContain('![Test Image](https://example.com/image.jpg)')
+  })
+
+  it('handles images with different attributes', () => {
+    const html = '<img src="https://example.com/image.jpg" alt="Test Image" class="test-class">'
+    const result = convertHtmlToMarkdown(html)
+    expect(result).toBe('![Test Image](https://example.com/image.jpg)')
+  })
+
+  it('handles lists conversion', () => {
+    const html = '<ul><li>Item 1</li><li>Item 2</li></ul>'
+    const result = convertHtmlToMarkdown(html)
+    expect(result).toContain('Item 1')
+    expect(result).toContain('Item 2')
+  })
+
+  it('handles ordered lists conversion', () => {
+    const html = '<ol><li>First</li><li>Second</li></ol>'
+    const result = convertHtmlToMarkdown(html)
+    expect(result).toContain('First')
+    expect(result).toContain('Second')
+  })
+
+  it('handles complex mixed content', () => {
+    const html = `
+      <h1>Title</h1>
+      <p>Paragraph with <strong>bold</strong> and <em>italic</em></p>
+      <ul>
+        <li>List item with <a href="http://example.com">link</a></li>
+        <li>Another item</li>
+      </ul>
+      <div>Extra content to remove</div>
+    `
+    const result = convertHtmlToMarkdown(html)
+    expect(result).toContain('# Title')
+    expect(result).toContain('**bold**')
+    expect(result).toContain('*italic*')
+    expect(result).toContain('- List item with [link](http://example.com)')
+    expect(result).toContain('- Another item')
+    expect(result).toContain('Extra content to remove')
+  })
+
+  it('cleans up excessive newlines', () => {
+    const html = '<p>First</p>\n\n\n\n<p>Second</p>'
+    const result = convertHtmlToMarkdown(html)
+    expect(result).not.toMatch(/\n{3,}/)
+    expect(result).toBe('First\n\nSecond')
+  })
 })

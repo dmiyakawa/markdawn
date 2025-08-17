@@ -581,4 +581,266 @@ describe('CodeMirrorEditor', () => {
     await wrapper.setProps({ darkMode: false })
     expect((wrapper.vm as any).$props.darkMode).toBe(false)
   })
+
+  describe('Advanced History Management', () => {
+    it('creates history boundaries', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.createHistoryBoundary).toBe('function')
+      expect(() => vm.createHistoryBoundary()).not.toThrow()
+      expect(() => vm.createHistoryBoundary('full')).not.toThrow()
+      expect(() => vm.createHistoryBoundary('before')).not.toThrow()
+      expect(() => vm.createHistoryBoundary('after')).not.toThrow()
+    })
+
+    it('performs undo with boundary', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.performUndoWithBoundary).toBe('function')
+      expect(typeof vm.performUndoWithBoundary()).toBe('boolean')
+    })
+
+    it('performs redo with boundary', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.performRedoWithBoundary).toBe('function')
+      expect(typeof vm.performRedoWithBoundary()).toBe('boolean')
+    })
+
+    it('gets history status', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.getHistoryStatus).toBe('function')
+      const status = vm.getHistoryStatus()
+      expect(status).toHaveProperty('canUndo')
+      expect(status).toHaveProperty('canRedo')
+      expect(status).toHaveProperty('undoDepth')
+      expect(status).toHaveProperty('redoDepth')
+      expect(typeof status.canUndo).toBe('boolean')
+      expect(typeof status.canRedo).toBe('boolean')
+      expect(typeof status.undoDepth).toBe('number')
+      expect(typeof status.redoDepth).toBe('number')
+    })
+  })
+
+  describe('Editor State Management', () => {
+    it('handles editor view initialization', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(vm.editorView).toBeDefined()
+    })
+
+    it('handles getCurrentLine function', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.getCurrentLine).toBe('function')
+      expect(typeof vm.getCurrentLine()).toBe('number')
+    })
+
+    it('handles scrollToPosition function', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.scrollToPosition).toBe('function')
+      expect(() => vm.scrollToPosition(10)).not.toThrow()
+    })
+
+    it('handles scrollToLine function', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.scrollToLine).toBe('function')
+      expect(() => vm.scrollToLine(1)).not.toThrow()
+    })
+
+    it('handles getScrollInfo function', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.getScrollInfo).toBe('function')
+      const scrollInfo = vm.getScrollInfo()
+      if (scrollInfo) {
+        expect(scrollInfo).toHaveProperty('scrollTop')
+        expect(scrollInfo).toHaveProperty('scrollHeight')
+        expect(scrollInfo).toHaveProperty('clientHeight')
+        expect(typeof scrollInfo.scrollTop).toBe('number')
+        expect(typeof scrollInfo.scrollHeight).toBe('number')
+        expect(typeof scrollInfo.clientHeight).toBe('number')
+      }
+    })
+  })
+
+  describe('Content Management', () => {
+    it('handles advanced text operations', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      // Test exposed methods that exist
+      expect(typeof vm.insertText).toBe('function')
+      expect(typeof vm.replaceSelection).toBe('function')
+      expect(() => vm.insertText('new text')).not.toThrow()
+      expect(() => vm.replaceSelection('replacement')).not.toThrow()
+    })
+
+    it('handles undo/redo functions', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.canUndo).toBe('function')
+      expect(typeof vm.canRedo).toBe('function')
+      expect(typeof vm.canUndo()).toBe('boolean')
+      expect(typeof vm.canRedo()).toBe('boolean')
+    })
+
+    it('handles text insertion and replacement', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(typeof vm.insertText).toBe('function')
+      expect(typeof vm.replaceSelection).toBe('function')
+      expect(() => vm.insertText('new text')).not.toThrow()
+      expect(() => vm.replaceSelection('replacement')).not.toThrow()
+    })
+  })
+
+  describe('Search and Replace', () => {
+    it('handles search functionality', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content for searching',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      // Test exposed search methods that exist
+      expect(typeof vm.searchNext).toBe('function')
+      expect(typeof vm.searchPrevious).toBe('function')
+      expect(typeof vm.clearSearch).toBe('function')
+      expect(() => vm.searchNext()).not.toThrow()
+      expect(() => vm.searchPrevious()).not.toThrow()
+      expect(() => vm.clearSearch()).not.toThrow()
+    })
+
+    it('handles replace functionality', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content for searching',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      // Test exposed replace methods that exist
+      expect(typeof vm.performReplace).toBe('function')
+      expect(typeof vm.performReplaceAll).toBe('function')
+      expect(() => vm.performReplace()).not.toThrow()
+      expect(() => vm.performReplaceAll()).not.toThrow()
+    })
+  })
+
+  describe('Editor Lifecycle', () => {
+    it('handles component destruction', async () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+        },
+      })
+
+      const vm = wrapper.vm as any
+      expect(vm.editorView).toBeDefined()
+      
+      // Simulate component destruction
+      wrapper.unmount()
+      
+      // Should not throw errors during cleanup
+      expect(true).toBe(true)
+    })
+
+    it('handles prop changes without errors', async () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '# Test\n\nSome content',
+          darkMode: false,
+          placeholder: 'Original placeholder',
+        },
+      })
+
+      // Change multiple props
+      await wrapper.setProps({ 
+        modelValue: '# Updated\n\nNew content',
+        placeholder: 'New placeholder'
+      })
+      
+      expect(wrapper.props('modelValue')).toBe('# Updated\n\nNew content')
+      expect(wrapper.props('placeholder')).toBe('New placeholder')
+    })
+  })
 })

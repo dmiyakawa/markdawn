@@ -346,3 +346,50 @@ This file contains technical concerns requiring detailed investigation and compl
 1. Remove `test.skip()` from line 116 in `tests/e2e/find-replace.spec.ts`
 2. Test will immediately reproduce the content scrambling issue
 3. Focus on content replacement timing and method reliability
+
+## Resolved Issues
+
+### Auto-Save Cursor Jump Issue
+
+**Problem**: Auto-save functionality was causing the cursor to jump to the top of the editor during editing, creating a disruptive user experience.
+
+**Status**: ✅ FIXED
+
+**Root Cause**: The `updateEditorContent` function in CodeMirrorEditor.vue was replacing the entire document content without preserving cursor position during reactive updates triggered by auto-save.
+
+**Solution**: Modified the `updateEditorContent` function to store and restore cursor position and selection state during content updates:
+
+```typescript
+const updateEditorContent = (newValue: string) => {
+  if (!editorView) return
+  const currentValue = editorView.state.doc.toString()
+  if (currentValue !== newValue) {
+    // Store current cursor position and selection
+    const currentSelection = editorView.state.selection.main
+    const cursorPos = currentSelection.head
+    const anchorPos = currentSelection.anchor
+    
+    editorView.dispatch({
+      changes: {
+        from: 0,
+        to: editorView.state.doc.length,
+        insert: newValue,
+      },
+      // Restore cursor position after content update, ensuring it's within bounds
+      selection: {
+        anchor: Math.min(anchorPos, newValue.length),
+        head: Math.min(cursorPos, newValue.length),
+      },
+    })
+  }
+}
+```
+
+**Fix Details**:
+- Preserves both cursor position (`head`) and selection anchor point
+- Ensures restored positions don't exceed document length boundaries
+- Maintains user's editing context during auto-save operations
+- No impact on manual content updates or other editor functionality
+
+**Files Modified**:
+- `/workspace/src/components/CodeMirrorEditor.vue` (lines 694-717)

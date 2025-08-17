@@ -687,5 +687,497 @@ describe('App.vue', () => {
 
       expect(vm.showExportModal).toBe(false)
     })
+
+    it('handles export modal cancellation', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleExportCancel: () => void
+        showExportModal: boolean
+      }
+
+      // First show the modal
+      vm.showExportModal = true
+      await wrapper.vm.$nextTick()
+
+      // Then cancel it
+      vm.handleExportCancel()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showExportModal).toBe(false)
+    })
+  })
+
+  describe('UI State Management', () => {
+    it('toggles preview visibility', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showPreview: boolean
+        togglePreview: () => void
+      }
+
+      const initialState = vm.showPreview
+      vm.togglePreview()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showPreview).toBe(!initialState)
+    })
+
+    it('toggles outline visibility', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showOutline: boolean
+        toggleOutline: () => void
+      }
+
+      const initialState = vm.showOutline
+      vm.toggleOutline()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showOutline).toBe(!initialState)
+    })
+
+    it('toggles find/replace visibility', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showFindReplace: boolean
+        toggleFindReplace: () => void
+      }
+
+      const initialState = vm.showFindReplace
+      vm.toggleFindReplace()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showFindReplace).toBe(!initialState)
+    })
+
+    it('toggles image manager visibility', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        showImageManager: boolean
+        toggleImageManager: () => void
+      }
+
+      const initialState = vm.showImageManager
+      vm.toggleImageManager()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showImageManager).toBe(!initialState)
+    })
+
+    it('toggles WYSIWYG mode', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        isWysiwygMode: boolean
+        toggleWysiwygMode: () => void
+      }
+
+      const initialState = vm.isWysiwygMode
+      vm.toggleWysiwygMode()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.isWysiwygMode).toBe(!initialState)
+    })
+  })
+
+  describe('Export Functionality', () => {
+    it('handles HTML export initiation', async () => {
+      const wrapper = createWrapper()
+      const htmlButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text() === 'HTML')
+
+      const vm = wrapper.vm as unknown as {
+        showExportModal: boolean
+        exportModalType: string
+      }
+
+      await htmlButton?.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showExportModal).toBe(true)
+      expect(vm.exportModalType).toBe('html')
+    })
+
+    it('handles PDF export initiation', async () => {
+      const wrapper = createWrapper()
+      const pdfButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text() === 'PDF')
+
+      const vm = wrapper.vm as unknown as {
+        showExportModal: boolean
+        exportModalType: string
+      }
+
+      await pdfButton?.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showExportModal).toBe(true)
+      expect(vm.exportModalType).toBe('pdf')
+    })
+
+    it('handles markdown file export', async () => {
+      const wrapper = createWrapper()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const mdButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text() === 'MD')
+
+      const vm = wrapper.vm as unknown as {
+        exportFile: () => void
+      }
+
+      expect(typeof vm.exportFile).toBe('function')
+      expect(() => vm.exportFile()).not.toThrow()
+    })
+
+    it('handles ZIP export', async () => {
+      const wrapper = createWrapper()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const zipButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text() === 'ZIP')
+
+      const vm = wrapper.vm as unknown as {
+        exportingZip: boolean
+        exportAllFilesWithImages: () => Promise<void>
+      }
+
+      expect(typeof vm.exportAllFilesWithImages).toBe('function')
+      expect(typeof vm.exportingZip).toBe('boolean')
+    })
+  })
+
+  describe('WYSIWYG Editor Integration', () => {
+    it('handles WYSIWYG input events', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleWysiwygInput: (event: Event) => void
+      }
+
+      const mockEvent = new Event('input')
+      expect(() => vm.handleWysiwygInput(mockEvent)).not.toThrow()
+    })
+
+    it('handles WYSIWYG paste events', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleWysiwygPaste: (event: ClipboardEvent) => Promise<void>
+      }
+
+      // Mock ClipboardEvent since it's not available in JSDOM
+      const mockClipboardEvent = {
+        type: 'paste',
+        clipboardData: {
+          getData: vi.fn(() => 'test text'),
+          items: [],
+        },
+        preventDefault: vi.fn(),
+      } as unknown as ClipboardEvent
+
+      expect(typeof vm.handleWysiwygPaste).toBe('function')
+      await expect(
+        vm.handleWysiwygPaste(mockClipboardEvent)
+      ).resolves.not.toThrow()
+    })
+  })
+
+  describe('Image Manager Integration', () => {
+    it('handles image insertion from manager', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleImageManagerInsert: (image: any) => void
+        showImageManager: boolean
+      }
+
+      const mockImage = {
+        id: 'test-image-123',
+        name: 'test.jpg',
+        data: 'data:image/jpeg;base64,test123',
+        type: 'image/jpeg',
+        size: 1024,
+        lastModified: Date.now(),
+      }
+
+      vm.showImageManager = true
+      vm.handleImageManagerInsert(mockImage)
+
+      expect(vm.showImageManager).toBe(false)
+    })
+  })
+
+  describe('Computed Properties', () => {
+    it('computes document statistics', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        stats: {
+          lines: number
+          words: number
+          characters: { withSpaces: number; withoutSpaces: number }
+        }
+      }
+
+      expect(typeof vm.stats).toBe('object')
+      expect(vm.stats).toHaveProperty('lines')
+      expect(vm.stats).toHaveProperty('words')
+      expect(vm.stats).toHaveProperty('characters')
+      expect(typeof vm.stats.lines).toBe('number')
+      expect(typeof vm.stats.words).toBe('number')
+      expect(typeof vm.stats.characters.withSpaces).toBe('number')
+      expect(typeof vm.stats.characters.withoutSpaces).toBe('number')
+    })
+
+    it('computes save status class', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        saveStatusClass: Record<string, boolean>
+      }
+
+      expect(typeof vm.saveStatusClass).toBe('object')
+    })
+
+    it('computes HTML content from markdown', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        htmlContent: string
+        markdownContent: string
+      }
+
+      expect(typeof vm.htmlContent).toBe('string')
+      expect(vm.htmlContent.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Component References', () => {
+    it('has markdown editor reference', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        markdownEditorRef: any
+      }
+
+      expect(vm.markdownEditorRef).toBeDefined()
+    })
+
+    it('has preview reference', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        previewRef: any
+      }
+
+      expect(vm.previewRef).toBeDefined()
+    })
+
+    it('has find/replace reference', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        findReplaceRef: any
+      }
+
+      expect(vm.findReplaceRef).toBeDefined()
+    })
+
+    it('has document outline reference', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        documentOutlineRef: any
+      }
+
+      expect(vm.documentOutlineRef).toBeDefined()
+    })
+  })
+
+  describe('Scroll Synchronization', () => {
+    it('handles editor scroll events', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleEditorScroll: (scrollInfo: any) => void
+      }
+
+      const scrollInfo = {
+        scrollTop: 50,
+        scrollHeight: 200,
+        clientHeight: 100,
+      }
+
+      // Should not throw when called
+      expect(() => vm.handleEditorScroll(scrollInfo)).not.toThrow()
+    })
+
+    it('handles WYSIWYG scroll events', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleWysiwygScroll: (event: Event) => void
+      }
+
+      const mockTarget = {
+        scrollTop: 50,
+        scrollHeight: 200,
+        clientHeight: 100,
+      } as HTMLElement
+
+      const mockEvent = { target: mockTarget } as unknown as Event
+
+      // Should not throw when called
+      expect(() => vm.handleWysiwygScroll(mockEvent)).not.toThrow()
+    })
+
+    it('has scroll handler functions', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleEditorScroll: (scrollInfo: any) => void
+        handleWysiwygScroll: (event: Event) => void
+      }
+
+      expect(typeof vm.handleEditorScroll).toBe('function')
+      expect(typeof vm.handleWysiwygScroll).toBe('function')
+    })
+  })
+
+  describe('CodeMirror Integration', () => {
+    it('has updateActiveHeading function', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        updateActiveHeading: () => void
+      }
+
+      expect(typeof vm.updateActiveHeading).toBe('function')
+      expect(() => vm.updateActiveHeading()).not.toThrow()
+    })
+
+    it('has updateUndoRedoState function', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        updateUndoRedoState: () => void
+      }
+
+      expect(typeof vm.updateUndoRedoState).toBe('function')
+      expect(() => vm.updateUndoRedoState()).not.toThrow()
+    })
+
+    it('has CodeMirror editor reference management', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        codeMirrorEditor: { value: any } | null
+      }
+
+      // Should have the reference object structure (may be null initially)
+      expect(vm.codeMirrorEditor !== undefined).toBe(true)
+      if (vm.codeMirrorEditor) {
+        expect(vm.codeMirrorEditor).toHaveProperty('value')
+      }
+    })
+  })
+
+  describe('Editor Computed Properties', () => {
+    it('has WYSIWYG editor computed property', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        wysiwygEditor: any
+      }
+
+      expect(vm.wysiwygEditor).toBeDefined()
+    })
+
+    it('has WYSIWYG scroll container computed property', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        wysiwygScrollContainer: any
+      }
+
+      expect(vm.wysiwygScrollContainer).toBeDefined()
+    })
+
+    it('has CodeMirror editor computed property', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        codeMirrorEditor: any
+      }
+
+      expect(vm.codeMirrorEditor).toBeDefined()
+    })
+  })
+
+  describe('Legacy Content Import', () => {
+    it('imports legacy content as new document on mount', async () => {
+      // Mock localStorage to simulate saved content
+      const mockLocalStorage = {
+        getItem: vi.fn((key) => {
+          if (key === 'markdown-editor-content')
+            return '# Legacy Content\n\nThis is legacy content'
+          if (key === 'lastSaved') return Date.now().toString()
+          return null
+        }),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      }
+      Object.defineProperty(window, 'localStorage', { value: mockLocalStorage })
+
+      const wrapper = createWrapper()
+      await wrapper.vm.$nextTick()
+
+      // Legacy import functionality should be triggered during mount
+      expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
+        'markdown-editor-content'
+      )
+    })
+
+    it('handles mount initialization with auto-save', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        initializeDocuments: () => void
+        enableAutoSave: () => void
+      }
+
+      vm.initializeDocuments = vi.fn()
+      vm.enableAutoSave = vi.fn()
+
+      // Trigger mounted lifecycle
+      await wrapper.vm.$nextTick()
+
+      expect(vm.initializeDocuments).toBeDefined()
+      expect(vm.enableAutoSave).toBeDefined()
+    })
+
+    it('handles WYSIWYG content initialization on mount', async () => {
+      const wrapper = createWrapper()
+      await wrapper.vm.$nextTick()
+
+      // Should complete mount without errors
+      expect(wrapper.vm).toBeDefined()
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('handles invalid file import gracefully', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleFileImport: (event: Event) => Promise<void>
+      }
+
+      const mockEvent = {
+        target: {
+          files: [
+            new File(['invalid content'], 'test.txt', { type: 'text/plain' }),
+          ],
+        },
+      } as unknown as Event
+
+      await expect(vm.handleFileImport(mockEvent)).resolves.not.toThrow()
+    })
+
+    it('handles file import with no files', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as {
+        handleFileImport: (event: Event) => Promise<void>
+      }
+
+      const mockEvent = {
+        target: {
+          files: [],
+        },
+      } as unknown as Event
+
+      await expect(vm.handleFileImport(mockEvent)).resolves.not.toThrow()
+    })
   })
 })

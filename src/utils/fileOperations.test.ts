@@ -339,4 +339,68 @@ describe('Content Analysis', () => {
     expect(getLineCount('')).toBe(1)
     expect(getLineCount('Single line')).toBe(1)
   })
+
+  describe('Error Handling', () => {
+    beforeEach(() => {
+      // Reset localStorage mock before each test
+      localStorageMock.setItem.mockReset()
+      localStorageMock.getItem.mockReset()
+      localStorageMock.removeItem.mockReset()
+    })
+
+    it('handles localStorage clear errors', () => {
+      // Mock localStorage.removeItem to throw an error
+      localStorageMock.removeItem.mockImplementation(() => {
+        throw new Error('Storage error')
+      })
+
+      // Mock console.error to verify it's called
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const result = clearLocalStorage('test-key')
+
+      expect(result).toBe(false)
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to clear localStorage:', expect.any(Error))
+
+      // Restore original methods
+      consoleSpy.mockRestore()
+    })
+
+    it('handles localStorage access errors in hasSavedContent', () => {
+      // Mock localStorage.getItem to throw an error
+      localStorageMock.getItem.mockImplementation(() => {
+        throw new Error('Storage error')
+      })
+
+      const result = hasSavedContent('test-key')
+
+      expect(result).toBe(false)
+    })
+
+    it('handles clearLocalStorage success case', () => {
+      // Mock successful removal
+      localStorageMock.removeItem.mockImplementation(() => {})
+      
+      const result = clearLocalStorage('test-clear-key')
+      
+      expect(result).toBe(true)
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('test-clear-key')
+    })
+
+    it('handles hasSavedContent with existing content', () => {
+      localStorageMock.getItem.mockReturnValue('test content')
+      
+      const result = hasSavedContent('test-has-content')
+      
+      expect(result).toBe(true)
+    })
+
+    it('handles hasSavedContent with no content', () => {
+      localStorageMock.getItem.mockReturnValue(null)
+      
+      const result = hasSavedContent('non-existent-key')
+      
+      expect(result).toBe(false)
+    })
+  })
 })

@@ -8,6 +8,8 @@ import {
   getImagesStorageSize,
   clearImageStorage,
   generateImageMarkdown,
+  getImageUsageStats,
+  findDocumentsUsingImage,
   type StoredImage,
 } from './imageStorage'
 import { isValidImageFile } from './imageProcessing'
@@ -272,6 +274,81 @@ describe('imageOperations', () => {
       const imageNoExt = { ...mockImage, name: 'photo' }
       const result = generateImageMarkdown(imageNoExt)
       expect(result).toBe('![photo](stored:test-id)')
+    })
+  })
+
+  describe('Image Usage Statistics', () => {
+    beforeEach(() => {
+      // Setup test images
+      const testImages = [
+        { id: 'image-1', name: 'test1.jpg', data: 'data:image/jpeg;base64,test1', type: 'image/jpeg', size: 1000, lastModified: Date.now() },
+        { id: 'image-2', name: 'test2.png', data: 'data:image/png;base64,test2', type: 'image/png', size: 2000, lastModified: Date.now() },
+      ]
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(testImages))
+    })
+
+    it('gets comprehensive image usage statistics', () => {
+      const documents = [
+        { id: 'doc1', title: 'Document 1', content: 'Some content with ![image](stored:image-1) and text' },
+        { id: 'doc2', title: 'Document 2', content: 'Different content with ![image](stored:image-1) and ![image](stored:image-2)' },
+        { id: 'doc3', title: 'Document 3', content: 'No images here' },
+      ]
+
+      const stats = getImageUsageStats(documents)
+
+      expect(stats).toHaveLength(2)
+      expect(stats[0].usageCount).toBe(2) // image-1 used in doc1 and doc2
+      expect(stats[0].documentsUsing).toHaveLength(2)
+      expect(stats[0].documentsUsing[0]).toEqual({ id: 'doc1', title: 'Document 1' })
+      expect(stats[0].documentsUsing[1]).toEqual({ id: 'doc2', title: 'Document 2' })
+      
+      expect(stats[1].usageCount).toBe(1) // image-2 used only in doc2
+      expect(stats[1].documentsUsing).toHaveLength(1)
+      expect(stats[1].documentsUsing[0]).toEqual({ id: 'doc2', title: 'Document 2' })
+    })
+
+    it('finds documents using specific image', () => {
+      const documents = [
+        { id: 'doc1', title: 'Document 1', content: 'Some content with ![image](stored:image-1) and text' },
+        { id: 'doc2', title: 'Document 2', content: 'Different content with ![image](stored:image-1) and ![image](stored:image-2)' },
+        { id: 'doc3', title: 'Document 3', content: 'No images here' },
+      ]
+
+      const documentsUsingImage1 = findDocumentsUsingImage('image-1', documents)
+      expect(documentsUsingImage1).toHaveLength(2)
+      expect(documentsUsingImage1).toEqual([
+        { id: 'doc1', title: 'Document 1' },
+        { id: 'doc2', title: 'Document 2' },
+      ])
+
+      const documentsUsingImage2 = findDocumentsUsingImage('image-2', documents)
+      expect(documentsUsingImage2).toHaveLength(1)
+      expect(documentsUsingImage2).toEqual([
+        { id: 'doc2', title: 'Document 2' },
+      ])
+
+      const documentsUsingNonExistent = findDocumentsUsingImage('nonexistent', documents)
+      expect(documentsUsingNonExistent).toHaveLength(0)
+    })
+
+    it('handles empty document list', () => {
+      const stats = getImageUsageStats([])
+      expect(stats).toHaveLength(2) // Still returns stats for stored images
+      expect(stats[0].usageCount).toBe(0)
+      expect(stats[0].documentsUsing).toHaveLength(0)
+      expect(stats[1].usageCount).toBe(0)
+      expect(stats[1].documentsUsing).toHaveLength(0)
+    })
+
+    it('handles no stored images', () => {
+      localStorageMock.getItem.mockReturnValue('[]')
+      
+      const documents = [
+        { id: 'doc1', title: 'Document 1', content: 'Some content with ![image](stored:image-1)' },
+      ]
+
+      const stats = getImageUsageStats(documents)
+      expect(stats).toHaveLength(0)
     })
   })
 })

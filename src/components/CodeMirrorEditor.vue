@@ -696,11 +696,21 @@ const updateEditorContent = (newValue: string) => {
 
   const currentValue = editorView.state.doc.toString()
   if (currentValue !== newValue) {
+    // Store current cursor position and selection
+    const currentSelection = editorView.state.selection.main
+    const cursorPos = currentSelection.head
+    const anchorPos = currentSelection.anchor
+    
     editorView.dispatch({
       changes: {
         from: 0,
         to: editorView.state.doc.length,
         insert: newValue,
+      },
+      // Restore cursor position after content update, ensuring it's within bounds
+      selection: {
+        anchor: Math.min(anchorPos, newValue.length),
+        head: Math.min(cursorPos, newValue.length),
       },
     })
   }
