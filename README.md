@@ -38,6 +38,8 @@ Claude Codeに主に書かせています。AIっぽいのは大体AIだから�
 - Node.js 20以上
 - npm
 
+VSCodeでDev Containerを使うと色々うまくいきます
+
 ### インストールと起動
 
 ```bash
