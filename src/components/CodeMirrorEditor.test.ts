@@ -816,10 +816,10 @@ describe('CodeMirrorEditor', () => {
 
       const vm = wrapper.vm as any
       expect(vm.editorView).toBeDefined()
-      
+
       // Simulate component destruction
       wrapper.unmount()
-      
+
       // Should not throw errors during cleanup
       expect(true).toBe(true)
     })
@@ -834,13 +834,260 @@ describe('CodeMirrorEditor', () => {
       })
 
       // Change multiple props
-      await wrapper.setProps({ 
+      await wrapper.setProps({
         modelValue: '# Updated\n\nNew content',
-        placeholder: 'New placeholder'
+        placeholder: 'New placeholder',
       })
-      
+
       expect(wrapper.props('modelValue')).toBe('# Updated\n\nNew content')
       expect(wrapper.props('placeholder')).toBe('New placeholder')
+    })
+  })
+
+  describe('Internal Functionality', () => {
+    it('has valid component structure', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test content',
+        },
+      })
+
+      // Component should exist and have proper structure
+      expect(wrapper.vm).toBeDefined()
+      expect(wrapper.find('.codemirror-container').exists()).toBe(true)
+    })
+
+    it('handles editor initialization in test environment', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test content',
+          placeholder: 'test placeholder',
+          darkMode: false,
+          readonly: false,
+        },
+      })
+
+      // Component should mount successfully even in test environment
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.props('modelValue')).toBe('test content')
+      expect(wrapper.props('placeholder')).toBe('test placeholder')
+      expect(wrapper.props('darkMode')).toBe(false)
+      expect(wrapper.props('readonly')).toBe(false)
+    })
+
+    it('has proper component methods exposed', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test content',
+        },
+      })
+
+      const vm = wrapper.vm as any
+
+      // All the methods that should be exposed to parent components
+      const expectedMethods = [
+        'focus',
+        'getSelection',
+        'insertText',
+        'replaceSelection',
+        'searchNext',
+        'searchPrevious',
+        'performReplace',
+        'performReplaceAll',
+        'clearSearch',
+        'scrollToPosition',
+        'scrollToLine',
+        'getScrollInfo',
+        'getCurrentLine',
+        'performUndo',
+        'performRedo',
+        'getUndoDepth',
+        'getRedoDepth',
+        'canUndo',
+        'canRedo',
+        'isolateHistoryBoundary',
+        'clearHistory',
+        'createHistoryBoundary',
+        'performUndoWithBoundary',
+        'performRedoWithBoundary',
+        'getHistoryStatus',
+        'getDocumentSize',
+        'isLargeDocument',
+        'isVeryLargeDocument',
+        'optimizeForLargeDocument',
+        'insertLargeText',
+        'getBatchedTextInsertion',
+        'getPerformanceStats',
+      ]
+
+      expectedMethods.forEach((method) => {
+        expect(typeof vm[method]).toBe('function')
+      })
+    })
+
+    it('handles watchers for prop changes', async () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'initial content',
+          darkMode: false,
+        },
+      })
+
+      // Change modelValue prop - should trigger the watcher
+      await wrapper.setProps({ modelValue: 'updated content' })
+      expect(wrapper.props('modelValue')).toBe('updated content')
+
+      // Change darkMode prop - should trigger the watcher
+      await wrapper.setProps({ darkMode: true })
+      expect(wrapper.props('darkMode')).toBe(true)
+    })
+
+    it('validates prop defaults', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test',
+        },
+      })
+
+      // Check default values are applied
+      expect(wrapper.props('placeholder')).toBe(
+        'Start typing your markdown here...'
+      )
+      expect(wrapper.props('darkMode')).toBe(false)
+      expect(wrapper.props('readonly')).toBe(false)
+    })
+
+    it('validates emit events are properly defined', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test',
+        },
+      })
+
+      // Component should be able to emit these events
+      expect(wrapper.vm.$options.emits).toBeDefined()
+    })
+
+    it('handles component props validation', () => {
+      // Test with all props provided
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'complete test',
+          placeholder: 'custom placeholder',
+          darkMode: true,
+          readonly: true,
+        },
+      })
+
+      expect(wrapper.props('modelValue')).toBe('complete test')
+      expect(wrapper.props('placeholder')).toBe('custom placeholder')
+      expect(wrapper.props('darkMode')).toBe(true)
+      expect(wrapper.props('readonly')).toBe(true)
+    })
+
+    it('handles multiple prop updates in sequence', async () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'initial',
+          darkMode: false,
+          readonly: false,
+        },
+      })
+
+      // Update multiple props in sequence
+      await wrapper.setProps({ modelValue: 'step1' })
+      expect(wrapper.props('modelValue')).toBe('step1')
+
+      await wrapper.setProps({ darkMode: true })
+      expect(wrapper.props('darkMode')).toBe(true)
+
+      await wrapper.setProps({ readonly: true })
+      expect(wrapper.props('readonly')).toBe(true)
+
+      await wrapper.setProps({ modelValue: 'final' })
+      expect(wrapper.props('modelValue')).toBe('final')
+    })
+
+    it('handles edge cases for method calls', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: '',
+        },
+      })
+
+      const vm = wrapper.vm as any
+
+      // Test methods with empty/null parameters
+      expect(() => vm.insertText('')).not.toThrow()
+      expect(() => vm.replaceSelection('')).not.toThrow()
+      expect(() => vm.searchNext('')).not.toThrow()
+      expect(() => vm.performReplace('', '')).not.toThrow()
+      expect(() => vm.scrollToPosition(0)).not.toThrow()
+      expect(() => vm.scrollToLine(1)).not.toThrow()
+    })
+
+    it('handles getBatchedTextInsertion with different sizes', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test',
+        },
+      })
+
+      const vm = wrapper.vm as any
+
+      // Test with small text (single batch)
+      const smallBatches = vm.getBatchedTextInsertion('small text')
+      expect(smallBatches).toEqual(['small text'])
+
+      // Test with large text (multiple batches)
+      const largeText = 'a'.repeat(25000)
+      const largeBatches = vm.getBatchedTextInsertion(largeText, 10000)
+      expect(largeBatches.length).toBe(3)
+      expect(largeBatches[0].length).toBe(10000)
+      expect(largeBatches[1].length).toBe(10000)
+      expect(largeBatches[2].length).toBe(5000)
+    })
+
+    it('handles document size calculations', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'line1\nline2\nline3',
+        },
+      })
+
+      const vm = wrapper.vm as any
+
+      const docSize = vm.getDocumentSize()
+      expect(docSize).toHaveProperty('lines')
+      expect(docSize).toHaveProperty('characters')
+      expect(typeof docSize.lines).toBe('number')
+      expect(typeof docSize.characters).toBe('number')
+
+      // Should detect as small document
+      expect(vm.isLargeDocument()).toBe(false)
+      expect(vm.isVeryLargeDocument()).toBe(false)
+    })
+
+    it('handles performance stats generation', () => {
+      const wrapper = mount(CodeMirrorEditor, {
+        props: {
+          modelValue: 'test content for performance',
+        },
+      })
+
+      const vm = wrapper.vm as any
+      const stats = vm.getPerformanceStats()
+
+      expect(stats).toHaveProperty('lines')
+      expect(stats).toHaveProperty('characters')
+      expect(stats).toHaveProperty('isLarge')
+      expect(stats).toHaveProperty('isVeryLarge')
+      expect(stats).toHaveProperty('undoDepth')
+      expect(stats).toHaveProperty('redoDepth')
+      expect(stats).toHaveProperty('memoryUsageEstimate')
+
+      expect(typeof stats.memoryUsageEstimate).toBe('number')
+      expect(stats.memoryUsageEstimate).toBeGreaterThanOrEqual(0)
     })
   })
 })

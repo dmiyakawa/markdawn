@@ -700,7 +700,7 @@ const updateEditorContent = (newValue: string) => {
     const currentSelection = editorView.state.selection.main
     const cursorPos = currentSelection.head
     const anchorPos = currentSelection.anchor
-    
+
     editorView.dispatch({
       changes: {
         from: 0,

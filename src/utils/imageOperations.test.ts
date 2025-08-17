@@ -281,16 +281,39 @@ describe('imageOperations', () => {
     beforeEach(() => {
       // Setup test images
       const testImages = [
-        { id: 'image-1', name: 'test1.jpg', data: 'data:image/jpeg;base64,test1', type: 'image/jpeg', size: 1000, lastModified: Date.now() },
-        { id: 'image-2', name: 'test2.png', data: 'data:image/png;base64,test2', type: 'image/png', size: 2000, lastModified: Date.now() },
+        {
+          id: 'image-1',
+          name: 'test1.jpg',
+          data: 'data:image/jpeg;base64,test1',
+          type: 'image/jpeg',
+          size: 1000,
+          lastModified: Date.now(),
+        },
+        {
+          id: 'image-2',
+          name: 'test2.png',
+          data: 'data:image/png;base64,test2',
+          type: 'image/png',
+          size: 2000,
+          lastModified: Date.now(),
+        },
       ]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(testImages))
     })
 
     it('gets comprehensive image usage statistics', () => {
       const documents = [
-        { id: 'doc1', title: 'Document 1', content: 'Some content with ![image](stored:image-1) and text' },
-        { id: 'doc2', title: 'Document 2', content: 'Different content with ![image](stored:image-1) and ![image](stored:image-2)' },
+        {
+          id: 'doc1',
+          title: 'Document 1',
+          content: 'Some content with ![image](stored:image-1) and text',
+        },
+        {
+          id: 'doc2',
+          title: 'Document 2',
+          content:
+            'Different content with ![image](stored:image-1) and ![image](stored:image-2)',
+        },
         { id: 'doc3', title: 'Document 3', content: 'No images here' },
       ]
 
@@ -299,18 +322,36 @@ describe('imageOperations', () => {
       expect(stats).toHaveLength(2)
       expect(stats[0].usageCount).toBe(2) // image-1 used in doc1 and doc2
       expect(stats[0].documentsUsing).toHaveLength(2)
-      expect(stats[0].documentsUsing[0]).toEqual({ id: 'doc1', title: 'Document 1' })
-      expect(stats[0].documentsUsing[1]).toEqual({ id: 'doc2', title: 'Document 2' })
-      
+      expect(stats[0].documentsUsing[0]).toEqual({
+        id: 'doc1',
+        title: 'Document 1',
+      })
+      expect(stats[0].documentsUsing[1]).toEqual({
+        id: 'doc2',
+        title: 'Document 2',
+      })
+
       expect(stats[1].usageCount).toBe(1) // image-2 used only in doc2
       expect(stats[1].documentsUsing).toHaveLength(1)
-      expect(stats[1].documentsUsing[0]).toEqual({ id: 'doc2', title: 'Document 2' })
+      expect(stats[1].documentsUsing[0]).toEqual({
+        id: 'doc2',
+        title: 'Document 2',
+      })
     })
 
     it('finds documents using specific image', () => {
       const documents = [
-        { id: 'doc1', title: 'Document 1', content: 'Some content with ![image](stored:image-1) and text' },
-        { id: 'doc2', title: 'Document 2', content: 'Different content with ![image](stored:image-1) and ![image](stored:image-2)' },
+        {
+          id: 'doc1',
+          title: 'Document 1',
+          content: 'Some content with ![image](stored:image-1) and text',
+        },
+        {
+          id: 'doc2',
+          title: 'Document 2',
+          content:
+            'Different content with ![image](stored:image-1) and ![image](stored:image-2)',
+        },
         { id: 'doc3', title: 'Document 3', content: 'No images here' },
       ]
 
@@ -327,7 +368,10 @@ describe('imageOperations', () => {
         { id: 'doc2', title: 'Document 2' },
       ])
 
-      const documentsUsingNonExistent = findDocumentsUsingImage('nonexistent', documents)
+      const documentsUsingNonExistent = findDocumentsUsingImage(
+        'nonexistent',
+        documents
+      )
       expect(documentsUsingNonExistent).toHaveLength(0)
     })
 
@@ -342,9 +386,13 @@ describe('imageOperations', () => {
 
     it('handles no stored images', () => {
       localStorageMock.getItem.mockReturnValue('[]')
-      
+
       const documents = [
-        { id: 'doc1', title: 'Document 1', content: 'Some content with ![image](stored:image-1)' },
+        {
+          id: 'doc1',
+          title: 'Document 1',
+          content: 'Some content with ![image](stored:image-1)',
+        },
       ]
 
       const stats = getImageUsageStats(documents)

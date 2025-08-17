@@ -3,7 +3,7 @@
  * Mocks browser APIs that are not available in the test environment
  */
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-/// <reference path="./test-types.d.ts" />
+import './test-types.d.ts'
 
 // Suppress console errors during tests for intentional error testing
 const originalConsoleError = console.error
@@ -122,13 +122,21 @@ global.Range = class Range {
   }
 
   getClientRects() {
-    return {
+    const mockDOMRectList: DOMRectList = {
       length: 0,
       item: (index: number): null => null,
-      [Symbol.iterator]: function* (): Generator<DOMRect, undefined, unknown> {
-        return undefined
+      [Symbol.iterator]: function () {
+        return {
+          next() {
+            return { done: true, value: undefined }
+          },
+          [Symbol.iterator]() {
+            return this
+          },
+        }
       },
-    }
+    } as DOMRectList
+    return mockDOMRectList
   }
 
   getBoundingClientRect() {
