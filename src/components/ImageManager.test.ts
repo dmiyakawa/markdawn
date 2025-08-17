@@ -27,7 +27,7 @@ describe('ImageManager.vue', () => {
       height: 600,
     },
     {
-      id: 'image-2', 
+      id: 'image-2',
       name: 'test-image-2.png',
       data: 'data:image/png;base64,test2',
       size: 2048,
@@ -45,7 +45,7 @@ describe('ImageManager.vue', () => {
     },
     {
       id: 'doc-2',
-      title: 'Document 2', 
+      title: 'Document 2',
       content: 'This document has no images',
     },
   ]
@@ -72,7 +72,7 @@ describe('ImageManager.vue', () => {
 
     it('loads images on mount', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue([])
-      
+
       mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -84,7 +84,7 @@ describe('ImageManager.vue', () => {
 
     it('displays header elements', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue([])
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -100,7 +100,7 @@ describe('ImageManager.vue', () => {
   describe('Image Display', () => {
     it('displays empty state when no images', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue([])
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -113,7 +113,7 @@ describe('ImageManager.vue', () => {
     it('displays images when available', async () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue(mockImages)
       vi.mocked(imageStorage.countImageUsage).mockReturnValue(0)
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -122,7 +122,7 @@ describe('ImageManager.vue', () => {
 
       // Wait for component to load images and update
       await wrapper.vm.$nextTick()
-      
+
       // Check that the component has the correct number of images
       expect(wrapper.vm.images.length).toBe(2)
       expect(wrapper.text()).toContain('2 images')
@@ -133,7 +133,7 @@ describe('ImageManager.vue', () => {
       vi.mocked(imageStorage.countImageUsage).mockImplementation((imageId) => {
         return imageId === 'image-1' ? 1 : 0
       })
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -142,14 +142,20 @@ describe('ImageManager.vue', () => {
 
       // Wait for component to load and compute statistics
       await wrapper.vm.$nextTick()
-      
+
       // Access the computed imageUsageStats to trigger the calculations
       const stats = wrapper.vm.imageUsageStats
       expect(stats).toBeDefined()
-      
+
       // The computed property should have calculated usage for both images
-      expect(imageStorage.countImageUsage).toHaveBeenCalledWith('image-1', mockDocuments)
-      expect(imageStorage.countImageUsage).toHaveBeenCalledWith('image-2', mockDocuments)
+      expect(imageStorage.countImageUsage).toHaveBeenCalledWith(
+        'image-1',
+        mockDocuments
+      )
+      expect(imageStorage.countImageUsage).toHaveBeenCalledWith(
+        'image-2',
+        mockDocuments
+      )
     })
   })
 
@@ -157,7 +163,7 @@ describe('ImageManager.vue', () => {
     it('has search input field', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue(mockImages)
       vi.mocked(imageStorage.countImageUsage).mockReturnValue(0)
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -171,7 +177,7 @@ describe('ImageManager.vue', () => {
     it('has sort options', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue(mockImages)
       vi.mocked(imageStorage.countImageUsage).mockReturnValue(0)
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -188,7 +194,7 @@ describe('ImageManager.vue', () => {
     it('updates search query when input changes', async () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue(mockImages)
       vi.mocked(imageStorage.countImageUsage).mockReturnValue(0)
-      
+
       const wrapper = mount(ImageManager, {
         props: {
           documents: mockDocuments,
@@ -244,7 +250,7 @@ describe('ImageManager.vue', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue(mockImages)
       vi.mocked(imageStorage.countImageUsage).mockReturnValue(1)
       vi.mocked(imageStorage.findDocumentsUsingImage).mockReturnValue([
-        { id: 'doc-1', usageCount: 1 }
+        { id: 'doc-1', usageCount: 1 },
       ])
 
       const wrapper = mount(ImageManager, {
@@ -336,9 +342,9 @@ describe('ImageManager.vue', () => {
         },
       })
 
-      const closeButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Close')
-      )
+      const closeButton = wrapper
+        .findAll('button')
+        .find((btn) => btn.text().includes('Close'))
 
       if (closeButton) {
         await closeButton.trigger('click')
@@ -434,15 +440,14 @@ describe('ImageManager.vue', () => {
       })
 
       // Component should mount successfully even if getStoredImages throws
-      let wrapper
       expect(() => {
-        wrapper = mount(ImageManager, {
+        mount(ImageManager, {
           props: {
             documents: mockDocuments,
           },
         })
       }).toThrow() // The error is expected during mount due to onMounted calling getStoredImages
-      
+
       // But the component should handle the error and not crash the application
     })
 
@@ -450,7 +455,9 @@ describe('ImageManager.vue', () => {
       vi.mocked(imageStorage.getStoredImages).mockReturnValue(mockImages)
       vi.mocked(imageStorage.countImageUsage).mockReturnValue(0)
       vi.mocked(imageStorage.findDocumentsUsingImage).mockReturnValue([])
-      vi.mocked(imageStorage.deleteStoredImage).mockRejectedValue(new Error('Delete failed'))
+      vi.mocked(imageStorage.deleteStoredImage).mockRejectedValue(
+        new Error('Delete failed')
+      )
       mockConfirm.mockReturnValue(true)
 
       const wrapper = mount(ImageManager, {

@@ -71,7 +71,9 @@ describe('ExportModal.vue', () => {
       })
 
       const titleInput = wrapper.find('#export-title')
-      expect((titleInput.element as HTMLInputElement).value).toBe('Test Document')
+      expect((titleInput.element as HTMLInputElement).value).toBe(
+        'Test Document'
+      )
     })
 
     it('populates author field with default value', () => {
@@ -80,7 +82,9 @@ describe('ExportModal.vue', () => {
       })
 
       const authorInput = wrapper.find('#export-author')
-      expect((authorInput.element as HTMLInputElement).value).toBe('Test Author')
+      expect((authorInput.element as HTMLInputElement).value).toBe(
+        'Test Author'
+      )
     })
 
     it('allows updating title field', async () => {
@@ -225,7 +229,7 @@ describe('ExportModal.vue', () => {
       // Find all checkboxes and look for one related to styles
       const checkboxes = wrapper.findAll('input[type="checkbox"]')
       let includeStylesCheckbox = null
-      
+
       for (const checkbox of checkboxes) {
         const id = checkbox.element.id
         if (id && id.includes('styles')) {
@@ -253,7 +257,7 @@ describe('ExportModal.vue', () => {
 
       const buttons = wrapper.findAll('button')
       let cancelButton = null
-      
+
       for (const button of buttons) {
         if (button.text().includes('Cancel')) {
           cancelButton = button
@@ -278,7 +282,7 @@ describe('ExportModal.vue', () => {
 
       const buttons = wrapper.findAll('button')
       let exportButton = null
-      
+
       for (const button of buttons) {
         if (button.text().includes('Export HTML')) {
           exportButton = button
@@ -495,7 +499,9 @@ describe('ExportModal.vue', () => {
         props: defaultProps,
       })
 
-      expect(wrapper.find('[role="dialog"], .modal, .fixed.inset-0').exists()).toBe(true)
+      expect(
+        wrapper.find('[role="dialog"], .modal, .fixed.inset-0').exists()
+      ).toBe(true)
     })
   })
 })
