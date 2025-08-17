@@ -3,6 +3,44 @@
 See [ai/completed_tasks.md](./completed_tasks.md) for completed features and implementations.
 See [ai/concerns.md](./concerns.md) for complex technical issues and unresolved concerns.
 
+## High Priority
+
+### Achieve 80% Test Coverage Requirement
+
+**Current Status**: Test coverage is significantly below the required 80% threshold across all metrics:
+- Statements: 38.53% (need 80%)
+- Functions: 41.07% (need 80%) 
+- Lines: 38.53% (need 80%)
+- Branches: 77.57% (need 80%)
+
+**Components Requiring Tests** (currently 0% coverage):
+- `DocumentOutline.vue` - Document structure navigation component
+- `ExportModal.vue` - File export dialog and options
+- `ImageManager.vue` - Image gallery and management interface
+- `MarkdownEditor.vue` - Main markdown editing component wrapper
+- `Preview.vue` - HTML preview and WYSIWYG editing pane
+
+**Utilities Requiring Improved Coverage**:
+- `advancedExport.ts` (1.07% coverage) - HTML/PDF export functionality
+- `imageProcessing.ts` (5.08% coverage) - Image manipulation and optimization
+- `useDocuments.ts` (51.39% coverage) - Document state management
+- `useResizablePanes.ts` (43.1% coverage) - UI layout management
+
+**Implementation Strategy**:
+1. **Component Tests**: Create comprehensive Vue component tests using Vue Test Utils
+   - Mock child components and external dependencies
+   - Test user interactions, prop handling, and event emissions
+   - Cover both success and error scenarios
+2. **Utility Function Tests**: Add thorough unit tests for utility functions
+   - Test all function parameters and return values
+   - Cover edge cases and error handling
+   - Mock external dependencies (localStorage, File API, etc.)
+3. **Integration Tests**: Ensure component integration scenarios are covered
+   - Test data flow between components
+   - Verify proper event handling and state updates
+
+**Priority**: Critical - Blocks CI/CD pipeline and violates fundamental project quality requirements
+
 ## Medium Priority
 
 ### Enhanced E2E Test Scenarios
